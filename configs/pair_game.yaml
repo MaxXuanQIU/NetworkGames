@@ -1,0 +1,61 @@
+description: 16x16 MBTI personality matrix in repeated prisoner's dilemma
+experiment_type: pair_game
+game:
+  num_repetitions: 20
+  num_rounds: 100
+  payoff_matrix:
+    COOPERATE:
+      COOPERATE:
+      - 3
+      - 3
+      DEFECT:
+      - 0
+      - 5
+    DEFECT:
+      COOPERATE:
+      - 5
+      - 0
+      DEFECT:
+      - 1
+      - 1
+  random_seed: 42
+llm:
+  api_key: null
+  kwargs:
+    response_delay: 0
+  max_tokens: 50
+  model_name: mock-model
+  provider: mock
+  temperature: 0.7
+  timeout: 30
+name: MBTI Pair Game Experiment
+network:
+  directed: false
+  edge_probability: 0.1
+  k: 4
+  m: 2
+  network_type: small_world
+  num_nodes: 50
+  p: 0.1
+  seed: null
+network_game_config: null
+output_dir: results
+pair_game_config:
+  matrix_size: 16
+  save_heatmap: true
+  save_statistics: true
+personality_distribution:
+  cluster_config: null
+  custom_distribution: null
+  distribution_type: uniform
+  single_type: null
+save_detailed_results: true
+save_network_snapshots: true
+save_visualizations: true
+visualization_config:
+  color_palette: Set2
+  dpi: 300
+  figsize:
+  - 12
+  - 8
+  style: seaborn-v0_8

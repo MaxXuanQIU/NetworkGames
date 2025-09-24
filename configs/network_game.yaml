@@ -1,0 +1,69 @@
+description: Network-based prisoner's dilemma with different personality distributions
+experiment_type: network_game
+game:
+  num_repetitions: 5
+  num_rounds: 5
+  payoff_matrix:
+    COOPERATE:
+      COOPERATE:
+      - 3
+      - 3
+      DEFECT:
+      - 0
+      - 5
+    DEFECT:
+      COOPERATE:
+      - 5
+      - 0
+      DEFECT:
+      - 1
+      - 1
+  random_seed: 42
+llm:
+  api_key: null
+  kwargs:
+    response_delay: 0
+  max_tokens: 50
+  model_name: mock-model
+  provider: mock
+  temperature: 0.7
+  timeout: 30
+name: MBTI Network Game Experiment
+network:
+  directed: false
+  edge_probability: 0.1
+  k: 4
+  m: 2
+  network_type: small_world
+  num_nodes: 50
+  p: 0.1
+  seed: null
+network_game_config:
+  network_types:
+  - regular
+  - small_world_0.1
+  - small_world_0.5
+  - random
+  personality_scenarios:
+  - uniform
+  - single_ENTJ
+  - clustered
+  save_cooperation_metrics: true
+  save_network_evolution: true
+output_dir: results
+pair_game_config: null
+personality_distribution:
+  cluster_config: null
+  custom_distribution: null
+  distribution_type: uniform
+  single_type: null
+save_detailed_results: true
+save_network_snapshots: true
+save_visualizations: true
+visualization_config:
+  color_palette: Set2
+  dpi: 300
+  figsize:
+  - 12
+  - 8
+  style: seaborn-v0_8
