@@ -15,6 +15,7 @@ class Action(Enum):
     """博弈动作"""
     COOPERATE = "COOPERATE"
     DEFECT = "DEFECT"
+    # 可扩展更多动作
 
 
 @dataclass
@@ -52,7 +53,24 @@ class GameHistory:
         self.player2_cooperation_rate = player2_cooperations / self.total_rounds
 
 
-class PrisonersDilemma:
+class TwoPlayerGame:
+    """通用双人博弈"""
+    def __init__(self, payoff_matrix: Dict[Tuple[Action, Action], Tuple[float, float]]):
+        self.payoff_matrix = payoff_matrix
+        self._validate_payoff_matrix()
+
+    def _validate_payoff_matrix(self):
+        # 检查所有组合都有定义
+        for a1 in Action:
+            for a2 in Action:
+                if (a1, a2) not in self.payoff_matrix:
+                    raise ValueError(f"Missing payoff for: {(a1, a2)}")
+
+    def calculate_payoff(self, action1: Action, action2: Action):
+        return self.payoff_matrix[(action1, action2)]
+
+
+class PrisonersDilemma(TwoPlayerGame):
     """囚徒困境博弈类"""
     
     # 标准囚徒困境收益矩阵
@@ -70,28 +88,8 @@ class PrisonersDilemma:
         Args:
             payoff_matrix: 自定义收益矩阵，格式为 {(action1, action2): (payoff1, payoff2)}
         """
-        self.payoff_matrix = payoff_matrix or self.PAYOFF_MATRIX
+        super().__init__(payoff_matrix or self.PAYOFF_MATRIX)
         self.logger = logging.getLogger(self.__class__.__name__)
-        
-        # 验证收益矩阵
-        self._validate_payoff_matrix()
-    
-    def _validate_payoff_matrix(self):
-        """验证收益矩阵的有效性"""
-        required_combinations = [
-            (Action.COOPERATE, Action.COOPERATE),
-            (Action.COOPERATE, Action.DEFECT),
-            (Action.DEFECT, Action.COOPERATE),
-            (Action.DEFECT, Action.DEFECT)
-        ]
-        
-        for combo in required_combinations:
-            if combo not in self.payoff_matrix:
-                raise ValueError(f"Missing payoff for action combination: {combo}")
-    
-    def calculate_payoff(self, action1: Action, action2: Action) -> Tuple[float, float]:
-        """计算给定动作组合的收益"""
-        return self.payoff_matrix[(action1, action2)]
     
     def play_round(self, action1: Action, action2: Action, round_number: int = 1) -> GameResult:
         """进行一轮博弈"""

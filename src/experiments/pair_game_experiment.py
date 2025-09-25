@@ -30,7 +30,8 @@ class PairGameExperiment:
         self.logger = logging.getLogger(self.__class__.__name__)
         
         # 初始化组件
-        self.game = PrisonersDilemma()
+        payoff_matrix = self._parse_payoff_matrix(config.game.payoff_matrix)
+        self.game = PrisonersDilemma(payoff_matrix=payoff_matrix)
         self.cooperation_analyzer = CooperationAnalyzer()
         self.personality_analyzer = PersonalityAnalyzer()
         self.plotter = PairGamePlotter(
@@ -197,6 +198,14 @@ class PairGameExperiment:
         else:
             # 默认策略：基于响应的随机性
             return Action.COOPERATE if random.random() < 0.5 else Action.DEFECT
+ 
+    def _parse_payoff_matrix(self, matrix_cfg: dict) -> dict:
+        """将yaml配置的payoff_matrix转为内部格式"""
+        result = {}
+        for a1_str, row in matrix_cfg.items():
+            for a2_str, payoff in row.items():
+                result[(Action[a1_str], Action[a2_str])] = tuple(payoff)
+        return result
     
     def _analyze_results(self, matrix_results: Dict[str, Any]) -> Dict[str, Any]:
         """分析实验结果"""

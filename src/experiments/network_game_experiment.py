@@ -34,7 +34,8 @@ class NetworkGameExperiment:
         self.logger = logging.getLogger(self.__class__.__name__)
         
         # 初始化组件
-        self.game = PrisonersDilemma()
+        payoff_matrix = self._parse_payoff_matrix(config.game.payoff_matrix)
+        self.game = PrisonersDilemma(payoff_matrix=payoff_matrix)
         self.network_generator = NetworkGenerator()
         self.network_analyzer = NetworkAnalyzer()
         self.cooperation_analyzer = CooperationAnalyzer()
@@ -259,6 +260,14 @@ class NetworkGameExperiment:
             return Action.DEFECT
         # 无法解析时，报错
         raise ValueError(f"无法解析LLM响应: {response}")
+
+    def _parse_payoff_matrix(self, matrix_cfg: dict) -> dict:
+        """将yaml配置的payoff_matrix转为内部格式"""
+        result = {}
+        for a1_str, row in matrix_cfg.items():
+            for a2_str, payoff in row.items():
+                result[(Action[a1_str], Action[a2_str])] = tuple(payoff)
+        return result
 
     def _generate_network_prompt(self, personality: MBTIPersonality, node: int, 
                                neighbors: List[int], node_actions: Dict[int, Action], 
@@ -495,14 +504,23 @@ class NetworkGameExperiment:
         visualization_files["network_comparison"] = comparison_file
         
         # 网络快照
+        color_palette = [
+            'red', 'blue', 'green', 'orange', 'purple', 'cyan', 'magenta', 'yellow',
+            'brown', 'pink', 'gray', 'olive', 'lime', 'teal', 'navy', 'maroon'
+        ]
+        # 为每种MBTI类型分配唯一颜色，便于可视化和维护
+        mbti_types = list(self.mbti_types)
+        mbti_color_map = {mbti_type.value: color_palette[i % len(color_palette)] for i, mbti_type in enumerate(mbti_types)}
         for network_type, scenarios in all_results.items():
             for scenario, results in scenarios.items():
                 G = results["network"]
                 personality_assignment = results["personality_assignment"]
                 
                 # 生成节点颜色（基于人格类型）
-                node_colors = [hash(personality_assignment[node].value) % 16 
-                             for node in G.nodes()]
+                node_colors = [
+                    mbti_color_map[personality_assignment[node].value]
+                    for node in G.nodes()
+                ]
                 
                 snapshot_file = self.plotter.plot_network_snapshot(
                     G, node_colors,
