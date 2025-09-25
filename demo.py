@@ -162,15 +162,15 @@ def demo_config_system():
     config_files = config_manager.list_configs()
     print("可用的配置文件:")
     for config_file in config_files:
-        info = config_manager.get_config_info(config_file)
-        if "error" not in info:
-            print(f"  - {config_file}: {info['name']} ({info['experiment_type']})")
+        info = config_manager.get_config_info(f"configs/{config_file}")
+        print(f"  - {config_file}: {info['name']} ({info['experiment_type']})")
     
     # 演示配置验证
     print("\n配置验证演示:")
     for config_file in config_files:
+        config_path = f"configs/{config_file}" if not config_file.startswith("configs/") else config_file
         try:
-            config = config_manager.load_config(config_file)
+            config = config_manager.load_config(config_path)
             errors = config_manager.validate_config(config)
             if errors:
                 print(f"  {config_file}: 验证失败 - {len(errors)}个错误")

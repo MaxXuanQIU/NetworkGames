@@ -226,10 +226,12 @@ network:
 - `cooperation_matrix.csv`: 16x16合作率矩阵
 - `payoff_matrix.csv`: 16x16收益矩阵
 - `detailed_results.csv`: 详细结果数据
+- `analysis_results.json`: 统计分析结果
+- `experiment_config.json`: 实验配置信息
 - `cooperation_heatmap.png`: 合作率热力图
+- `cooperation_distribution.png`: 合作率分布图
 - `personality_ranking.png`: 人格合作率排名
 - `mbti_dimension_analysis.png`: MBTI维度分析
-- `analysis_results.json`: 统计分析结果
 
 ### 网络博弈实验输出
 
