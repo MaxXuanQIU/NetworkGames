@@ -127,12 +127,12 @@ class PairGamePlotter(BasePlotter):
 
         # 提取合作率、样本量和标准差
         data = [
-            (ptype, pdata.get('cooperation_rate', 0), pdata.get('sample_size', 0), pdata.get('std', 0))
+            (ptype, pdata.get('cooperation_rate', 0), pdata.get('std', 0))
             for ptype, pdata in personality_rates.items()
         ]
         # 按合作率排序
         data_sorted = sorted(data, key=lambda x: x[1], reverse=True)
-        personalities, rates, sample_sizes, stds = zip(*data_sorted)
+        personalities, rates, stds = zip(*data_sorted)
 
         # 根据MBTI类型分组着色
         bar_colors = []
@@ -147,9 +147,9 @@ class PairGamePlotter(BasePlotter):
                        color=bar_colors)
 
         # 添加数值标签和样本量
-        for i, (bar, rate, n) in enumerate(zip(bars, rates, sample_sizes)):
+        for i, (bar, rate) in enumerate(zip(bars, rates)):
             plt.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.01,
-                     f'{rate:.3f}\nN={n}', ha='center', va='bottom', fontsize=9)
+                     f'{rate:.3f}', ha='center', va='bottom', fontsize=9)
 
         plt.xlabel('Personality Type')
         plt.ylabel('Cooperation Rate')
@@ -340,18 +340,18 @@ class NetworkGamePlotter(BasePlotter):
         
         return str(self.save_plot(filename))
     
-    def plot_network_comparison(self, network_data: Dict[str, Dict[str, Any]],
+    def plot_network_comparison(self, network_comparison: Dict[str, Dict[str, Any]],
                               title: str = "Network Comparison",
                               filename: str = "network_comparison") -> str:
         """绘制网络比较"""
         fig, axes = plt.subplots(2, 2, figsize=(16, 12))
         
         # 提取数据
-        network_names = list(network_data.keys())
-        cooperation_rates = [network_data[name].get('final_cooperation_rate', 0) for name in network_names]
-        clustering_coeffs = [network_data[name].get('clustering_coefficient', 0) for name in network_names]
-        avg_path_lengths = [network_data[name].get('avg_path_length', 0) for name in network_names]
-        densities = [network_data[name].get('density', 0) for name in network_names]
+        network_names = list(network_comparison.keys())
+        cooperation_rates = [network_comparison[name].get('avg_final_cooperation_rate', 0) for name in network_names]
+        clustering_coeffs = [network_comparison[name].get('avg_clustering_coefficient', 0) for name in network_names]
+        avg_path_lengths = [network_comparison[name].get('avg_path_length', 0) for name in network_names]
+        densities = [network_comparison[name].get('avg_density', 0) for name in network_names]
         
         # 合作率比较
         axes[0, 0].bar(network_names, cooperation_rates, color='skyblue')

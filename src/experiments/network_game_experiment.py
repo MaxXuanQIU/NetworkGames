@@ -392,19 +392,25 @@ class NetworkGameExperiment:
             final_cooperation_rates = []
             final_clustering_coeffs = []
             final_avg_path_lengths = []
+            densities = []
             
             for scenario, results in scenarios.items():
                 evolution_data = results["evolution_data"]
+                G = results["network"]
                 if evolution_data:
                     final_data = evolution_data[-1]
                     final_cooperation_rates.append(final_data["cooperation_rate"])
                     final_clustering_coeffs.append(final_data["clustering_coefficient"])
                     final_avg_path_lengths.append(final_data["avg_path_length"])
+                # 计算网络密度
+                if G is not None:
+                    densities.append(nx.density(G))
             
             network_metrics[network_type] = {
                 "avg_final_cooperation_rate": np.mean(final_cooperation_rates) if final_cooperation_rates else 0,
                 "avg_clustering_coefficient": np.mean(final_clustering_coeffs) if final_clustering_coeffs else 0,
-                "avg_path_length": np.mean(final_avg_path_lengths) if final_avg_path_lengths else 0
+                "avg_path_length": np.mean(final_avg_path_lengths) if final_avg_path_lengths else 0,
+                "avg_density": np.mean(densities) if densities else 0
             }
         
         return network_metrics
