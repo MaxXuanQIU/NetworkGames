@@ -275,6 +275,15 @@ class PairGameExperiment:
             filename="cooperation_heatmap"
         )
         visualization_files["heatmap"] = heatmap_file
+
+        # 收益热力图
+        payoff_heatmap_file = self.plotter.plot_payoff_heatmap(
+            matrix_results["payoff_matrix"],
+            matrix_results["personality_types"],
+            title="MBTI Payoff Matrix",
+            filename="payoff_heatmap"
+        )
+        visualization_files["payoff_heatmap"] = payoff_heatmap_file
         
         # 合作率分布
         all_rates = matrix_results["cooperation_matrix"].flatten()
@@ -314,13 +323,21 @@ class PairGameExperiment:
         output_dir = Path(self.config.output_dir)
         output_dir.mkdir(exist_ok=True)
         
-        # 保存矩阵数据
+        # 保存合作率矩阵
         matrix_df = pd.DataFrame(
             matrix_results["cooperation_matrix"],
             index=matrix_results["personality_types"],
             columns=matrix_results["personality_types"]
         )
         matrix_df.to_csv(output_dir / "cooperation_matrix.csv")
+
+        # 保存收益矩阵
+        payoff_df = pd.DataFrame(
+            matrix_results["payoff_matrix"],
+            index=matrix_results["personality_types"],
+            columns=matrix_results["personality_types"]
+        )
+        payoff_df.to_csv(output_dir / "payoff_matrix.csv")
         
         # 保存详细结果
         detailed_df = pd.DataFrame([

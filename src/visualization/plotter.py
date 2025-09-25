@@ -60,12 +60,13 @@ class PairGamePlotter(BasePlotter):
         """绘制合作率热力图"""
         plt.figure(figsize=self.figsize)
         
-        # 创建热力图
+        # 创建热力图，设置注释字体大小
         sns.heatmap(cooperation_matrix, 
                    xticklabels=personality_types,
                    yticklabels=personality_types,
                    annot=True, 
                    fmt='.3f',
+                   annot_kws={"size": 8},
                    cmap='RdYlBu_r',
                    center=0.5,
                    square=True,
@@ -78,6 +79,33 @@ class PairGamePlotter(BasePlotter):
         plt.yticks(rotation=0)
         plt.tight_layout()
         
+        return str(self.save_plot(filename))
+    
+    def plot_payoff_heatmap(self, payoff_matrix: np.ndarray,
+                            personality_types: List[str],
+                            title: str = "MBTI Payoff Matrix",
+                            filename: str = "payoff_heatmap") -> str:
+        """绘制收益热力图"""
+        plt.figure(figsize=self.figsize)
+
+        sns.heatmap(payoff_matrix,
+                    xticklabels=personality_types,
+                    yticklabels=personality_types,
+                    annot=True,
+                    fmt='.2f',
+                    annot_kws={"size": 8},
+                    cmap='YlGnBu',
+                    center=np.mean(payoff_matrix),
+                    square=True,
+                    cbar_kws={'label': 'Average Payoff'})
+
+        plt.title(title, fontsize=16, fontweight='bold')
+        plt.xlabel('Opponent Personality Type', fontsize=12)
+        plt.ylabel('Player Personality Type', fontsize=12)
+        plt.xticks(rotation=45, ha='right')
+        plt.yticks(rotation=0)
+        plt.tight_layout()
+
         return str(self.save_plot(filename))
     
     def plot_cooperation_distribution(self, cooperation_rates: List[float],
