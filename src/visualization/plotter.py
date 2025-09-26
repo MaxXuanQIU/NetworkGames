@@ -310,10 +310,39 @@ class NetworkGamePlotter(BasePlotter):
         
         return str(self.save_plot(filename))
     
-    def plot_network_snapshot(self, G: nx.Graph, node_colors: List[str], 
-                            title: str = "Network Snapshot",
-                            filename: str = "network_snapshot") -> str:
-        """绘制网络快照"""
+    def plot_network_snapshot(self, G, personality_assignment, title="", filename="", legend_labels=None):
+        """绘制网络快照，节点颜色根据人格类型着色"""
+        # MBTI类型配色方案
+        color_palette = [
+            '#9467bd',  # INTJ
+            '#8c6bb1',  # INTP
+            '#7b4173',  # ENTJ
+            '#c5b0d5',  # ENTP
+            '#2ca02c',  # INFJ
+            '#98df8a',  # INFP
+            '#17becf',  # ENFJ
+            '#bcbd22',  # ENFP
+            '#1f77b4',  # ISTJ
+            '#aec7e8',  # ISFJ
+            "#3556a1",  # ESTJ
+            '#5dade2',  # ESFJ
+            '#ffbb78',  # ISTP
+            '#ffd700',  # ISFP
+            '#ffeb99',  # ESTP
+            '#ffe066',  # ESFP
+        ]
+        # 获取所有MBTI类型
+        from src.agents.mbti_personalities import get_all_mbti_types
+        mbti_types = list(get_all_mbti_types())
+        mbti_color_map = {mbti_type.value: color_palette[i % len(color_palette)] for i, mbti_type in enumerate(mbti_types)}
+        # 生成节点颜色
+        node_colors = [
+            mbti_color_map[personality_assignment[node].value]
+            for node in G.nodes()
+        ]
+        # legend_labels自动生成
+        legend_labels = {mbti_type.value: mbti_color_map[mbti_type.value] for mbti_type in mbti_types}
+        
         plt.figure(figsize=self.figsize)
         
         # 计算布局
@@ -331,6 +360,14 @@ class NetworkGamePlotter(BasePlotter):
         plt.title(title)
         plt.axis('off')
         plt.tight_layout()
+        
+        # 添加图例
+        if legend_labels:
+            legend_elements = [
+                Patch(facecolor=color, label=label)
+                for label, color in legend_labels.items()
+            ]
+            plt.legend(handles=legend_elements, title="Personality Type", loc="center left", bbox_to_anchor=(1.02, 0.5), borderaxespad=0.)
         
         return str(self.save_plot(filename))
     

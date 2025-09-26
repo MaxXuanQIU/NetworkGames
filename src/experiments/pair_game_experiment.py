@@ -196,8 +196,8 @@ class PairGameExperiment:
         elif "DEFECT" in response:
             return Action.DEFECT
         else:
-            # 默认策略：基于响应的随机性
-            return Action.COOPERATE if random.random() < 0.5 else Action.DEFECT
+            # 无法解析时，报错
+            raise ValueError(f"无法解析LLM响应: {response}")
  
     def _parse_payoff_matrix(self, matrix_cfg: dict) -> dict:
         """将yaml配置的payoff_matrix转为内部格式"""

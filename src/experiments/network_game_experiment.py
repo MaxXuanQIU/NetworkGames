@@ -205,58 +205,77 @@ class NetworkGameExperiment:
         return personality_assignment
     
     async def _run_network_game(self, G: nx.Graph, personality_assignment: Dict[int, MBTIType]) -> List[Dict[str, Any]]:
-        """运行网络博弈"""
+        """运行网络博弈（每个节点与每个邻居分别决策）"""
         evolution_data = []
-        
-        # 初始化节点状态
-        node_actions = {node: Action.COOPERATE for node in G.nodes()}
+        # 存储每对节点的历史: (node, neighbor) -> List[GameResult]
+        pair_histories = defaultdict(list)
         node_payoffs = {node: 0.0 for node in G.nodes()}
-        
-        # 运行多轮博弈
+
         for round_num in range(1, self.config.game.num_rounds + 1):
             self.logger.info(f"Running round {round_num}/{self.config.game.num_rounds}")
-            
-            # 为每个节点生成决策
-            new_actions = {}
-            
+            round_payoffs = {node: 0.0 for node in G.nodes()}
+            round_actions = {node: {} for node in G.nodes()}  # node -> neighbor -> action
+
+            # 决策与博弈
             for node in G.nodes():
-                # 获取邻居信息
                 neighbors = list(G.neighbors(node))
-                if not neighbors:
-                    new_actions[node] = Action.COOPERATE
-                    continue
-                
-                # 生成决策prompt
                 personality = self.personalities[personality_assignment[node]]
-                prompt = self._generate_network_prompt(personality, node, neighbors, 
-                                                     node_actions, round_num)
-                
-                # 获取LLM决策
-                response = await self.llm_manager.generate_response("default", prompt)
-                new_actions[node] = self._parse_action(response.content)
-            
-            # 更新节点动作
-            node_actions = new_actions
-            
-            # 计算收益
-            node_payoffs = self._calculate_network_payoffs(G, node_actions)
-            
-            # 记录演化数据
-            round_data = self._record_round_data(G, node_actions, node_payoffs, 
-                                               personality_assignment, round_num)
+                for neighbor in neighbors:
+                    # 取 node 与 neighbor 的历史（无序对）
+                    pair_key = tuple(sorted((node, neighbor)))
+                    history = pair_histories[pair_key]
+                    prompt = personality.get_decision_prompt(
+                        history,  # 只属于该2人的历史
+                        personality_assignment[neighbor].value  # 邻居类型
+                    )
+                    response = await self.llm_manager.generate_response("default", prompt)
+                    action = self._parse_action(response.content)
+                    round_actions[node][neighbor] = action
+
+            # 进行所有博弈并累计收益
+            for node in G.nodes():
+                for neighbor in G.neighbors(node):
+                    if node < neighbor:
+                        action1 = round_actions[node][neighbor]
+                        action2 = round_actions[neighbor][node]
+                        result = self.game.play_round(action1, action2, round_num)
+                        round_payoffs[node] += result.player1_payoff
+                        round_payoffs[neighbor] += result.player2_payoff
+                        # 记录该对的历史
+                        pair_key = (node, neighbor)
+                        pair_histories[tuple(sorted(pair_key))].append(result)
+
+            # 统计每个节点的主动作
+            node_main_actions = {}
+            for node, actions in round_actions.items():
+                if actions:
+                    # 统计出现次数最多的动作
+                    action_counts = defaultdict(int)
+                    for act in actions.values():
+                        action_counts[act] += 1
+                    main_action = max(action_counts, key=action_counts.get)
+                    node_main_actions[node] = main_action
+                else:
+                    node_main_actions[node] = Action.COOPERATE  # 默认
+
+            # 记录本轮数据
+            round_data = self._record_round_data(
+                G, 
+                node_main_actions,
+                round_payoffs,
+                personality_assignment,
+                round_num
+            )
             evolution_data.append(round_data)
-        
+
         return evolution_data
-    
+
     def _parse_action(self, response: str) -> Action:
         """解析LLM响应为博弈动作（与两人博弈保持一致）"""
-        import random
-        if not isinstance(response, str):
-            return Action.COOPERATE if random.random() < 0.5 else Action.DEFECT
-        text = response.strip().upper()
-        if "COOPERATE" in text or "合作" in text:
+        response = response.strip().upper()
+        if "COOPERATE" in response or "合作" in response:
             return Action.COOPERATE
-        if "DEFECT" in text or "背叛" in text:
+        if "DEFECT" in response or "背叛" in response:
             return Action.DEFECT
         # 无法解析时，报错
         raise ValueError(f"无法解析LLM响应: {response}")
@@ -268,51 +287,6 @@ class NetworkGameExperiment:
             for a2_str, payoff in row.items():
                 result[(Action[a1_str], Action[a2_str])] = tuple(payoff)
         return result
-
-    def _generate_network_prompt(self, personality: MBTIPersonality, node: int, 
-                               neighbors: List[int], node_actions: Dict[int, Action], 
-                               round_num: int) -> str:
-        """生成网络博弈的决策prompt"""
-        # 获取邻居的历史行为
-        neighbor_actions = [node_actions.get(neighbor, Action.COOPERATE) for neighbor in neighbors]
-        cooperation_count = sum(1 for action in neighbor_actions if action == Action.COOPERATE)
-        total_neighbors = len(neighbors)
-        
-        # 生成基础prompt
-        base_prompt = personality.prompt_template
-        
-        # 添加网络信息
-        network_info = f"""
-网络博弈信息：
-- 当前节点: {node}
-- 邻居数量: {total_neighbors}
-- 邻居合作数量: {cooperation_count}
-- 邻居背叛数量: {total_neighbors - cooperation_count}
-- 当前轮次: {round_num}
-
-请基于以上信息做出你的决策：合作(COOPERATE)还是背叛(DEFECT)？
-请只回答COOPERATE或DEFECT，不要解释原因。"""
-        
-        return base_prompt + network_info
-    
-    def _calculate_network_payoffs(self, G: nx.Graph, node_actions: Dict[int, Action]) -> Dict[int, float]:
-        """计算网络收益"""
-        node_payoffs = {node: 0.0 for node in G.nodes()}
-        
-        for node in G.nodes():
-            total_payoff = 0.0
-            neighbors = list(G.neighbors(node))
-            
-            for neighbor in neighbors:
-                # 与每个邻居进行囚徒困境博弈
-                payoff1, payoff2 = self.game.calculate_payoff(
-                    node_actions[node], node_actions[neighbor]
-                )
-                total_payoff += payoff1
-            
-            node_payoffs[node] = total_payoff
-        
-        return node_payoffs
     
     def _record_round_data(self, G: nx.Graph, node_actions: Dict[int, Action], 
                           node_payoffs: Dict[int, float], personality_assignment: Dict[int, MBTIType],
@@ -504,26 +478,14 @@ class NetworkGameExperiment:
         visualization_files["network_comparison"] = comparison_file
         
         # 网络快照
-        color_palette = [
-            'red', 'blue', 'green', 'orange', 'purple', 'cyan', 'magenta', 'yellow',
-            'brown', 'pink', 'gray', 'olive', 'lime', 'teal', 'navy', 'maroon'
-        ]
-        # 为每种MBTI类型分配唯一颜色，便于可视化和维护
-        mbti_types = list(self.mbti_types)
-        mbti_color_map = {mbti_type.value: color_palette[i % len(color_palette)] for i, mbti_type in enumerate(mbti_types)}
         for network_type, scenarios in all_results.items():
             for scenario, results in scenarios.items():
                 G = results["network"]
                 personality_assignment = results["personality_assignment"]
                 
-                # 生成节点颜色（基于人格类型）
-                node_colors = [
-                    mbti_color_map[personality_assignment[node].value]
-                    for node in G.nodes()
-                ]
-                
+                # 直接传递personality_assignment
                 snapshot_file = self.plotter.plot_network_snapshot(
-                    G, node_colors,
+                    G, personality_assignment,
                     title=f"Network Snapshot: {network_type} - {scenario}",
                     filename=f"network_snapshot_{network_type}_{scenario}"
                 )
