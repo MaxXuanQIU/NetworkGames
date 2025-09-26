@@ -215,18 +215,18 @@ class NetworkGameExperiment:
             self.logger.info(f"Running round {round_num}/{self.config.game.num_rounds}")
             round_payoffs = {node: 0.0 for node in G.nodes()}
             round_actions = {node: {} for node in G.nodes()}  # node -> neighbor -> action
+            edge_actions = {}  # 记录每条边的动作
 
             # 决策与博弈
             for node in G.nodes():
                 neighbors = list(G.neighbors(node))
                 personality = self.personalities[personality_assignment[node]]
                 for neighbor in neighbors:
-                    # 取 node 与 neighbor 的历史（无序对）
                     pair_key = tuple(sorted((node, neighbor)))
                     history = pair_histories[pair_key]
                     prompt = personality.get_decision_prompt(
-                        history,  # 只属于该2人的历史
-                        personality_assignment[neighbor].value  # 邻居类型
+                        history,
+                        personality_assignment[neighbor].value
                     )
                     response = await self.llm_manager.generate_response("default", prompt)
                     action = self._parse_action(response.content)
@@ -241,30 +241,18 @@ class NetworkGameExperiment:
                         result = self.game.play_round(action1, action2, round_num)
                         round_payoffs[node] += result.player1_payoff
                         round_payoffs[neighbor] += result.player2_payoff
-                        # 记录该对的历史
                         pair_key = (node, neighbor)
                         pair_histories[tuple(sorted(pair_key))].append(result)
-
-            # 统计每个节点的主动作
-            node_main_actions = {}
-            for node, actions in round_actions.items():
-                if actions:
-                    # 统计出现次数最多的动作
-                    action_counts = defaultdict(int)
-                    for act in actions.values():
-                        action_counts[act] += 1
-                    main_action = max(action_counts, key=action_counts.get)
-                    node_main_actions[node] = main_action
-                else:
-                    node_main_actions[node] = Action.COOPERATE  # 默认
+                        # 记录边的动作
+                        edge_actions[(node, neighbor)] = (action1, action2)
 
             # 记录本轮数据
             round_data = self._record_round_data(
                 G, 
-                node_main_actions,
                 round_payoffs,
                 personality_assignment,
-                round_num
+                round_num,
+                edge_actions
             )
             evolution_data.append(round_data)
 
@@ -288,40 +276,59 @@ class NetworkGameExperiment:
                 result[(Action[a1_str], Action[a2_str])] = tuple(payoff)
         return result
     
-    def _record_round_data(self, G: nx.Graph, node_actions: Dict[int, Action], 
+    def _record_round_data(self, G: nx.Graph, 
                           node_payoffs: Dict[int, float], personality_assignment: Dict[int, MBTIType],
-                          round_num: int) -> Dict[str, Any]:
-        """记录轮次数据"""
-        # 计算合作率
-        cooperation_count = sum(1 for action in node_actions.values() if action == Action.COOPERATE)
-        cooperation_rate = cooperation_count / len(node_actions)
-        
+                          round_num: int, edge_actions: Optional[Dict[Tuple[int, int], Tuple[Action, Action]]] = None
+                          ) -> Dict[str, Any]:
+        """记录轮次数据，基于edge_actions统计"""
+        # 统计边的合作情况
+        edge_actions = edge_actions or {}
+        total_edges = len(edge_actions)
+        cooperation_edges = 0
+        personality_stats = defaultdict(lambda: {"cooperation_count": 0, "total_count": 0})
+
+        for (u, v), (a1, a2) in edge_actions.items():
+            # 只有双方都合作才算合作边
+            if a1 == Action.COOPERATE and a2 == Action.COOPERATE:
+                cooperation_edges += 1
+                # 统计每个人格的合作边数（每个节点都+1）
+                personality_stats[personality_assignment[u].value]["cooperation_count"] += 1
+                personality_stats[personality_assignment[v].value]["cooperation_count"] += 1
+            # 无论合作还是背叛，每个人格的总边数都+1
+            personality_stats[personality_assignment[u].value]["total_count"] += 1
+            personality_stats[personality_assignment[v].value]["total_count"] += 1
+
+        cooperation_rate = cooperation_edges / total_edges if total_edges > 0 else 0
+        cooperation_count = cooperation_edges
+
         # 计算网络指标
         network_analysis = self.network_analyzer.analyze_network(G)
-        
-        # 按人格类型统计
-        personality_stats = defaultdict(lambda: {"cooperation_count": 0, "total_count": 0})
-        for node, action in node_actions.items():
-            personality = personality_assignment[node]
-            personality_stats[personality.value]["total_count"] += 1
-            if action == Action.COOPERATE:
-                personality_stats[personality.value]["cooperation_count"] += 1
-        
-        # 计算合作集群
-        cooperation_clusters = self._find_cooperation_clusters(G, node_actions)
-        
+
+        # 计算合作集群（只统计双方都合作的边，生成子图）
+        cooperation_nodes = set()
+        for (u, v), (a1, a2) in edge_actions.items():
+            if a1 == Action.COOPERATE and a2 == Action.COOPERATE:
+                cooperation_nodes.add(u)
+                cooperation_nodes.add(v)
+        if cooperation_nodes:
+            subgraph = G.subgraph(cooperation_nodes)
+            cooperation_clusters = [list(comp) for comp in nx.connected_components(subgraph)]
+        else:
+            cooperation_clusters = []
+
         return {
             "round": round_num,
             "cooperation_rate": cooperation_rate,
             "cooperation_count": cooperation_count,
-            "total_nodes": len(node_actions),
+            "total_edges": total_edges,
             "avg_payoff": np.mean(list(node_payoffs.values())),
             "std_payoff": np.std(list(node_payoffs.values())),
             "clustering_coefficient": network_analysis.get("clustering_coefficient", 0),
             "avg_path_length": network_analysis.get("avg_path_length", 0),
             "num_components": network_analysis.get("num_components", 1),
             "personality_stats": dict(personality_stats),
-            "cooperation_clusters": cooperation_clusters
+            "cooperation_clusters": cooperation_clusters,
+            "edge_actions": {f"{k[0]}_{k[1]}": (v[0].value, v[1].value) for k, v in edge_actions.items()}
         }
     
     def _find_cooperation_clusters(self, G: nx.Graph, node_actions: Dict[int, Action]) -> List[List[int]]:
@@ -483,9 +490,14 @@ class NetworkGameExperiment:
                 G = results["network"]
                 personality_assignment = results["personality_assignment"]
                 
-                # 直接传递personality_assignment
+                # 获取最后一轮的边动作
+                evolution_data = results["evolution_data"]
+                edge_actions = None
+                if evolution_data and "edge_actions" in evolution_data[-1]:
+                    edge_actions = evolution_data[-1]["edge_actions"]
                 snapshot_file = self.plotter.plot_network_snapshot(
                     G, personality_assignment,
+                    edge_actions=edge_actions,
                     title=f"Network Snapshot: {network_type} - {scenario}",
                     filename=f"network_snapshot_{network_type}_{scenario}"
                 )

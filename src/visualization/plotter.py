@@ -310,8 +310,8 @@ class NetworkGamePlotter(BasePlotter):
         
         return str(self.save_plot(filename))
     
-    def plot_network_snapshot(self, G, personality_assignment, title="", filename="", legend_labels=None):
-        """绘制网络快照，节点颜色根据人格类型着色"""
+    def plot_network_snapshot(self, G, personality_assignment, title="", filename="", legend_labels=None, edge_actions=None):
+        """绘制网络快照，节点颜色根据人格类型着色，边颜色根据动作染色"""
         # MBTI类型配色方案
         color_palette = [
             '#9467bd',  # INTJ
@@ -331,36 +331,52 @@ class NetworkGamePlotter(BasePlotter):
             '#ffeb99',  # ESTP
             '#ffe066',  # ESFP
         ]
-        # 获取所有MBTI类型
         from src.agents.mbti_personalities import get_all_mbti_types
         mbti_types = list(get_all_mbti_types())
         mbti_color_map = {mbti_type.value: color_palette[i % len(color_palette)] for i, mbti_type in enumerate(mbti_types)}
-        # 生成节点颜色
         node_colors = [
             mbti_color_map[personality_assignment[node].value]
             for node in G.nodes()
         ]
-        # legend_labels自动生成
         legend_labels = {mbti_type.value: mbti_color_map[mbti_type.value] for mbti_type in mbti_types}
-        
+
         plt.figure(figsize=self.figsize)
-        
-        # 计算布局
         pos = nx.spring_layout(G, seed=42)
-        
-        # 绘制网络
-        nx.draw(G, pos, 
-               node_color=node_colors,
-               node_size=300,
-               edge_color='gray',
-               alpha=0.7,
-               with_labels=True,
-               font_size=8)
-        
+
+        # 边颜色处理
+        edge_color_list = []
+        if edge_actions:
+            for u, v in G.edges():
+                key1 = f"{u}_{v}"
+                key2 = f"{v}_{u}"
+                action_tuple = edge_actions.get(key1) or edge_actions.get(key2)
+                if action_tuple:
+                    a1, a2 = action_tuple
+                    # 如果双方都合作，绿色；双方都背叛，红色；一方合作一方背叛，橙色
+                    if a1 == "COOPERATE" and a2 == "COOPERATE":
+                        edge_color_list.append("green")
+                    elif a1 == "DEFECT" and a2 == "DEFECT":
+                        edge_color_list.append("red")
+                    else:
+                        edge_color_list.append("orange")
+                else:
+                    edge_color_list.append("gray")
+        else:
+            edge_color_list = ["gray"] * G.number_of_edges()
+
+        nx.draw(G, pos,
+                node_color=node_colors,
+                node_size=300,
+                edge_color=edge_color_list,
+                width=2,
+                alpha=0.8,
+                with_labels=True,
+                font_size=8)
+
         plt.title(title)
         plt.axis('off')
         plt.tight_layout()
-        
+
         # 添加图例
         if legend_labels:
             legend_elements = [
@@ -368,7 +384,16 @@ class NetworkGamePlotter(BasePlotter):
                 for label, color in legend_labels.items()
             ]
             plt.legend(handles=legend_elements, title="Personality Type", loc="center left", bbox_to_anchor=(1.02, 0.5), borderaxespad=0.)
-        
+
+        # 边动作图例
+        edge_legend = [
+            Patch(facecolor="green", edgecolor="green", label="Both Cooperate"),
+            Patch(facecolor="orange", edgecolor="orange", label="One Cooperate, One Defect"),
+            Patch(facecolor="red", edgecolor="red", label="Both Defect"),
+            Patch(facecolor="gray", edgecolor="gray", label="No Data"),
+        ]
+        plt.legend(handles=legend_elements + edge_legend, title="Legend", loc="upper left", bbox_to_anchor=(1.02, 1.0), borderaxespad=0.)
+
         return str(self.save_plot(filename))
     
     def plot_cooperation_clusters(self, cluster_data: List[Dict[str, Any]],
