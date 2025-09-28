@@ -285,6 +285,8 @@ class NetworkGameExperiment:
         edge_actions = edge_actions or {}
         total_edges = len(edge_actions)
         cooperation_edges = 0
+        single_cooperation_edges = 0
+        both_defect_edges = 0
         personality_stats = defaultdict(lambda: {"cooperation_count": 0, "total_count": 0})
 
         for (u, v), (a1, a2) in edge_actions.items():
@@ -294,15 +296,17 @@ class NetworkGameExperiment:
                 # 统计每个人格的合作边数（每个节点都+1）
                 personality_stats[personality_assignment[u].value]["cooperation_count"] += 1
                 personality_stats[personality_assignment[v].value]["cooperation_count"] += 1
+            elif (a1 == Action.COOPERATE and a2 == Action.DEFECT) or (a1 == Action.DEFECT and a2 == Action.COOPERATE):
+                single_cooperation_edges += 1
+            elif a1 == Action.DEFECT and a2 == Action.DEFECT:
+                both_defect_edges += 1
             # 无论合作还是背叛，每个人格的总边数都+1
             personality_stats[personality_assignment[u].value]["total_count"] += 1
             personality_stats[personality_assignment[v].value]["total_count"] += 1
 
         cooperation_rate = cooperation_edges / total_edges if total_edges > 0 else 0
-        cooperation_count = cooperation_edges
-
-        # 计算网络指标
-        network_analysis = self.network_analyzer.analyze_network(G)
+        single_cooperation_rate = single_cooperation_edges / total_edges if total_edges > 0 else 0
+        both_defect_rate = both_defect_edges / total_edges if total_edges > 0 else 0
 
         # 计算合作集群（只统计双方都合作的边，生成子图）
         cooperation_nodes = set()
@@ -319,13 +323,14 @@ class NetworkGameExperiment:
         return {
             "round": round_num,
             "cooperation_rate": cooperation_rate,
-            "cooperation_count": cooperation_count,
+            "cooperation_count": cooperation_edges,
+            "single_cooperation_rate": single_cooperation_rate,
+            "single_cooperation_count": single_cooperation_edges,
+            "both_defect_rate": both_defect_rate,
+            "both_defect_count": both_defect_edges,
             "total_edges": total_edges,
             "avg_payoff": np.mean(list(node_payoffs.values())),
             "std_payoff": np.std(list(node_payoffs.values())),
-            "clustering_coefficient": network_analysis.get("clustering_coefficient", 0),
-            "avg_path_length": network_analysis.get("avg_path_length", 0),
-            "num_components": network_analysis.get("num_components", 1),
             "personality_stats": dict(personality_stats),
             "cooperation_clusters": cooperation_clusters,
             "edge_actions": {f"{k[0]}_{k[1]}": (v[0].value, v[1].value) for k, v in edge_actions.items()}
@@ -378,29 +383,29 @@ class NetworkGameExperiment:
         network_metrics = {}
         
         for network_type, scenarios in all_results.items():
-            # 计算该网络类型下的平均指标
+            # 计算该网络类型下的指标
             final_cooperation_rates = []
-            final_clustering_coeffs = []
-            final_avg_path_lengths = []
-            densities = []
+            
+            first_scenario = next(iter(scenarios.values()))
+            G = first_scenario["network"]
+            network_analysis = self.network_analyzer.analyze_network(G) if G is not None else {}
+            clustering_coefficient = network_analysis.get("clustering_coefficient", 0)
+            avg_path_length = network_analysis.get("avg_path_length", 0)
+            num_components = network_analysis.get("num_components", 0)
+            density = nx.density(G) if G is not None else 0
             
             for scenario, results in scenarios.items():
                 evolution_data = results["evolution_data"]
-                G = results["network"]
                 if evolution_data:
                     final_data = evolution_data[-1]
                     final_cooperation_rates.append(final_data["cooperation_rate"])
-                    final_clustering_coeffs.append(final_data["clustering_coefficient"])
-                    final_avg_path_lengths.append(final_data["avg_path_length"])
-                # 计算网络密度
-                if G is not None:
-                    densities.append(nx.density(G))
             
             network_metrics[network_type] = {
                 "avg_final_cooperation_rate": np.mean(final_cooperation_rates) if final_cooperation_rates else 0,
-                "avg_clustering_coefficient": np.mean(final_clustering_coeffs) if final_clustering_coeffs else 0,
-                "avg_path_length": np.mean(final_avg_path_lengths) if final_avg_path_lengths else 0,
-                "avg_density": np.mean(densities) if densities else 0
+                "clustering_coefficient": clustering_coefficient,
+                "avg_path_length": avg_path_length,
+                "num_components": num_components,
+                "density": density
             }
         
         return network_metrics
@@ -552,8 +557,11 @@ class NetworkGameExperiment:
                         "network_type": network_type,
                         "scenario": scenario,
                         "final_cooperation_rate": final_data["cooperation_rate"],
-                        "final_clustering_coefficient": final_data["clustering_coefficient"],
-                        "final_avg_path_length": final_data["avg_path_length"],
+                        "final_cooperation_count": final_data["cooperation_count"],
+                        "final_single_cooperation_rate": final_data["single_cooperation_rate"],
+                        "final_single_cooperation_count": final_data["single_cooperation_count"],
+                        "final_both_defect_rate": final_data["both_defect_rate"],
+                        "final_both_defect_count": final_data["both_defect_count"],
                         "final_avg_payoff": final_data["avg_payoff"],
                         "final_std_payoff": final_data["std_payoff"]
                     })

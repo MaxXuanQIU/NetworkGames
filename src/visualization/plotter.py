@@ -265,46 +265,50 @@ class NetworkGamePlotter(BasePlotter):
     """网络博弈可视化"""
     
     def plot_network_evolution(self, evolution_data: List[Dict[str, Any]],
-                             title: str = "Network Evolution",
-                             filename: str = "network_evolution") -> str:
+                          title: str = "Network Evolution",
+                          filename: str = "network_evolution") -> str:
         """绘制网络演化"""
         fig, axes = plt.subplots(2, 2, figsize=(16, 12))
         
         # 提取时间序列数据
         rounds = list(range(len(evolution_data)))
         cooperation_rates = [data.get('cooperation_rate', 0) for data in evolution_data]
-        clustering_coeffs = [data.get('clustering_coefficient', 0) for data in evolution_data]
-        avg_path_lengths = [data.get('avg_path_length', 0) for data in evolution_data]
-        num_components = [data.get('num_components', 1) for data in evolution_data]
-        
-        # 合作率演化
-        axes[0, 0].plot(rounds, cooperation_rates, 'b-', linewidth=2, marker='o', markersize=4)
-        axes[0, 0].set_title('Cooperation Rate Evolution')
-        axes[0, 0].set_xlabel('Round')
-        axes[0, 0].set_ylabel('Cooperation Rate')
+        avg_payoffs = [data.get('avg_payoff', 0) for data in evolution_data]
+        cooperation_cluster_sizes = [
+            max([len(cluster) for cluster in data.get('cooperation_clusters', [])], default=0)
+            for data in evolution_data
+        ]
+        single_cooperation_rates = [data.get('single_cooperation_rate', 0) for data in evolution_data]
+
+
+        # 1. 合作率演化
+        axes[0, 0].plot(rounds, cooperation_rates, marker='o', color='tab:blue')
+        axes[0, 0].set_title("Cooperation Rate Evolution")
+        axes[0, 0].set_xlabel("Round")
+        axes[0, 0].set_ylabel("Cooperation Rate")
         axes[0, 0].grid(True, alpha=0.3)
-        
-        # 聚类系数演化
-        axes[0, 1].plot(rounds, clustering_coeffs, 'g-', linewidth=2, marker='s', markersize=4)
-        axes[0, 1].set_title('Clustering Coefficient Evolution')
-        axes[0, 1].set_xlabel('Round')
-        axes[0, 1].set_ylabel('Clustering Coefficient')
+
+        # 2. 平均收益演化
+        axes[0, 1].plot(rounds, avg_payoffs, marker='o', color='tab:green')
+        axes[0, 1].set_title("Average Payoff Evolution")
+        axes[0, 1].set_xlabel("Round")
+        axes[0, 1].set_ylabel("Average Payoff")
         axes[0, 1].grid(True, alpha=0.3)
-        
-        # 平均路径长度演化
-        axes[1, 0].plot(rounds, avg_path_lengths, 'r-', linewidth=2, marker='^', markersize=4)
-        axes[1, 0].set_title('Average Path Length Evolution')
-        axes[1, 0].set_xlabel('Round')
-        axes[1, 0].set_ylabel('Average Path Length')
+
+        # 3. 最大合作集群规模演化
+        axes[1, 0].plot(rounds, cooperation_cluster_sizes, marker='o', color='tab:orange')
+        axes[1, 0].set_title("Max Cooperation Cluster Size Evolution")
+        axes[1, 0].set_xlabel("Round")
+        axes[1, 0].set_ylabel("Max Cluster Size")
         axes[1, 0].grid(True, alpha=0.3)
-        
-        # 连通分量数量演化
-        axes[1, 1].plot(rounds, num_components, 'm-', linewidth=2, marker='d', markersize=4)
-        axes[1, 1].set_title('Number of Components Evolution')
-        axes[1, 1].set_xlabel('Round')
-        axes[1, 1].set_ylabel('Number of Components')
+
+        # 4. 单方合作率演化
+        axes[1, 1].plot(rounds, single_cooperation_rates, marker='o', color='tab:red')
+        axes[1, 1].set_title("Single Cooperation Rate Evolution")
+        axes[1, 1].set_xlabel("Round")
+        axes[1, 1].set_ylabel("Single Cooperation Rate")
         axes[1, 1].grid(True, alpha=0.3)
-        
+
         plt.suptitle(title, fontsize=16, fontweight='bold')
         plt.tight_layout()
         
@@ -439,9 +443,9 @@ class NetworkGamePlotter(BasePlotter):
         # 提取数据
         network_names = list(network_comparison.keys())
         cooperation_rates = [network_comparison[name].get('avg_final_cooperation_rate', 0) for name in network_names]
-        clustering_coeffs = [network_comparison[name].get('avg_clustering_coefficient', 0) for name in network_names]
+        clustering_coeffs = [network_comparison[name].get('clustering_coefficient', 0) for name in network_names]
         avg_path_lengths = [network_comparison[name].get('avg_path_length', 0) for name in network_names]
-        densities = [network_comparison[name].get('avg_density', 0) for name in network_names]
+        densities = [network_comparison[name].get('density', 0) for name in network_names]
         
         # 合作率比较
         axes[0, 0].bar(network_names, cooperation_rates, color='skyblue')

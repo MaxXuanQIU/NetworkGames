@@ -1,7 +1,7 @@
 description: Network-based prisoner's dilemma with different personality distributions
 experiment_type: network_game
 game:
-  num_rounds: 20
+  num_rounds: 100
   payoff_matrix:
     COOPERATE:
       COOPERATE:
