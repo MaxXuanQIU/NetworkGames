@@ -307,18 +307,19 @@ class NetworkGamePlotter(BasePlotter):
                           title: str = "Network Evolution",
                           filename: str = "network_evolution") -> str:
         """绘制网络演化"""
-        fig, axes = plt.subplots(2, 2, figsize=(16, 12))
+        fig, axes = plt.subplots(2, 3, figsize=(20, 12))
         
         # 提取时间序列数据
         rounds = list(range(len(evolution_data)))
         cooperation_rates = [data.get('cooperation_rate', 0) for data in evolution_data]
         avg_payoffs = [data.get('avg_payoff', 0) for data in evolution_data]
+        std_payoffs = [data.get('std_payoff', 0) for data in evolution_data]
         cooperation_cluster_sizes = [
             max([len(cluster) for cluster in data.get('cooperation_clusters', [])], default=0)
             for data in evolution_data
         ]
         single_cooperation_rates = [data.get('single_cooperation_rate', 0) for data in evolution_data]
-
+        both_defect_rates = [data.get('both_defect_rate', 0) for data in evolution_data]
 
         # 1. 合作率演化
         axes[0, 0].plot(rounds, cooperation_rates, marker='o', color='tab:blue')
@@ -334,19 +335,33 @@ class NetworkGamePlotter(BasePlotter):
         axes[0, 1].set_ylabel("Average Payoff")
         axes[0, 1].grid(True, alpha=0.3)
 
-        # 3. 最大合作集群规模演化
+        # 3. 收益标准差演化
+        axes[0, 2].plot(rounds, std_payoffs, marker='o', color='tab:purple')
+        axes[0, 2].set_title("Payoff Std Evolution")
+        axes[0, 2].set_xlabel("Round")
+        axes[0, 2].set_ylabel("Payoff Std")
+        axes[0, 2].grid(True, alpha=0.3)
+
+        # 4. 最大合作集群规模演化
         axes[1, 0].plot(rounds, cooperation_cluster_sizes, marker='o', color='tab:orange')
         axes[1, 0].set_title("Max Cooperation Cluster Size Evolution")
         axes[1, 0].set_xlabel("Round")
         axes[1, 0].set_ylabel("Max Cluster Size")
         axes[1, 0].grid(True, alpha=0.3)
 
-        # 4. 单方合作率演化
+        # 5. 单方合作率演化
         axes[1, 1].plot(rounds, single_cooperation_rates, marker='o', color='tab:red')
         axes[1, 1].set_title("Single Cooperation Rate Evolution")
         axes[1, 1].set_xlabel("Round")
         axes[1, 1].set_ylabel("Single Cooperation Rate")
         axes[1, 1].grid(True, alpha=0.3)
+
+        # 6. 双方背叛边数演化
+        axes[1, 2].plot(rounds, both_defect_rates, marker='o', color='tab:brown')
+        axes[1, 2].set_title("Both-Defect Rates Evolution")
+        axes[1, 2].set_xlabel("Round")
+        axes[1, 2].set_ylabel("Both-Defect Rates")
+        axes[1, 2].grid(True, alpha=0.3)
 
         plt.suptitle(title, fontsize=16, fontweight='bold')
         plt.tight_layout()
