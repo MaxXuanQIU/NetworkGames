@@ -304,9 +304,13 @@ class LLMFactory:
 class LLMManager:
     """LLM manager supporting multiple LLM instances"""
     
-    def __init__(self):
+    def __init__(self, log_file: str = "llm_responses.log"):
         self.llms: Dict[str, BaseLLMInterface] = {}
         self.logger = logging.getLogger(self.__class__.__name__)
+        self.log_file = log_file
+        # Clear old log file on initialization
+        with open(self.log_file, "w", encoding="utf-8") as f:
+            f.write("")
     
     def add_llm(self, name: str, llm: BaseLLMInterface):
         """Add LLM instance"""
@@ -331,7 +335,17 @@ class LLMManager:
         if not llm.validate_response(response):
             self.logger.warning(f"Invalid response from {llm_name}: {response.content}")
         
+        self._log_prompt_response(llm_name, prompt, response.content)
+        
         return response
+
+    def _log_prompt_response(self, llm_name: str, prompt: str, response: str):
+        """Log prompt and response to file"""
+        with open(self.log_file, "a", encoding="utf-8") as f:
+            f.write(f"LLM: {llm_name}\n")
+            f.write(f"Prompt: {prompt}\n")
+            f.write(f"Response: {response}\n")
+            f.write("="*40 + "\n")
     
     def get_usage_stats(self) -> Dict[str, Dict]:
         """Get usage statistics"""
