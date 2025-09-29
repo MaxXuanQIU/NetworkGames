@@ -1,6 +1,6 @@
 """
-可视化模块
-包含各种图表和可视化功能
+Visualization module
+Contains various charts and visualization features
 """
 
 from .plotter import (

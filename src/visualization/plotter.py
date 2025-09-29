@@ -1,6 +1,6 @@
 """
-可视化模块
-提供各种图表和可视化功能
+Visualization module
+Provides various charts and visualization functions
 """
 
 import matplotlib.pyplot as plt
@@ -20,7 +20,7 @@ warnings.filterwarnings('ignore')
 
 
 class BasePlotter:
-    """基础绘图类"""
+    """Base plotting class"""
     
     def __init__(self, style: str = "seaborn-v0_8", figsize: Tuple[int, int] = (12, 8), 
                  dpi: int = 300, color_palette: str = "Set2"):
@@ -30,12 +30,12 @@ class BasePlotter:
         self.color_palette = color_palette
         self.logger = logging.getLogger(self.__class__.__name__)
         
-        # 设置matplotlib样式
+        # Set matplotlib style
         plt.style.use(style)
         sns.set_palette(color_palette)
     
     def save_plot(self, filename: str, output_dir: str = "results"):
-        """保存图表"""
+        """Save plot"""
         output_path = Path(output_dir) / "visualizations"
         output_path.mkdir(parents=True, exist_ok=True)
         
@@ -43,7 +43,7 @@ class BasePlotter:
         plt.savefig(filepath, dpi=self.dpi, bbox_inches='tight')
         self.logger.info(f"Plot saved to: {filepath}")
         
-        # 同时保存为PDF
+        # Also save as PDF
         pdf_path = output_path / f"{filename}.pdf"
         plt.savefig(pdf_path, bbox_inches='tight')
         
@@ -51,16 +51,16 @@ class BasePlotter:
 
 
 class PairGamePlotter(BasePlotter):
-    """两人博弈可视化"""
+    """Two-player game visualization"""
     
     def plot_cooperation_heatmap(self, cooperation_matrix: np.ndarray, 
                                 personality_types: List[str], 
                                 title: str = "MBTI Cooperation Rate Matrix",
                                 filename: str = "cooperation_heatmap") -> str:
-        """绘制合作率热力图"""
+        """Plot cooperation rate heatmap"""
         plt.figure(figsize=self.figsize)
         
-        # 创建热力图，设置注释字体大小
+        # Create heatmap, set annotation font size
         sns.heatmap(cooperation_matrix, 
                    xticklabels=personality_types,
                    yticklabels=personality_types,
@@ -85,7 +85,7 @@ class PairGamePlotter(BasePlotter):
                             personality_types: List[str],
                             title: str = "MBTI Payoff Matrix",
                             filename: str = "payoff_heatmap") -> str:
-        """绘制收益热力图"""
+        """Plot payoff heatmap"""
         plt.figure(figsize=self.figsize)
 
         sns.heatmap(payoff_matrix,
@@ -111,7 +111,7 @@ class PairGamePlotter(BasePlotter):
     def plot_cooperation_distribution(self, cooperation_rates: List[float],
                                     title: str = "Cooperation Rate Distribution",
                                     filename: str = "cooperation_distribution") -> str:
-        """绘制合作率分布"""
+        """Plot cooperation rate distribution"""
         plt.figure(figsize=self.figsize)
         
         plt.hist(cooperation_rates, bins=20, alpha=0.7, edgecolor='black')
@@ -132,15 +132,15 @@ class PairGamePlotter(BasePlotter):
     def plot_personality_ranking(self, personality_rates: Dict[str, Dict[str, float]],
                                title: str = "Personality Cooperation Ranking",
                                filename: str = "personality_ranking") -> str:
-        """绘制人格合作率排名（根据MBTI类型着色）"""
-        # MBTI类型到颜色的映射（可根据需要调整）
+        """Plot personality cooperation rate ranking (colored by MBTI type)"""
+        # MBTI type to color mapping (adjust as needed)
         mbti_color_map = {
-            "NT": "#8e44ad",   # 紫色
-            "NF": "#27ae60",   # 绿色
-            "SJ": "#2980b9",   # 蓝色
-            "SP": "#e67e22",   # 橙色
+            "NT": "#8e44ad",   # Purple
+            "NF": "#27ae60",   # Green
+            "SJ": "#2980b9",   # Blue
+            "SP": "#e67e22",   # Orange
         }
-        # MBTI类型到四组的映射
+        # MBTI type to four groups mapping
         def get_mbti_group(mbti: str) -> str:
             if mbti[1:3] == "NT":
                 return "NT"
@@ -153,29 +153,29 @@ class PairGamePlotter(BasePlotter):
             else:
                 return "Other"
 
-        # 提取合作率、样本量和标准差
+        # Extract cooperation rate, sample size, and std
         data = [
             (ptype, pdata.get('cooperation_rate', 0), pdata.get('std', 0))
             for ptype, pdata in personality_rates.items()
         ]
-        # 按合作率排序
+        # Sort by cooperation rate
         data_sorted = sorted(data, key=lambda x: x[1], reverse=True)
         personalities, rates, stds = zip(*data_sorted)
 
-        # 根据MBTI类型分组着色
+        # Color by MBTI group
         bar_colors = []
         for p in personalities:
             group = get_mbti_group(p)
-            bar_colors.append(mbti_color_map.get(group, "#95a5a6"))  # 默认灰色
+            bar_colors.append(mbti_color_map.get(group, "#95a5a6"))  # Default gray
 
         plt.figure(figsize=self.figsize)
 
         bars = plt.bar(range(len(personalities)), rates, 
                        yerr=stds, capsize=8, ecolor='black',
-                       error_kw=dict(lw=1, capthick=1),  # 横线长度和粗细
+                       error_kw=dict(lw=1, capthick=1),  # Error bar length and thickness
                        color=bar_colors)
 
-        # 添加数值标签和样本量
+        # Add value labels and sample size
         for i, (bar, rate) in enumerate(zip(bars, rates)):
             plt.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.01,
                      f'{rate:.3f}', ha='center', va='bottom', fontsize=9)
@@ -186,7 +186,7 @@ class PairGamePlotter(BasePlotter):
         plt.xticks(range(len(personalities)), personalities, rotation=45, ha='right')
         plt.grid(True, alpha=0.3, axis='y')
 
-        # 添加图例到图的旁边（右侧）
+        # Add legend to the side (right)
         legend_elements = [
             Patch(facecolor=color, label=group)
             for group, color in mbti_color_map.items()
@@ -199,17 +199,17 @@ class PairGamePlotter(BasePlotter):
     def plot_mbti_dimension_analysis(self, dimension_data: Dict[str, Dict[str, float]],
                                    title: str = "MBTI Dimension Analysis",
                                    filename: str = "mbti_dimension_analysis") -> str:
-        """绘制MBTI维度分析（含更多统计信息，每个分组独特颜色）"""
-        # 为每个维度分组指定独特颜色
+        """Plot MBTI dimension analysis"""
+        # Assign unique color for each dimension group
         group_colors = {
-            'E': '#1f77b4',  # 蓝色
-            'I': '#ff7f0e',  # 橙色
-            'S': '#2ca02c',  # 绿色
-            'N': '#d62728',  # 红色
-            'T': '#9467bd',  # 紫色
-            'F': '#8c564b',  # 棕色
-            'J': '#e377c2',  # 粉色
-            'P': '#7f7f7f',  # 灰色
+            'E': '#1f77b4',  # Blue
+            'I': '#ff7f0e',  # Orange
+            'S': '#2ca02c',  # Green
+            'N': '#d62728',  # Red
+            'T': '#9467bd',  # Purple
+            'F': '#8c564b',  # Brown
+            'J': '#e377c2',  # Pink
+            'P': '#7f7f7f',  # Gray
         }
 
         fig, axes = plt.subplots(2, 2, figsize=(5, 10))
@@ -221,7 +221,7 @@ class PairGamePlotter(BasePlotter):
 
             ax = axes[i]
 
-            # 提取均值和标准差
+            # Extract mean and std
             means = [(k.replace('_mean', ''), v) for k, v in data.items() if k.endswith('_mean')]
             stds = [(k.replace('_std', ''), v) for k, v in data.items() if k.endswith('_std')]
             if len(means) == 2 and len(stds) == 2:
@@ -229,13 +229,13 @@ class PairGamePlotter(BasePlotter):
                 _, errors = zip(*stds)
                 x = np.arange(len(labels))
 
-                # 为每个分组分配颜色
+                # Assign color for each group
                 bar_colors = [group_colors.get(label, "#cccccc") for label in labels]
 
                 bars = ax.bar(x, rates, yerr=errors, capsize=8, ecolor='black',
                               error_kw=dict(lw=1.2, capthick=1.2), color=bar_colors)
 
-                # 添加数值标签
+                # Add value labels
                 for bar, rate in zip(bars, rates):
                     ax.text(
                         bar.get_x() + bar.get_width()/2,
@@ -243,14 +243,14 @@ class PairGamePlotter(BasePlotter):
                         f'{rate:.3f}',
                         ha='center',
                         va='bottom',
-                        zorder=10  # 设置较高的zorder使标签浮在其他元素之上
+                        zorder=10  # Set higher zorder so label is above other elements
                     )
 
-                # 设置x轴标签
+                # Set x-axis labels
                 ax.set_xticks(x)
                 ax.set_xticklabels(labels)
 
-                # 添加统计信息
+                # Add statistics
                 diff = data.get('difference', None)
                 t_stat = data.get('t_statistic', None)
                 p_val = data.get('p_value', None)
@@ -270,21 +270,21 @@ class PairGamePlotter(BasePlotter):
     def plot_statistical_significance(self, test_results: Dict[str, Any],
                                     title: str = "Statistical Significance",
                                     filename: str = "statistical_significance") -> str:
-        """绘制统计显著性"""
+        """Plot statistical significance"""
         plt.figure(figsize=self.figsize)
         
-        # 提取p值
+        # Extract p-values
         test_names = list(test_results.keys())
         p_values = [test_results[name].get('p_value', 1.0) for name in test_names]
         
-        # 创建条形图
+        # Create bar chart
         bars = plt.bar(test_names, p_values, color=['red' if p < 0.05 else 'green' for p in p_values])
         
-        # 添加显著性线
+        # Add significance lines
         plt.axhline(y=0.05, color='red', linestyle='--', alpha=0.7, label='α = 0.05')
         plt.axhline(y=0.01, color='darkred', linestyle='--', alpha=0.7, label='α = 0.01')
         
-        # 添加数值标签
+        # Add value labels
         for bar, p_val in zip(bars, p_values):
             plt.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.01,
                     f'{p_val:.3f}', ha='center', va='bottom')
@@ -301,15 +301,15 @@ class PairGamePlotter(BasePlotter):
 
 
 class NetworkGamePlotter(BasePlotter):
-    """网络博弈可视化"""
+    """Network game visualization"""
     
     def plot_network_evolution(self, evolution_data: List[Dict[str, Any]],
                           title: str = "Network Evolution",
                           filename: str = "network_evolution") -> str:
-        """绘制网络演化"""
+        """Plot network evolution"""
         fig, axes = plt.subplots(2, 3, figsize=(20, 12))
         
-        # 提取时间序列数据
+        # Extract time series data
         rounds = list(range(len(evolution_data)))
         cooperation_rates = [data.get('cooperation_rate', 0) for data in evolution_data]
         avg_payoffs = [data.get('avg_payoff', 0) for data in evolution_data]
@@ -321,42 +321,42 @@ class NetworkGamePlotter(BasePlotter):
         single_cooperation_rates = [data.get('single_cooperation_rate', 0) for data in evolution_data]
         both_defect_rates = [data.get('both_defect_rate', 0) for data in evolution_data]
 
-        # 1. 合作率演化
+        # 1. Cooperation rate evolution
         axes[0, 0].plot(rounds, cooperation_rates, marker='o', color='tab:blue')
         axes[0, 0].set_title("Cooperation Rate Evolution")
         axes[0, 0].set_xlabel("Round")
         axes[0, 0].set_ylabel("Cooperation Rate")
         axes[0, 0].grid(True, alpha=0.3)
 
-        # 2. 平均收益演化
+        # 2. Average payoff evolution
         axes[0, 1].plot(rounds, avg_payoffs, marker='o', color='tab:green')
         axes[0, 1].set_title("Average Payoff Evolution")
         axes[0, 1].set_xlabel("Round")
         axes[0, 1].set_ylabel("Average Payoff")
         axes[0, 1].grid(True, alpha=0.3)
 
-        # 3. 收益标准差演化
+        # 3. Payoff std evolution
         axes[0, 2].plot(rounds, std_payoffs, marker='o', color='tab:purple')
         axes[0, 2].set_title("Payoff Std Evolution")
         axes[0, 2].set_xlabel("Round")
         axes[0, 2].set_ylabel("Payoff Std")
         axes[0, 2].grid(True, alpha=0.3)
 
-        # 4. 最大合作集群规模演化
+        # 4. Max cooperation cluster size evolution
         axes[1, 0].plot(rounds, cooperation_cluster_sizes, marker='o', color='tab:orange')
         axes[1, 0].set_title("Max Cooperation Cluster Size Evolution")
         axes[1, 0].set_xlabel("Round")
         axes[1, 0].set_ylabel("Max Cluster Size")
         axes[1, 0].grid(True, alpha=0.3)
 
-        # 5. 单方合作率演化
+        # 5. Single cooperation rate evolution
         axes[1, 1].plot(rounds, single_cooperation_rates, marker='o', color='tab:red')
         axes[1, 1].set_title("Single Cooperation Rate Evolution")
         axes[1, 1].set_xlabel("Round")
         axes[1, 1].set_ylabel("Single Cooperation Rate")
         axes[1, 1].grid(True, alpha=0.3)
 
-        # 6. 双方背叛边数演化
+        # 6. Both-defect rates evolution
         axes[1, 2].plot(rounds, both_defect_rates, marker='o', color='tab:brown')
         axes[1, 2].set_title("Both-Defect Rates Evolution")
         axes[1, 2].set_xlabel("Round")
@@ -369,8 +369,8 @@ class NetworkGamePlotter(BasePlotter):
         return str(self.save_plot(filename))
     
     def plot_network_snapshot(self, G, personality_assignment, title="", filename="", legend_labels=None, edge_actions=None):
-        """绘制网络快照，节点颜色根据人格类型着色，边颜色根据动作染色"""
-        # MBTI类型配色方案
+        """Plot network snapshot, node color by personality type, edge color by action"""
+        # MBTI type color scheme
         color_palette = [
             '#9467bd',  # INTJ
             '#8c6bb1',  # INTP
@@ -401,7 +401,7 @@ class NetworkGamePlotter(BasePlotter):
         plt.figure(figsize=self.figsize)
         pos = nx.spring_layout(G, seed=42)
 
-        # 边颜色处理
+        # Edge color handling
         edge_color_list = []
         if edge_actions:
             for u, v in G.edges():
@@ -410,7 +410,7 @@ class NetworkGamePlotter(BasePlotter):
                 action_tuple = edge_actions.get(key1) or edge_actions.get(key2)
                 if action_tuple:
                     a1, a2 = action_tuple
-                    # 如果双方都合作，绿色；双方都背叛，红色；一方合作一方背叛，橙色
+                    # Both cooperate: green; both defect: red; one cooperate one defect: orange
                     if a1 == "COOPERATE" and a2 == "COOPERATE":
                         edge_color_list.append("green")
                     elif a1 == "DEFECT" and a2 == "DEFECT":
@@ -435,7 +435,7 @@ class NetworkGamePlotter(BasePlotter):
         plt.axis('off')
         plt.tight_layout()
 
-        # 添加图例
+        # Add legend
         if legend_labels:
             legend_elements = [
                 Patch(facecolor=color, label=label)
@@ -443,7 +443,7 @@ class NetworkGamePlotter(BasePlotter):
             ]
             plt.legend(handles=legend_elements, title="Personality Type", loc="center left", bbox_to_anchor=(1.02, 0.5), borderaxespad=0.)
 
-        # 边动作图例
+        # Edge action legend
         edge_legend = [
             Patch(facecolor="green", edgecolor="green", label="Both Cooperate"),
             Patch(facecolor="orange", edgecolor="orange", label="One Cooperate, One Defect"),
@@ -457,10 +457,10 @@ class NetworkGamePlotter(BasePlotter):
     def plot_cooperation_clusters(self, cluster_data: List[Dict[str, Any]],
                                 title: str = "Cooperation Clusters",
                                 filename: str = "cooperation_clusters") -> str:
-        """绘制合作集群分析"""
+        """Plot cooperation cluster analysis"""
         fig, axes = plt.subplots(1, 2, figsize=(16, 6))
         
-        # 集群大小分布
+        # Cluster size distribution
         cluster_sizes = []
         for data in cluster_data:
             clusters = data.get('cooperation_clusters', [])
@@ -473,7 +473,7 @@ class NetworkGamePlotter(BasePlotter):
             axes[0].set_ylabel('Frequency')
             axes[0].grid(True, alpha=0.3)
         
-        # 集群数量演化
+        # Cluster count evolution
         cluster_counts = [len(data.get('cooperation_clusters', [])) for data in cluster_data]
         rounds = list(range(len(cluster_data)))
         
@@ -491,10 +491,10 @@ class NetworkGamePlotter(BasePlotter):
     def plot_network_comparison(self, network_comparison: Dict[str, Dict[str, Any]],
                               title: str = "Network Comparison",
                               filename: str = "network_comparison") -> str:
-        """绘制网络比较"""
+        """Plot network comparison"""
         fig, axes = plt.subplots(2, 3, figsize=(9, 12))
         
-        # 提取数据
+        # Extract data
         network_names = list(network_comparison.keys())
         cooperation_rates = [network_comparison[name].get('avg_final_cooperation_rate', 0) for name in network_names]
         clustering_coeffs = [network_comparison[name].get('clustering_coefficient', 0) for name in network_names]
@@ -503,42 +503,42 @@ class NetworkGamePlotter(BasePlotter):
         num_nodes = [network_comparison[name].get('num_nodes', 0) for name in network_names]
         num_edges = [network_comparison[name].get('num_edges', 0) for name in network_names]
         
-        # 合作率比较
+        # Cooperation rate comparison
         axes[0, 0].bar(network_names, cooperation_rates, color='skyblue')
         axes[0, 0].set_title('Final Cooperation Rate by Network Type')
         axes[0, 0].set_ylabel('Cooperation Rate')
         axes[0, 0].tick_params(axis='x', rotation=45)
         axes[0, 0].grid(True, alpha=0.3, axis='y')
         
-        # 聚类系数比较
+        # Clustering coefficient comparison
         axes[0, 1].bar(network_names, clustering_coeffs, color='lightcoral')
         axes[0, 1].set_title('Clustering Coefficient by Network Type')
         axes[0, 1].set_ylabel('Clustering Coefficient')
         axes[0, 1].tick_params(axis='x', rotation=45)
         axes[0, 1].grid(True, alpha=0.3, axis='y')
         
-        # 平均路径长度比较
+        # Average path length comparison
         axes[0, 2].bar(network_names, avg_path_lengths, color='lightgreen')
         axes[0, 2].set_title('Average Path Length by Network Type')
         axes[0, 2].set_ylabel('Average Path Length')
         axes[0, 2].tick_params(axis='x', rotation=45)
         axes[0, 2].grid(True, alpha=0.3, axis='y')
         
-        # 密度比较
+        # Density comparison
         axes[1, 0].bar(network_names, densities, color='gold')
         axes[1, 0].set_title('Network Density by Network Type')
         axes[1, 0].set_ylabel('Density')
         axes[1, 0].tick_params(axis='x', rotation=45)
         axes[1, 0].grid(True, alpha=0.3, axis='y')
         
-        # 节点数比较
+        # Number of nodes comparison
         axes[1, 1].bar(network_names, num_nodes, color='deepskyblue')
         axes[1, 1].set_title('Number of Nodes by Network Type')
         axes[1, 1].set_ylabel('Num Nodes')
         axes[1, 1].tick_params(axis='x', rotation=45)
         axes[1, 1].grid(True, alpha=0.3, axis='y')
         
-        # 边数比较
+        # Number of edges comparison
         axes[1, 2].bar(network_names, num_edges, color='salmon')
         axes[1, 2].set_title('Number of Edges by Network Type')
         axes[1, 2].set_ylabel('Num Edges')
@@ -552,7 +552,7 @@ class NetworkGamePlotter(BasePlotter):
 
 
 class InteractivePlotter:
-    """交互式可视化（使用Plotly）"""
+    """Interactive visualization (using Plotly)"""
     
     def __init__(self):
         self.logger = logging.getLogger(self.__class__.__name__)
@@ -560,7 +560,7 @@ class InteractivePlotter:
     def create_interactive_heatmap(self, cooperation_matrix: np.ndarray, 
                                  personality_types: List[str],
                                  title: str = "Interactive MBTI Cooperation Matrix") -> go.Figure:
-        """创建交互式热力图"""
+        """Create interactive heatmap"""
         fig = go.Figure(data=go.Heatmap(
             z=cooperation_matrix,
             x=personality_types,
@@ -584,7 +584,7 @@ class InteractivePlotter:
     
     def create_interactive_network(self, G: nx.Graph, node_colors: List[str],
                                  title: str = "Interactive Network") -> go.Figure:
-        """创建交互式网络图"""
+        """Create interactive network graph"""
         pos = nx.spring_layout(G, seed=42)
         
         edge_x = []
@@ -649,7 +649,7 @@ class InteractivePlotter:
         return fig
     
     def save_interactive_plot(self, fig: go.Figure, filename: str, output_dir: str = "results"):
-        """保存交互式图表"""
+        """Save interactive plot"""
         output_path = Path(output_dir) / "visualizations"
         output_path.mkdir(parents=True, exist_ok=True)
         
@@ -661,7 +661,7 @@ class InteractivePlotter:
 
 
 class RadarPlotter:
-    """雷达图绘制器"""
+    """Radar chart plotter"""
     
     def __init__(self):
         self.logger = logging.getLogger(self.__class__.__name__)
@@ -669,15 +669,15 @@ class RadarPlotter:
     def plot_personality_radar(self, personality_data: Dict[str, Dict[str, float]],
                              title: str = "Personality Radar Chart",
                              filename: str = "personality_radar") -> str:
-        """绘制人格雷达图"""
-        # 定义雷达图的维度
+        """Plot personality radar chart"""
+        # Define radar chart dimensions
         dimensions = ['Cooperation Rate', 'Stability', 'Responsiveness', 'Clustering', 'Efficiency']
         
-        # 为每个人格类型创建雷达图
+        # Create radar chart for each personality type
         fig, axes = plt.subplots(2, 2, figsize=(16, 12), subplot_kw=dict(projection='polar'))
         axes = axes.flatten()
         
-        personalities = list(personality_data.keys())[:4]  # 只显示前4个
+        personalities = list(personality_data.keys())[:4]  # Show only first 4
         
         for i, personality in enumerate(personalities):
             if i >= 4:
@@ -686,7 +686,7 @@ class RadarPlotter:
             ax = axes[i]
             data = personality_data[personality]
             
-            # 提取数据（这里需要根据实际数据结构调整）
+            # Extract data (adjust according to actual data structure)
             values = [
                 data.get('cooperation_rate', 0),
                 data.get('stability', 0),
@@ -695,12 +695,12 @@ class RadarPlotter:
                 data.get('efficiency', 0)
             ]
             
-            # 确保数据长度匹配
+            # Ensure data length matches
             values = values[:len(dimensions)]
             while len(values) < len(dimensions):
                 values.append(0)
             
-            # 闭合数据
+            # Close the data
             values += values[:1]
             angles = np.linspace(0, 2 * np.pi, len(dimensions), endpoint=False).tolist()
             angles += angles[:1]
@@ -719,7 +719,7 @@ class RadarPlotter:
         return self.save_plot(filename)
     
     def save_plot(self, filename: str, output_dir: str = "results") -> str:
-        """保存图表"""
+        """Save plot"""
         output_path = Path(output_dir) / "visualizations"
         output_path.mkdir(parents=True, exist_ok=True)
         

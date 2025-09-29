@@ -1,6 +1,6 @@
 """
-实验模块
-包含各种实验的实现
+Experiment module
+Contains implementations of various experiments
 """
 
 from .pair_game_experiment import PairGameExperiment, run_pair_game_experiment

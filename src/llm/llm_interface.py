@@ -1,6 +1,6 @@
 """
-LLM接口抽象层
-支持多种LLM模型的统一调用接口
+LLM interface abstraction layer
+Unified calling interface supporting multiple LLM models
 """
 
 from abc import ABC, abstractmethod
@@ -11,15 +11,15 @@ from enum import Enum
 
 
 class LLMProvider(Enum):
-    """支持的LLM提供商"""
+    """Supported LLM providers"""
     OPENAI = "openai"
     ANTHROPIC = "anthropic"
     GOOGLE = "google"
-    MOCK = "mock"  # 用于测试
+    MOCK = "mock"  # For testing
 
 
 class LLMResponse:
-    """LLM响应封装类"""
+    """LLM response wrapper class"""
     
     def __init__(self, content: str, model: str, usage: Optional[Dict] = None, 
                  response_time: float = 0.0, error: Optional[str] = None):
@@ -31,20 +31,20 @@ class LLMResponse:
         self.success = error is None
     
     def is_cooperate(self) -> bool:
-        """判断响应是否为合作"""
+        """Determine if the response is cooperation"""
         return self.content.upper() in ["COOPERATE", "COOPERATION", "合作"]
     
     def is_defect(self) -> bool:
-        """判断响应是否为背叛"""
+        """Determine if the response is defection"""
         return self.content.upper() in ["DEFECT", "DEFECTION", "背叛"]
     
     def is_valid_action(self) -> bool:
-        """判断响应是否为有效的博弈动作"""
+        """Determine if the response is a valid game action"""
         return self.is_cooperate() or self.is_defect()
 
 
 class BaseLLMInterface(ABC):
-    """LLM接口基类"""
+    """Base class for LLM interfaces"""
     
     def __init__(self, model_name: str, api_key: str = None, **kwargs):
         self.model_name = model_name
@@ -54,16 +54,16 @@ class BaseLLMInterface(ABC):
     
     @abstractmethod
     async def generate_response(self, prompt: str, **kwargs) -> LLMResponse:
-        """生成响应"""
+        """Generate response"""
         pass
     
     @abstractmethod
     def get_provider(self) -> LLMProvider:
-        """获取提供商类型"""
+        """Get provider type"""
         pass
     
     def validate_response(self, response: LLMResponse) -> bool:
-        """验证响应是否有效"""
+        """Validate if the response is valid"""
         if not response.success:
             self.logger.error(f"LLM response error: {response.error}")
             return False
@@ -76,7 +76,7 @@ class BaseLLMInterface(ABC):
 
 
 class OpenAIInterface(BaseLLMInterface):
-    """OpenAI接口实现"""
+    """OpenAI interface implementation"""
     
     def __init__(self, model_name: str = "gpt-3.5-turbo", api_key: str = None, **kwargs):
         super().__init__(model_name, api_key, **kwargs)
@@ -87,7 +87,7 @@ class OpenAIInterface(BaseLLMInterface):
             raise ImportError("OpenAI package not installed. Install with: pip install openai")
     
     async def generate_response(self, prompt: str, **kwargs) -> LLMResponse:
-        """生成OpenAI响应"""
+        """Generate OpenAI response"""
         import time
         start_time = time.time()
         
@@ -95,7 +95,7 @@ class OpenAIInterface(BaseLLMInterface):
             response = await self.client.chat.completions.create(
                 model=self.model_name,
                 messages=[{"role": "user", "content": prompt}],
-                max_tokens=50,  # 限制输出长度
+                max_tokens=50,  # Limit output length
                 temperature=kwargs.get("temperature", 0.7),
                 **self.kwargs
             )
@@ -130,7 +130,7 @@ class OpenAIInterface(BaseLLMInterface):
 
 
 class AnthropicInterface(BaseLLMInterface):
-    """Anthropic接口实现"""
+    """Anthropic interface implementation"""
     
     def __init__(self, model_name: str = "claude-3-sonnet-20240229", api_key: str = None, **kwargs):
         super().__init__(model_name, api_key, **kwargs)
@@ -141,7 +141,7 @@ class AnthropicInterface(BaseLLMInterface):
             raise ImportError("Anthropic package not installed. Install with: pip install anthropic")
     
     async def generate_response(self, prompt: str, **kwargs) -> LLMResponse:
-        """生成Anthropic响应"""
+        """Generate Anthropic response"""
         import time
         start_time = time.time()
         
@@ -183,7 +183,7 @@ class AnthropicInterface(BaseLLMInterface):
 
 
 class GoogleInterface(BaseLLMInterface):
-    """Google接口实现"""
+    """Google interface implementation"""
     
     def __init__(self, model_name: str = "gemini-pro", api_key: str = None, **kwargs):
         super().__init__(model_name, api_key, **kwargs)
@@ -195,7 +195,7 @@ class GoogleInterface(BaseLLMInterface):
             raise ImportError("Google Generative AI package not installed. Install with: pip install google-generativeai")
     
     async def generate_response(self, prompt: str, **kwargs) -> LLMResponse:
-        """生成Google响应"""
+        """Generate Google response"""
         import time
         start_time = time.time()
         
@@ -238,7 +238,7 @@ class GoogleInterface(BaseLLMInterface):
 
 
 class MockLLMInterface(BaseLLMInterface):
-    """模拟LLM接口，用于测试"""
+    """Mock LLM interface for testing"""
     
     def __init__(self, model_name: str = "mock-model", **kwargs):
         super().__init__(model_name, **kwargs)
@@ -246,16 +246,16 @@ class MockLLMInterface(BaseLLMInterface):
         self.response_delay = kwargs.get("response_delay", 0.1)
     
     async def generate_response(self, prompt: str, **kwargs) -> LLMResponse:
-        """生成模拟响应"""
+        """Generate mock response"""
         import time
         import random
         
         start_time = time.time()
         
-        # 模拟响应延迟
+        # Simulate response delay
         await asyncio.sleep(self.response_delay)
         
-        # 基于合作率随机生成响应
+        # Randomly generate response based on cooperation rate
         if random.random() < self.cooperation_rate:
             content = "COOPERATE"
         else:
@@ -274,11 +274,11 @@ class MockLLMInterface(BaseLLMInterface):
 
 
 class LLMFactory:
-    """LLM工厂类"""
+    """LLM factory class"""
     
     @staticmethod
     def create_llm(provider: LLMProvider, model_name: str, api_key: str = None, **kwargs) -> BaseLLMInterface:
-        """创建LLM实例"""
+        """Create LLM instance"""
         if provider == LLMProvider.OPENAI:
             return OpenAIInterface(model_name, api_key, **kwargs)
         elif provider == LLMProvider.ANTHROPIC:
@@ -292,7 +292,7 @@ class LLMFactory:
     
     @staticmethod
     def create_from_config(config: Dict[str, Any]) -> BaseLLMInterface:
-        """从配置创建LLM实例"""
+        """Create LLM instance from config"""
         provider = LLMProvider(config["provider"])
         model_name = config["model_name"]
         api_key = config.get("api_key")
@@ -302,29 +302,29 @@ class LLMFactory:
 
 
 class LLMManager:
-    """LLM管理器，支持多个LLM实例"""
+    """LLM manager supporting multiple LLM instances"""
     
     def __init__(self):
         self.llms: Dict[str, BaseLLMInterface] = {}
         self.logger = logging.getLogger(self.__class__.__name__)
     
     def add_llm(self, name: str, llm: BaseLLMInterface):
-        """添加LLM实例"""
+        """Add LLM instance"""
         self.llms[name] = llm
         self.logger.info(f"Added LLM: {name} ({llm.get_provider().value})")
     
     def get_llm(self, name: str) -> BaseLLMInterface:
-        """获取LLM实例"""
+        """Get LLM instance"""
         if name not in self.llms:
             raise ValueError(f"LLM not found: {name}")
         return self.llms[name]
     
     def list_llms(self) -> List[str]:
-        """列出所有LLM名称"""
+        """List all LLM names"""
         return list(self.llms.keys())
     
     async def generate_response(self, llm_name: str, prompt: str, **kwargs) -> LLMResponse:
-        """生成响应"""
+        """Generate response"""
         llm = self.get_llm(llm_name)
         response = await llm.generate_response(prompt, **kwargs)
         
@@ -334,7 +334,7 @@ class LLMManager:
         return response
     
     def get_usage_stats(self) -> Dict[str, Dict]:
-        """获取使用统计"""
+        """Get usage statistics"""
         stats = {}
         for name, llm in self.llms.items():
             stats[name] = {

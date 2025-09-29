@@ -1,6 +1,6 @@
 """
-实验2：网络博弈实验
-不同网络拓扑和人格分布下的网络博弈行为分析
+Experiment 2: Network Game Experiment
+Analysis of network game behavior under different network topologies and personality distributions
 """
 
 import asyncio
@@ -26,14 +26,14 @@ from src.config.config_manager import ExperimentConfig
 
 
 class NetworkGameExperiment:
-    """网络博弈实验类"""
+    """Network Game Experiment Class"""
     
     def __init__(self, config: ExperimentConfig, llm_manager: LLMManager):
         self.config = config
         self.llm_manager = llm_manager
         self.logger = logging.getLogger(self.__class__.__name__)
         
-        # 初始化组件
+        # Initialize components
         payoff_matrix = self._parse_payoff_matrix(config.game.payoff_matrix)
         self.game = PrisonersDilemma(payoff_matrix=payoff_matrix)
         self.network_generator = NetworkGenerator()
@@ -48,29 +48,29 @@ class NetworkGameExperiment:
         )
         self.interactive_plotter = InteractivePlotter()
         
-        # 获取所有MBTI类型
+        # Get all MBTI types
         self.mbti_types = get_all_mbti_types()
         self.personalities = {mbti_type: MBTIPersonality(mbti_type) for mbti_type in self.mbti_types}
         
-        # 设置随机种子
+        # Set random seed
         if config.game.random_seed is not None:
             random.seed(config.game.random_seed)
             np.random.seed(config.game.random_seed)
     
     async def run_experiment(self) -> Dict[str, Any]:
-        """运行实验"""
+        """Run experiment"""
         self.logger.info("Starting network game experiment...")
         
-        # 创建结果目录
+        # Create results directory
         output_dir = Path(self.config.output_dir)
         output_dir.mkdir(exist_ok=True)
         
-        # 获取实验配置
+        # Get experiment config
         network_config = self.config.network_game_config
         network_types = network_config.get("network_types", ["small_world"])
         personality_scenarios = network_config.get("personality_scenarios", ["uniform"])
         
-        # 运行不同网络类型的实验
+        # Run experiments for different network types
         all_results = {}
         
         for network_type in network_types:
@@ -84,13 +84,13 @@ class NetworkGameExperiment:
             
             all_results[network_type] = network_results
         
-        # 分析结果
+        # Analyze results
         analysis_results = self._analyze_network_results(all_results)
         
-        # 生成可视化
+        # Generate visualizations
         visualization_results = self._generate_network_visualizations(all_results, analysis_results)
         
-        # 保存结果
+        # Save results
         self._save_network_results(all_results, analysis_results, visualization_results)
         
         self.logger.info("Network game experiment completed!")
@@ -102,18 +102,18 @@ class NetworkGameExperiment:
         }
     
     async def _run_network_scenario(self, network_type: str, scenario: str) -> Dict[str, Any]:
-        """运行单个网络场景"""
-        # 生成网络
+        """Run a single network scenario"""
+        # Generate network
         network_config = self._get_network_config(network_type)
         G = self.network_generator.generate_network(network_config)
         
-        # 分配人格类型
+        # Assign personality types
         personality_assignment = self._assign_personalities(G, scenario)
         
-        # 运行网络博弈
+        # Run network game
         evolution_data = await self._run_network_game(G, personality_assignment)
         
-        # 分析网络演化
+        # Analyze network evolution
         network_analysis = self.network_analyzer.analyze_network(G)
         evolution_analysis = self.network_stats_analyzer.analyze_network_evolution(evolution_data)
         
@@ -126,7 +126,7 @@ class NetworkGameExperiment:
         }
     
     def _get_network_config(self, network_type: str) -> NetworkConfig:
-        """获取网络配置"""
+        """Get network config"""
         base_config = NetworkConfig(
             network_type=NetworkType.SMALL_WORLD,
             num_nodes=self.config.network.num_nodes,
@@ -153,50 +153,50 @@ class NetworkGameExperiment:
         return base_config
     
     def _assign_personalities(self, G: nx.Graph, scenario: str) -> Dict[int, MBTIType]:
-        """分配人格类型"""
+        """Assign personality types"""
         nodes = list(G.nodes())
         personality_assignment = {}
         
         if scenario == "uniform":
-            # 均匀随机分布
+            # Uniform random distribution
             for node in nodes:
                 personality_assignment[node] = random.choice(self.mbti_types)
         
         elif scenario == "single_ENTJ":
-            # 所有人都是ENTJ
+            # All are ENTJ
             for node in nodes:
                 personality_assignment[node] = MBTIType.ENTJ
         
         elif scenario == "clustered":
-            # 聚类分布
+            # Clustered distribution
             personality_assignment = self._assign_clustered_personalities(G)
         
         else:
-            # 默认均匀分布
+            # Default to uniform distribution
             for node in nodes:
                 personality_assignment[node] = random.choice(self.mbti_types)
         
         return personality_assignment
     
     def _assign_clustered_personalities(self, G: nx.Graph) -> Dict[int, MBTIType]:
-        """分配聚类人格分布"""
-        # 使用社区检测算法
+        """Assign clustered personality distribution"""
+        # Use community detection algorithm
         try:
             communities = nx.community.greedy_modularity_communities(G)
         except:
-            # 如果社区检测失败，使用简单的聚类
+            # If community detection fails, use simple clustering
             communities = [list(G.nodes())]
         
         personality_assignment = {}
         
-        # 为每个社区分配主导人格类型
+        # Assign dominant personality type to each community
         dominant_personalities = random.sample(list(self.mbti_types), len(communities))
         
         for i, community in enumerate(communities):
             dominant_personality = dominant_personalities[i % len(dominant_personalities)]
             
             for node in community:
-                # 80%概率分配主导人格，20%概率分配其他人格
+                # 80% probability assign dominant personality, 20% assign other personality
                 if random.random() < 0.8:
                     personality_assignment[node] = dominant_personality
                 else:
@@ -205,9 +205,9 @@ class NetworkGameExperiment:
         return personality_assignment
     
     async def _run_network_game(self, G: nx.Graph, personality_assignment: Dict[int, MBTIType]) -> List[Dict[str, Any]]:
-        """运行网络博弈（每个节点与每个邻居分别决策）"""
+        """Run network game (each node makes decisions with each neighbor)"""
         evolution_data = []
-        # 存储每对节点的历史: (node, neighbor) -> List[GameResult]
+        # Store history for each node pair: (node, neighbor) -> List[GameResult]
         pair_histories = defaultdict(list)
         node_payoffs = {node: 0.0 for node in G.nodes()}
 
@@ -215,9 +215,9 @@ class NetworkGameExperiment:
             self.logger.info(f"Running round {round_num}/{self.config.game.num_rounds}")
             round_payoffs = {node: 0.0 for node in G.nodes()}
             round_actions = {node: {} for node in G.nodes()}  # node -> neighbor -> action
-            edge_actions = {}  # 记录每条边的动作
+            edge_actions = {}  # Record actions for each edge
 
-            # 决策与博弈
+            # Decision and game
             for node in G.nodes():
                 neighbors = list(G.neighbors(node))
                 personality = self.personalities[personality_assignment[node]]
@@ -232,7 +232,7 @@ class NetworkGameExperiment:
                     action = self._parse_action(response.content)
                     round_actions[node][neighbor] = action
 
-            # 进行所有博弈并累计收益
+            # Play all games and accumulate payoffs
             for node in G.nodes():
                 for neighbor in G.neighbors(node):
                     if node < neighbor:
@@ -243,10 +243,10 @@ class NetworkGameExperiment:
                         round_payoffs[neighbor] += result.player2_payoff
                         pair_key = (node, neighbor)
                         pair_histories[tuple(sorted(pair_key))].append(result)
-                        # 记录边的动作
+                        # Record edge actions
                         edge_actions[(node, neighbor)] = (action1, action2)
 
-            # 记录本轮数据
+            # Record round data
             round_data = self._record_round_data(
                 G, 
                 round_payoffs,
@@ -259,17 +259,17 @@ class NetworkGameExperiment:
         return evolution_data
 
     def _parse_action(self, response: str) -> Action:
-        """解析LLM响应为博弈动作（与两人博弈保持一致）"""
+        """Parse LLM response to game action (consistent with two-player game)"""
         response = response.strip().upper()
         if "COOPERATE" in response or "合作" in response:
             return Action.COOPERATE
         if "DEFECT" in response or "背叛" in response:
             return Action.DEFECT
-        # 无法解析时，报错
-        raise ValueError(f"无法解析LLM响应: {response}")
+        # Raise error if cannot parse
+        raise ValueError(f"Cannot parse LLM response: {response}")
 
     def _parse_payoff_matrix(self, matrix_cfg: dict) -> dict:
-        """将yaml配置的payoff_matrix转为内部格式"""
+        """Convert payoff_matrix from yaml config to internal format"""
         result = {}
         for a1_str, row in matrix_cfg.items():
             for a2_str, payoff in row.items():
@@ -280,35 +280,32 @@ class NetworkGameExperiment:
                           node_payoffs: Dict[int, float], personality_assignment: Dict[int, MBTIType],
                           round_num: int, edge_actions: Optional[Dict[Tuple[int, int], Tuple[Action, Action]]] = None
                           ) -> Dict[str, Any]:
-        """记录轮次数据，基于edge_actions统计"""
-        # 统计边的合作情况
+        """Record round data, statistics based on edge_actions"""
+        # Statistics for cooperation on edges
         edge_actions = edge_actions or {}
         total_edges = len(edge_actions)
         cooperation_edges = 0
         single_cooperation_edges = 0
         both_defect_edges = 0
         personality_stats = defaultdict(lambda: {"cooperation_count": 0, "total_count": 0})
-
         for (u, v), (a1, a2) in edge_actions.items():
-            # 只有双方都合作才算合作边
+            # Only count as cooperation edge if both cooperate
             if a1 == Action.COOPERATE and a2 == Action.COOPERATE:
                 cooperation_edges += 1
-                # 统计每个人格的合作边数（每个节点都+1）
+                # Count cooperation edges for each personality (each node +1)
                 personality_stats[personality_assignment[u].value]["cooperation_count"] += 1
                 personality_stats[personality_assignment[v].value]["cooperation_count"] += 1
             elif (a1 == Action.COOPERATE and a2 == Action.DEFECT) or (a1 == Action.DEFECT and a2 == Action.COOPERATE):
                 single_cooperation_edges += 1
             elif a1 == Action.DEFECT and a2 == Action.DEFECT:
                 both_defect_edges += 1
-            # 无论合作还是背叛，每个人格的总边数都+1
+            # For every edge, increment total count for each personality
             personality_stats[personality_assignment[u].value]["total_count"] += 1
             personality_stats[personality_assignment[v].value]["total_count"] += 1
-
         cooperation_rate = cooperation_edges / total_edges if total_edges > 0 else 0
         single_cooperation_rate = single_cooperation_edges / total_edges if total_edges > 0 else 0
         both_defect_rate = both_defect_edges / total_edges if total_edges > 0 else 0
-
-        # 计算合作集群（只统计双方都合作的边，生成子图）
+        # Calculate cooperation clusters (only count edges where both cooperate, generate subgraph)
         cooperation_nodes = set()
         for (u, v), (a1, a2) in edge_actions.items():
             if a1 == Action.COOPERATE and a2 == Action.COOPERATE:
@@ -319,7 +316,6 @@ class NetworkGameExperiment:
             cooperation_clusters = [list(comp) for comp in nx.connected_components(subgraph)]
         else:
             cooperation_clusters = []
-
         return {
             "round": round_num,
             "cooperation_rate": cooperation_rate,
@@ -337,18 +333,18 @@ class NetworkGameExperiment:
         }
     
     def _find_cooperation_clusters(self, G: nx.Graph, node_actions: Dict[int, Action]) -> List[List[int]]:
-        """查找合作集群"""
-        # 创建只包含合作节点的子图
+        """Find cooperation clusters"""
+        # Create subgraph containing only cooperation nodes
         cooperation_nodes = [node for node, action in node_actions.items() 
                            if action == Action.COOPERATE]
         
         if not cooperation_nodes:
             return []
         
-        # 创建子图
+        # Create subgraph
         subgraph = G.subgraph(cooperation_nodes)
         
-        # 找到连通分量
+        # Find connected components
         clusters = []
         for component in nx.connected_components(subgraph):
             clusters.append(list(component))
@@ -356,18 +352,18 @@ class NetworkGameExperiment:
         return clusters
     
     def _analyze_network_results(self, all_results: Dict[str, Any]) -> Dict[str, Any]:
-        """分析网络实验结果"""
+        """Analyze network experiment results"""
         self.logger.info("Analyzing network results...")
         
         analysis_results = {}
         
-        # 比较不同网络类型
+        # Compare different network types
         network_comparison = self._compare_networks(all_results)
         
-        # 比较不同人格场景
+        # Compare different personality scenarios
         scenario_comparison = self._compare_scenarios(all_results)
         
-        # 分析演化模式
+        # Analyze evolution patterns
         evolution_patterns = self._analyze_evolution_patterns(all_results)
         
         analysis_results = {
@@ -379,11 +375,11 @@ class NetworkGameExperiment:
         return analysis_results
     
     def _compare_networks(self, all_results: Dict[str, Any]) -> Dict[str, Any]:
-        """比较不同网络类型"""
+        """Compare different network types"""
         network_metrics = {}
         
         for network_type, scenarios in all_results.items():
-            # 计算该网络类型下的指标
+            # Calculate metrics for this network type
             final_cooperation_rates = []
             
             first_scenario = next(iter(scenarios.values()))
@@ -396,7 +392,6 @@ class NetworkGameExperiment:
             num_nodes = G.number_of_nodes() if G is not None else 0
             num_edges = G.number_of_edges() if G is not None else 0
             avg_degree = (2 * num_edges / num_nodes) if num_nodes > 0 else 0
-
             for scenario, results in scenarios.items():
                 evolution_data = results["evolution_data"]
                 if evolution_data:
@@ -417,10 +412,10 @@ class NetworkGameExperiment:
         return network_metrics
     
     def _compare_scenarios(self, all_results: Dict[str, Any]) -> Dict[str, Any]:
-        """比较不同人格场景"""
+        """Compare different personality scenarios"""
         scenario_metrics = {}
         
-        # 收集所有场景的数据
+        # Collect all scenario data
         all_scenarios = set()
         for scenarios in all_results.values():
             all_scenarios.update(scenarios.keys())
@@ -443,17 +438,17 @@ class NetworkGameExperiment:
         return scenario_metrics
     
     def _analyze_evolution_patterns(self, all_results: Dict[str, Any]) -> Dict[str, Any]:
-        """分析演化模式"""
+        """Analyze evolution patterns"""
         patterns = {}
         
         for network_type, scenarios in all_results.items():
             for scenario, results in scenarios.items():
                 evolution_data = results["evolution_data"]
                 if evolution_data:
-                    # 提取时间序列
+                    # Extract time series
                     cooperation_rates = [data["cooperation_rate"] for data in evolution_data]
                     
-                    # 计算趋势
+                    # Calculate trend
                     x = np.arange(len(cooperation_rates))
                     slope, intercept, r_value, p_value, std_err = linregress(x, cooperation_rates)
                     
@@ -469,12 +464,12 @@ class NetworkGameExperiment:
     
     def _generate_network_visualizations(self, all_results: Dict[str, Any], 
                                        analysis_results: Dict[str, Any]) -> Dict[str, str]:
-        """生成网络可视化"""
+        """Generate network visualizations"""
         self.logger.info("Generating network visualizations...")
         
         visualization_files = {}
         
-        # 网络演化图
+        # Network evolution plots
         for network_type, scenarios in all_results.items():
             for scenario, results in scenarios.items():
                 evolution_data = results["evolution_data"]
@@ -486,7 +481,7 @@ class NetworkGameExperiment:
                     )
                     visualization_files[f"evolution_{network_type}_{scenario}"] = evolution_file
         
-        # 网络比较图
+        # Network comparison plot
         network_comparison = analysis_results["network_comparison"]
         comparison_file = self.plotter.plot_network_comparison(
             network_comparison,
@@ -495,13 +490,13 @@ class NetworkGameExperiment:
         )
         visualization_files["network_comparison"] = comparison_file
         
-        # 网络快照
+        # Network snapshots
         for network_type, scenarios in all_results.items():
             for scenario, results in scenarios.items():
                 G = results["network"]
                 personality_assignment = results["personality_assignment"]
                 
-                # 获取最后一轮的边动作
+                # Get edge actions from last round
                 evolution_data = results["evolution_data"]
                 edge_actions = None
                 if evolution_data and "edge_actions" in evolution_data[-1]:
@@ -519,15 +514,15 @@ class NetworkGameExperiment:
     def _save_network_results(self, all_results: Dict[str, Any], 
                             analysis_results: Dict[str, Any],
                             visualization_results: Dict[str, str]):
-        """保存网络实验结果"""
+        """Save network experiment results"""
         self.logger.info("Saving network results...")
         
         output_dir = Path(self.config.output_dir)
         output_dir.mkdir(exist_ok=True)
         
-        # 保存详细结果
+        # Save detailed results
         with open(output_dir / "network_results.json", 'w', encoding='utf-8') as f:
-            # 转换networkx图对象为可序列化的格式
+            # Convert networkx graph objects to serializable format
             serializable_results = {}
             for network_type, scenarios in all_results.items():
                 serializable_results[network_type] = {}
@@ -541,17 +536,17 @@ class NetworkGameExperiment:
             
             json.dump(serializable_results, f, indent=2, ensure_ascii=False)
         
-        # 保存分析结果
+        # Save analysis results
         with open(output_dir / "network_analysis.json", 'w', encoding='utf-8') as f:
             json.dump(analysis_results, f, indent=2, ensure_ascii=False)
         
-        # 保存CSV格式的汇总数据
+        # Save summary data in CSV format
         self._save_network_summary_csv(all_results, output_dir)
         
         self.logger.info(f"Network results saved to: {output_dir}")
     
     def _save_network_summary_csv(self, all_results: Dict[str, Any], output_dir: Path):
-        """保存网络实验汇总CSV"""
+        """Save network experiment summary CSV"""
         summary_data = []
         
         for network_type, scenarios in all_results.items():
@@ -577,17 +572,17 @@ class NetworkGameExperiment:
 
 
 async def run_network_game_experiment(config_file: str = "configs/network_game.yaml"):
-    """运行网络博弈实验的主函数"""
+    """Main function to run the network game experiment"""
     from src.config.config_manager import ConfigManager
-    
-    # 加载配置
+
+    # Load config
     config_manager = ConfigManager()
     config = config_manager.load_config(config_file)
     
-    # 创建LLM管理器
+    # Create LLM manager
     llm_manager = LLMManager()
     
-    # 添加LLM实例
+    # Add LLM instance
     llm = LLMFactory.create_from_config({
         "provider": config.llm.provider,
         "model_name": config.llm.model_name,
@@ -596,7 +591,7 @@ async def run_network_game_experiment(config_file: str = "configs/network_game.y
     })
     llm_manager.add_llm("default", llm)
     
-    # 运行实验
+    # Run experiment
     experiment = NetworkGameExperiment(config, llm_manager)
     results = await experiment.run_experiment()
     
@@ -604,8 +599,9 @@ async def run_network_game_experiment(config_file: str = "configs/network_game.y
 
 
 if __name__ == "__main__":
-    # 设置日志
+    # Set logging
     logging.basicConfig(level=logging.INFO)
     
-    # 运行实验
+    # Run experiment
     asyncio.run(run_network_game_experiment())
+

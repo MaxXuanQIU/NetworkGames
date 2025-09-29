@@ -1,6 +1,6 @@
 """
-LLM接口模块
-包含多种LLM模型的统一调用接口
+LLM interface module
+Contains a unified interface for calling various LLM models
 """
 
 from .llm_interface import (

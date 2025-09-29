@@ -1,6 +1,6 @@
 """
-博弈模块
-包含囚徒困境博弈逻辑和策略分析
+Game module
+Contains Prisoner's Dilemma game logic and strategy analysis
 """
 
 from .prisoners_dilemma import (

@@ -1,6 +1,6 @@
 """
-智能体模块
-包含MBTI人格系统和智能体相关功能
+Agent module
+Includes MBTI personality system and agent-related functionality
 """
 
 from .mbti_personalities import (

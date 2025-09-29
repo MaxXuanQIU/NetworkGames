@@ -1,6 +1,6 @@
 """
-囚徒困境博弈实现
-包含博弈逻辑、收益计算、策略分析等功能
+Prisoner's Dilemma Game Implementation
+Includes game logic, payoff calculation, strategy analysis, and other features
 """
 
 from typing import Dict, List, Tuple, Optional, Any
@@ -12,15 +12,15 @@ import logging
 
 
 class Action(Enum):
-    """博弈动作"""
+    """Game actions"""
     COOPERATE = "COOPERATE"
     DEFECT = "DEFECT"
-    # 可扩展更多动作
+    # Extend with more actions if needed
 
 
 @dataclass
 class GameResult:
-    """单轮博弈结果"""
+    """Single round game result"""
     player1_action: Action
     player2_action: Action
     player1_payoff: float
@@ -30,7 +30,7 @@ class GameResult:
 
 @dataclass
 class GameHistory:
-    """博弈历史记录"""
+    """Game history record"""
     results: List[GameResult]
     total_rounds: int
     player1_total_payoff: float
@@ -39,13 +39,13 @@ class GameHistory:
     player2_cooperation_rate: float
     
     def add_result(self, result: GameResult):
-        """添加一轮结果"""
+        """Add a round result"""
         self.results.append(result)
         self.total_rounds += 1
         self.player1_total_payoff += result.player1_payoff
         self.player2_total_payoff += result.player2_payoff
         
-        # 更新合作率
+        # Update cooperation rate
         player1_cooperations = sum(1 for r in self.results if r.player1_action == Action.COOPERATE)
         player2_cooperations = sum(1 for r in self.results if r.player2_action == Action.COOPERATE)
         
@@ -54,13 +54,13 @@ class GameHistory:
 
 
 class TwoPlayerGame:
-    """通用双人博弈"""
+    """Generic two-player game"""
     def __init__(self, payoff_matrix: Dict[Tuple[Action, Action], Tuple[float, float]]):
         self.payoff_matrix = payoff_matrix
         self._validate_payoff_matrix()
 
     def _validate_payoff_matrix(self):
-        # 检查所有组合都有定义
+        # Check all combinations are defined
         for a1 in Action:
             for a2 in Action:
                 if (a1, a2) not in self.payoff_matrix:
@@ -71,28 +71,28 @@ class TwoPlayerGame:
 
 
 class PrisonersDilemma(TwoPlayerGame):
-    """囚徒困境博弈类"""
+    """Prisoner's Dilemma game class"""
     
-    # 标准囚徒困境收益矩阵
+    # Standard Prisoner's Dilemma payoff matrix
     PAYOFF_MATRIX = {
-        (Action.COOPERATE, Action.COOPERATE): (3, 3),  # 双方合作
-        (Action.COOPERATE, Action.DEFECT): (0, 5),      # 我合作，对手背叛
-        (Action.DEFECT, Action.COOPERATE): (5, 0),      # 我背叛，对手合作
-        (Action.DEFECT, Action.DEFECT): (1, 1)          # 双方背叛
+        (Action.COOPERATE, Action.COOPERATE): (3, 3),  # Both cooperate
+        (Action.COOPERATE, Action.DEFECT): (0, 5),      # I cooperate, opponent defects
+        (Action.DEFECT, Action.COOPERATE): (5, 0),      # I defect, opponent cooperates
+        (Action.DEFECT, Action.DEFECT): (1, 1)          # Both defect
     }
     
     def __init__(self, payoff_matrix: Optional[Dict[Tuple[Action, Action], Tuple[float, float]]] = None):
         """
-        初始化囚徒困境博弈
+        Initialize Prisoner's Dilemma game
         
         Args:
-            payoff_matrix: 自定义收益矩阵，格式为 {(action1, action2): (payoff1, payoff2)}
+            payoff_matrix: Custom payoff matrix, format {(action1, action2): (payoff1, payoff2)}
         """
         super().__init__(payoff_matrix or self.PAYOFF_MATRIX)
         self.logger = logging.getLogger(self.__class__.__name__)
     
     def play_round(self, action1: Action, action2: Action, round_number: int = 1) -> GameResult:
-        """进行一轮博弈"""
+        """Play one round"""
         payoff1, payoff2 = self.calculate_payoff(action1, action2)
         
         return GameResult(
@@ -104,7 +104,7 @@ class PrisonersDilemma(TwoPlayerGame):
         )
     
     def play_game(self, player1_actions: List[Action], player2_actions: List[Action]) -> GameHistory:
-        """进行多轮博弈"""
+        """Play multiple rounds"""
         if len(player1_actions) != len(player2_actions):
             raise ValueError("Players must have the same number of actions")
         
@@ -124,39 +124,39 @@ class PrisonersDilemma(TwoPlayerGame):
         return history
     
     def get_nash_equilibrium(self) -> Tuple[Action, Action]:
-        """获取纳什均衡（背叛，背叛）"""
+        """Get Nash equilibrium (Defect, Defect)"""
         return Action.DEFECT, Action.DEFECT
     
     def get_pareto_optimal(self) -> Tuple[Action, Action]:
-        """获取帕累托最优（合作，合作）"""
+        """Get Pareto optimal (Cooperate, Cooperate)"""
         return Action.COOPERATE, Action.COOPERATE
     
     def is_dominant_strategy(self, action: Action) -> bool:
-        """检查是否为占优策略（背叛是占优策略）"""
+        """Check if action is a dominant strategy (Defect is dominant)"""
         return action == Action.DEFECT
     
     def get_cooperation_incentive(self) -> float:
-        """获取合作激励（CC - CD的收益差）"""
+        """Get cooperation incentive (CC - CD payoff difference)"""
         cc_payoff = self.payoff_matrix[(Action.COOPERATE, Action.COOPERATE)][0]
         cd_payoff = self.payoff_matrix[(Action.COOPERATE, Action.DEFECT)][0]
         return cc_payoff - cd_payoff
     
     def get_defection_temptation(self) -> float:
-        """获取背叛诱惑（DC - CC的收益差）"""
+        """Get defection temptation (DC - CC payoff difference)"""
         dc_payoff = self.payoff_matrix[(Action.DEFECT, Action.COOPERATE)][0]
         cc_payoff = self.payoff_matrix[(Action.COOPERATE, Action.COOPERATE)][0]
         return dc_payoff - cc_payoff
     
     def get_sucker_payoff(self) -> float:
-        """获取被欺骗收益（CD收益）"""
+        """Get sucker payoff (CD payoff)"""
         return self.payoff_matrix[(Action.COOPERATE, Action.DEFECT)][0]
     
     def get_punishment_payoff(self) -> float:
-        """获取惩罚收益（DD收益）"""
+        """Get punishment payoff (DD payoff)"""
         return self.payoff_matrix[(Action.DEFECT, Action.DEFECT)][0]
     
     def is_valid_prisoners_dilemma(self) -> bool:
-        """检查是否为有效的囚徒困境（满足T > R > P > S）"""
+        """Check if valid Prisoner's Dilemma (T > R > P > S)"""
         cc = self.payoff_matrix[(Action.COOPERATE, Action.COOPERATE)][0]
         cd = self.payoff_matrix[(Action.COOPERATE, Action.DEFECT)][0]
         dc = self.payoff_matrix[(Action.DEFECT, Action.COOPERATE)][0]
@@ -166,7 +166,7 @@ class PrisonersDilemma(TwoPlayerGame):
         return dc > cc > dd > cd
     
     def get_game_parameters(self) -> Dict[str, float]:
-        """获取博弈参数"""
+        """Get game parameters"""
         return {
             "reward": self.payoff_matrix[(Action.COOPERATE, Action.COOPERATE)][0],
             "temptation": self.payoff_matrix[(Action.DEFECT, Action.COOPERATE)][0],
@@ -179,24 +179,24 @@ class PrisonersDilemma(TwoPlayerGame):
 
 
 class StrategyAnalyzer:
-    """策略分析器"""
+    """Strategy analyzer"""
     
     def __init__(self, game: PrisonersDilemma):
         self.game = game
         self.logger = logging.getLogger(self.__class__.__name__)
     
     def analyze_strategy(self, actions: List[Action]) -> Dict[str, Any]:
-        """分析单个玩家的策略"""
+        """Analyze a single player's strategy"""
         if not actions:
             return {}
         
         cooperation_rate = sum(1 for a in actions if a == Action.COOPERATE) / len(actions)
         defect_rate = 1 - cooperation_rate
         
-        # 分析策略模式
+        # Analyze strategy patterns
         patterns = self._analyze_patterns(actions)
         
-        # 分析响应性
+        # Analyze responsiveness
         responsiveness = self._analyze_responsiveness(actions)
         
         return {
@@ -210,11 +210,11 @@ class StrategyAnalyzer:
         }
     
     def _analyze_patterns(self, actions: List[Action]) -> Dict[str, Any]:
-        """分析策略模式"""
+        """Analyze strategy patterns"""
         if len(actions) < 2:
             return {}
         
-        # 计算连续合作/背叛的长度
+        # Calculate lengths of consecutive cooperation/defection
         cooperation_streaks = []
         defect_streaks = []
         
@@ -232,7 +232,7 @@ class StrategyAnalyzer:
                 current_streak = 1
                 current_action = actions[i]
         
-        # 添加最后一个streak
+        # Add last streak
         if current_action == Action.COOPERATE:
             cooperation_streaks.append(current_streak)
         else:
@@ -248,11 +248,11 @@ class StrategyAnalyzer:
         }
     
     def _analyze_responsiveness(self, actions: List[Action]) -> Dict[str, float]:
-        """分析响应性（对对手行为的反应）"""
+        """Analyze responsiveness (reaction to opponent's actions)"""
         if len(actions) < 2:
             return {}
         
-        # 计算动作变化率
+        # Calculate action change rate
         changes = sum(1 for i in range(1, len(actions)) if actions[i] != actions[i-1])
         change_rate = changes / (len(actions) - 1)
         
@@ -262,7 +262,7 @@ class StrategyAnalyzer:
         }
     
     def compare_strategies(self, strategy1: List[Action], strategy2: List[Action]) -> Dict[str, Any]:
-        """比较两个策略"""
+        """Compare two strategies"""
         analysis1 = self.analyze_strategy(strategy1)
         analysis2 = self.analyze_strategy(strategy2)
         
@@ -274,7 +274,7 @@ class StrategyAnalyzer:
         }
     
     def _calculate_similarity(self, strategy1: List[Action], strategy2: List[Action]) -> float:
-        """计算两个策略的相似性"""
+        """Calculate similarity between two strategies"""
         if len(strategy1) != len(strategy2):
             return 0.0
         
@@ -283,19 +283,19 @@ class StrategyAnalyzer:
 
 
 class GameStatistics:
-    """博弈统计类"""
+    """Game statistics class"""
     
     def __init__(self, game: PrisonersDilemma):
         self.game = game
         self.logger = logging.getLogger(self.__class__.__name__)
     
     def calculate_expected_payoff(self, strategy1: List[Action], strategy2: List[Action]) -> Tuple[float, float]:
-        """计算期望收益"""
+        """Calculate expected payoff"""
         history = self.game.play_game(strategy1, strategy2)
         return history.player1_total_payoff, history.player2_total_payoff
     
     def calculate_efficiency(self, strategy1: List[Action], strategy2: List[Action]) -> float:
-        """计算效率（相对于帕累托最优的收益比例）"""
+        """Calculate efficiency (relative to Pareto optimal payoff ratio)"""
         payoff1, payoff2 = self.calculate_expected_payoff(strategy1, strategy2)
         optimal_payoff = self.game.payoff_matrix[(Action.COOPERATE, Action.COOPERATE)][0]
         total_optimal = optimal_payoff * 2
@@ -303,14 +303,14 @@ class GameStatistics:
         return total_actual / total_optimal if total_optimal > 0 else 0
     
     def calculate_fairness(self, strategy1: List[Action], strategy2: List[Action]) -> float:
-        """计算公平性（收益差异的倒数）"""
+        """Calculate fairness (inverse of payoff difference)"""
         payoff1, payoff2 = self.calculate_expected_payoff(strategy1, strategy2)
         if payoff1 + payoff2 == 0:
             return 1.0
         return 1 - abs(payoff1 - payoff2) / (payoff1 + payoff2)
     
     def generate_summary_statistics(self, histories: List[GameHistory]) -> Dict[str, Any]:
-        """生成汇总统计"""
+        """Generate summary statistics"""
         if not histories:
             return {}
         

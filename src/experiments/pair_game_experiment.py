@@ -1,6 +1,6 @@
 """
-实验1：两人博弈实验
-16x16 MBTI人格矩阵在重复囚徒困境中的行为分析
+Experiment 1: Two-player game experiment
+16x16 MBTI personality matrix behavior analysis in repeated Prisoner's Dilemma
 """
 
 import asyncio
@@ -22,14 +22,14 @@ from src.config.config_manager import ExperimentConfig
 
 
 class PairGameExperiment:
-    """两人博弈实验类"""
+    """Two-player game experiment class"""
     
     def __init__(self, config: ExperimentConfig, llm_manager: LLMManager):
         self.config = config
         self.llm_manager = llm_manager
         self.logger = logging.getLogger(self.__class__.__name__)
         
-        # 初始化组件
+        # Initialize components
         payoff_matrix = self._parse_payoff_matrix(config.game.payoff_matrix)
         self.game = PrisonersDilemma(payoff_matrix=payoff_matrix)
         self.cooperation_analyzer = CooperationAnalyzer()
@@ -41,33 +41,33 @@ class PairGameExperiment:
             color_palette=config.visualization_config.get("color_palette", "Set2")
         )
         
-        # 获取所有MBTI类型
+        # Get all MBTI types
         self.mbti_types = get_all_mbti_types()
         self.personalities = {mbti_type: MBTIPersonality(mbti_type) for mbti_type in self.mbti_types}
         
-        # 设置随机种子
+        # Set random seed
         if config.game.random_seed is not None:
             random.seed(config.game.random_seed)
             np.random.seed(config.game.random_seed)
     
     async def run_experiment(self) -> Dict[str, Any]:
-        """运行实验"""
+        """Run experiment"""
         self.logger.info("Starting pair game experiment...")
         
-        # 创建结果目录
+        # Create result directory
         output_dir = Path(self.config.output_dir)
         output_dir.mkdir(exist_ok=True)
         
-        # 运行16x16矩阵实验
+        # Run 16x16 matrix experiment
         matrix_results = await self._run_matrix_experiment()
         
-        # 分析结果
+        # Analyze results
         analysis_results = self._analyze_results(matrix_results)
         
-        # 生成可视化
+        # Generate visualizations
         visualization_results = self._generate_visualizations(matrix_results, analysis_results)
         
-        # 保存结果
+        # Save results
         self._save_results(matrix_results, analysis_results, visualization_results)
         
         self.logger.info("Pair game experiment completed!")
@@ -79,45 +79,45 @@ class PairGameExperiment:
         }
     
     async def _run_matrix_experiment(self) -> Dict[str, Any]:
-        """运行16x16矩阵实验"""
+        """Run 16x16 matrix experiment"""
         self.logger.info("Running 16x16 matrix experiment...")
         
-        # 初始化结果矩阵
+        # Initialize result matrices
         cooperation_matrix = np.zeros((16, 16))
         payoff_matrix = np.zeros((16, 16))
         std_matrix = np.zeros((16, 16))
         
-        # 存储详细结果
+        # Store detailed results
         detailed_results = {}
         
-        # 创建进度条
+        # Create progress bar
         total_combinations = 16 * 16
         pbar = tqdm(total=total_combinations, desc="Running matrix experiment")
         
         for i, player1_type in enumerate(self.mbti_types):
             for j, player2_type in enumerate(self.mbti_types):
-                # 运行重复实验
+                # Run repeated experiments
                 cooperation_rates = []
                 total_payoffs = []
                 
                 for rep in range(self.config.game.num_repetitions):
-                    # 运行单次实验
+                    # Run single experiment
                     history = await self._run_single_game(player1_type, player2_type)
                     
                     cooperation_rates.append(history.player1_cooperation_rate)
                     total_payoffs.append(history.player1_total_payoff)
                 
-                # 计算统计量
+                # Calculate statistics
                 mean_cooperation = np.mean(cooperation_rates)
                 std_cooperation = np.std(cooperation_rates)
                 mean_payoff = np.mean(total_payoffs)
                 
-                # 更新矩阵
+                # Update matrices
                 cooperation_matrix[i, j] = mean_cooperation
                 payoff_matrix[i, j] = mean_payoff
                 std_matrix[i, j] = std_cooperation
                 
-                # 存储详细结果
+                # Store detailed results
                 detailed_results[f"{player1_type.value}_{player2_type.value}"] = {
                     "player1_type": player1_type.value,
                     "player2_type": player2_type.value,
@@ -142,12 +142,12 @@ class PairGameExperiment:
         }
     
     async def _run_single_game(self, player1_type: MBTIType, player2_type: MBTIType) -> GameHistory:
-        """运行单次博弈"""
-        # 获取人格对象
+        """Run a single game"""
+        # Get personality objects
         personality1 = self.personalities[player1_type]
         personality2 = self.personalities[player2_type]
         
-        # 初始化博弈历史
+        # Initialize game history
         history = GameHistory(
             results=[],
             total_rounds=0,
@@ -157,9 +157,9 @@ class PairGameExperiment:
             player2_cooperation_rate=0.0
         )
         
-        # 运行多轮博弈
+        # Run multiple rounds
         for round_num in range(1, self.config.game.num_rounds + 1):
-            # 生成决策prompt
+            # Generate decision prompt
             prompt1 = personality1.get_decision_prompt(
                 history.results, 
                 player2_type.value
@@ -169,7 +169,7 @@ class PairGameExperiment:
                 player1_type.value
             )
             
-            # 获取LLM决策
+            # Get LLM decisions
             response1 = await self.llm_manager.generate_response(
                 "default", prompt1
             )
@@ -177,18 +177,18 @@ class PairGameExperiment:
                 "default", prompt2
             )
             
-            # 解析决策
+            # Parse decisions
             action1 = self._parse_action(response1.content)
             action2 = self._parse_action(response2.content)
             
-            # 进行博弈
+            # Play game round
             result = self.game.play_round(action1, action2, round_num)
             history.add_result(result)
         
         return history
     
     def _parse_action(self, response: str) -> Action:
-        """解析LLM响应为博弈动作"""
+        """Parse LLM response to game action"""
         response = response.strip().upper()
         
         if "COOPERATE" in response:
@@ -196,11 +196,11 @@ class PairGameExperiment:
         elif "DEFECT" in response:
             return Action.DEFECT
         else:
-            # 无法解析时，报错
-            raise ValueError(f"无法解析LLM响应: {response}")
+            # If unable to parse, raise error
+            raise ValueError(f"Unable to parse LLM response: {response}")
  
     def _parse_payoff_matrix(self, matrix_cfg: dict) -> dict:
-        """将yaml配置的payoff_matrix转为内部格式"""
+        """Convert yaml-configured payoff_matrix to internal format"""
         result = {}
         for a1_str, row in matrix_cfg.items():
             for a2_str, payoff in row.items():
@@ -208,19 +208,19 @@ class PairGameExperiment:
         return result
     
     def _analyze_results(self, matrix_results: Dict[str, Any]) -> Dict[str, Any]:
-        """分析实验结果"""
+        """Analyze experiment results"""
         self.logger.info("Analyzing results...")
         
         cooperation_matrix = matrix_results["cooperation_matrix"]
         detailed_results = matrix_results["detailed_results"]
         
-        # 计算基本统计
+        # Calculate basic statistics
         basic_stats = self._calculate_basic_statistics(cooperation_matrix)
         
-        # 人格分析
+        # Personality analysis
         personality_analysis = self._analyze_personalities(detailed_results)
         
-        # MBTI维度分析
+        # MBTI dimension analysis
         dimension_analysis = self._analyze_mbti_dimensions(detailed_results)
         
         return {
@@ -230,7 +230,7 @@ class PairGameExperiment:
         }
     
     def _calculate_basic_statistics(self, cooperation_matrix: np.ndarray) -> Dict[str, Any]:
-        """计算基本统计量"""
+        """Calculate basic statistics"""
         return {
             "overall_mean": np.mean(cooperation_matrix),
             "overall_std": np.std(cooperation_matrix),
@@ -242,16 +242,16 @@ class PairGameExperiment:
         }
     
     def _analyze_personalities(self, detailed_results: Dict[str, Any]) -> Dict[str, Any]:
-        """分析人格特征（调用统计分析器）"""
-        # 构造 personality_data: Dict[str, List[bool]]
+        """Analyze personality traits (calls statistics analyzer)"""
+        # Construct personality_data: Dict[str, List[bool]]
         personality_data = {ptype.value: [] for ptype in self.mbti_types}
         for result in detailed_results.values():
             personality_data[result["player1_type"]].extend(result["cooperation_rates"])
-        # 调用统一分析器
+        # Call unified analyzer
         return self.personality_analyzer._analyze_personality_types(personality_data)
 
     def _analyze_mbti_dimensions(self, detailed_results: Dict[str, Any]) -> Dict[str, Any]:
-        """分析MBTI维度（调用统计分析器）"""
+        """Analyze MBTI dimensions (calls statistics analyzer)"""
         personality_data = {ptype.value: [] for ptype in self.mbti_types}
         for result in detailed_results.values():
             personality_data[result["player1_type"]].extend(result["cooperation_rates"])
@@ -259,12 +259,12 @@ class PairGameExperiment:
     
     def _generate_visualizations(self, matrix_results: Dict[str, Any], 
                                analysis_results: Dict[str, Any]) -> Dict[str, str]:
-        """生成可视化"""
+        """Generate visualizations"""
         self.logger.info("Generating visualizations...")
         
         visualization_files = {}
         
-        # 合作率热力图
+        # Cooperation rate heatmap
         heatmap_file = self.plotter.plot_cooperation_heatmap(
             matrix_results["cooperation_matrix"],
             matrix_results["personality_types"],
@@ -273,7 +273,7 @@ class PairGameExperiment:
         )
         visualization_files["heatmap"] = heatmap_file
 
-        # 收益热力图
+        # Payoff heatmap
         payoff_heatmap_file = self.plotter.plot_payoff_heatmap(
             matrix_results["payoff_matrix"],
             matrix_results["personality_types"],
@@ -282,7 +282,7 @@ class PairGameExperiment:
         )
         visualization_files["payoff_heatmap"] = payoff_heatmap_file
         
-        # 合作率分布
+        # Cooperation rate distribution
         all_rates = matrix_results["cooperation_matrix"].flatten()
         distribution_file = self.plotter.plot_cooperation_distribution(
             all_rates,
@@ -291,7 +291,7 @@ class PairGameExperiment:
         )
         visualization_files["distribution"] = distribution_file
         
-        # 人格排名
+        # Personality ranking
         personality_rates = analysis_results["personality_analysis"]["personality_rates"]
         ranking_file = self.plotter.plot_personality_ranking(
             personality_rates,
@@ -300,7 +300,7 @@ class PairGameExperiment:
         )
         visualization_files["ranking"] = ranking_file
         
-        # MBTI维度分析
+        # MBTI dimension analysis
         dimension_data = analysis_results["dimension_analysis"]
         dimension_file = self.plotter.plot_mbti_dimension_analysis(
             dimension_data,
@@ -314,13 +314,13 @@ class PairGameExperiment:
     def _save_results(self, matrix_results: Dict[str, Any], 
                      analysis_results: Dict[str, Any],
                      visualization_results: Dict[str, str]):
-        """保存结果"""
+        """Save results"""
         self.logger.info("Saving results...")
         
         output_dir = Path(self.config.output_dir)
         output_dir.mkdir(exist_ok=True)
         
-        # 保存合作率矩阵
+        # Save cooperation rate matrix
         matrix_df = pd.DataFrame(
             matrix_results["cooperation_matrix"],
             index=matrix_results["personality_types"],
@@ -328,7 +328,7 @@ class PairGameExperiment:
         )
         matrix_df.to_csv(output_dir / "cooperation_matrix.csv")
 
-        # 保存收益矩阵
+        # Save payoff matrix
         payoff_df = pd.DataFrame(
             matrix_results["payoff_matrix"],
             index=matrix_results["personality_types"],
@@ -336,7 +336,7 @@ class PairGameExperiment:
         )
         payoff_df.to_csv(output_dir / "payoff_matrix.csv")
         
-        # 保存详细结果
+        # Save detailed results
         detailed_df = pd.DataFrame([
             {
                 "player1_type": result["player1_type"],
@@ -350,11 +350,11 @@ class PairGameExperiment:
         ])
         detailed_df.to_csv(output_dir / "detailed_results.csv", index=False)
         
-        # 保存分析结果
+        # Save analysis results
         with open(output_dir / "analysis_results.json", 'w', encoding='utf-8') as f:
             json.dump(analysis_results, f, indent=2, ensure_ascii=False, default=str)
         
-        # 保存实验配置
+        # Save experiment config
         config_dict = {
             "experiment_type": self.config.experiment_type.value,
             "num_rounds": self.config.game.num_rounds,
@@ -370,17 +370,17 @@ class PairGameExperiment:
 
 
 async def run_pair_game_experiment(config_file: str = "configs/pair_game.yaml"):
-    """运行两人博弈实验的主函数"""
+    """Main function to run two-player game experiment"""
     from src.config.config_manager import ConfigManager
     
-    # 加载配置
+    # Load config
     config_manager = ConfigManager()
     config = config_manager.load_config(config_file)
     
-    # 创建LLM管理器
+    # Create LLM manager
     llm_manager = LLMManager()
     
-    # 添加LLM实例
+    # Add LLM instance
     llm = LLMFactory.create_from_config({
         "provider": config.llm.provider,
         "model_name": config.llm.model_name,
@@ -389,7 +389,7 @@ async def run_pair_game_experiment(config_file: str = "configs/pair_game.yaml"):
     })
     llm_manager.add_llm("default", llm)
     
-    # 运行实验
+    # Run experiment
     experiment = PairGameExperiment(config, llm_manager)
     results = await experiment.run_experiment()
     
@@ -397,8 +397,8 @@ async def run_pair_game_experiment(config_file: str = "configs/pair_game.yaml"):
 
 
 if __name__ == "__main__":
-    # 设置日志
+    # Set logging
     logging.basicConfig(level=logging.INFO)
     
-    # 运行实验
+    # Run experiment
     asyncio.run(run_pair_game_experiment())

@@ -1,6 +1,6 @@
 """
-LLM Network Games Framework 主程序
-支持运行不同的实验和配置管理
+LLM Network Games Framework main program
+Supports running different experiments and configuration management
 """
 
 import argparse
@@ -10,7 +10,7 @@ import sys
 from pathlib import Path
 from typing import Optional
 
-# 添加src目录到Python路径
+# Add src directory to Python path
 sys.path.append(str(Path(__file__).parent / "src"))
 
 from src.config.config_manager import ConfigManager, ExperimentType
@@ -20,7 +20,7 @@ from src.experiments.network_game_experiment import run_network_game_experiment
 
 
 def setup_logging(level: str = "INFO"):
-    """设置日志"""
+    """Set up logging"""
     logging.basicConfig(
         level=getattr(logging, level.upper()),
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -32,14 +32,14 @@ def setup_logging(level: str = "INFO"):
 
 
 def create_default_configs():
-    """创建默认配置文件"""
+    """Create default configuration files"""
     config_manager = ConfigManager()
     config_manager.create_default_configs()
     print("Default configuration files created in configs/ directory")
 
 
 def list_configs():
-    """列出所有配置文件"""
+    """List all configuration files"""
     config_manager = ConfigManager()
     config_files = config_manager.list_configs()
     
@@ -56,7 +56,7 @@ def list_configs():
 
 
 def validate_config(config_file: str):
-    """验证配置文件"""
+    """Validate configuration file"""
     config_manager = ConfigManager()
     try:
         config = config_manager.load_config(config_file)
@@ -73,7 +73,7 @@ def validate_config(config_file: str):
 
 
 async def main():
-    """主函数"""
+    """Main function"""
     parser = argparse.ArgumentParser(description="LLM Network Games Framework")
     parser.add_argument("--experiment", choices=["pair_game", "network_game"], 
                        help="Type of experiment to run")
@@ -90,18 +90,18 @@ async def main():
     
     args = parser.parse_args()
     
-    # 根据实验类型设置默认配置文件
+    # Set default configuration file based on experiment type
     if args.config is None:
         if args.experiment == "pair_game":
             args.config = "configs/pair_game.yaml"
         elif args.experiment == "network_game":
             args.config = "configs/network_game.yaml"
     
-    # 设置日志
+    # Set up logging
     setup_logging(args.log_level)
     logger = logging.getLogger(__name__)
     
-    # 处理特殊命令
+    # Handle special commands
     if args.create_configs:
         create_default_configs()
         return
@@ -114,13 +114,13 @@ async def main():
         validate_config(args.validate_config)
         return
     
-    # 检查实验类型
+    # Check experiment type
     if not args.experiment:
         print("Error: Please specify an experiment type using --experiment")
         print("Available experiments: pair_game, network_game")
         return
     
-    # 运行实验
+    # Run experiment
     try:
         if args.experiment == "pair_game":
             logger.info("Starting pair game experiment...")
@@ -140,4 +140,4 @@ async def main():
 
 
 if __name__ == "__main__":
-        asyncio.run(main())
+    asyncio.run(main())

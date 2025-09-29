@@ -1,13 +1,13 @@
 """
-LLM Network Games Framework 演示脚本
-展示框架的主要功能
+LLM Network Games Framework Demo Script
+Showcase of main framework features
 """
 
 import asyncio
 import sys
 from pathlib import Path
 
-# 添加src目录到Python路径
+# Add src directory to Python path
 sys.path.append(str(Path(__file__).parent / "src"))
 
 from src.agents.mbti_personalities import MBTIType, MBTIPersonality, get_all_mbti_types
@@ -18,81 +18,81 @@ from src.networks.network_generator import NetworkGenerator, NetworkConfig, Netw
 
 
 def demo_mbti_system():
-    """演示MBTI人格系统"""
+    """Demo MBTI personality system"""
     print("=" * 60)
-    print("MBTI人格系统演示")
+    print("MBTI Personality System Demo")
     print("=" * 60)
     
-    # 显示所有MBTI类型
+    # Show all MBTI types
     mbti_types = get_all_mbti_types()
-    print(f"支持的MBTI人格类型 ({len(mbti_types)}种):")
+    print(f"Supported MBTI personality types ({len(mbti_types)} types):")
     for i, mbti_type in enumerate(mbti_types, 1):
         personality = MBTIPersonality(mbti_type)
         print(f"{i:2d}. {personality.name}")
     
     print("\n" + "-" * 40)
     
-    # 演示特定人格类型
+    # Demo specific personality type
     intj = MBTIPersonality(MBTIType.INTJ)
-    print(f"INTJ人格特征: {intj.description}")
-    print(f"INTJ决策prompt示例:")
+    print(f"INTJ Personality Traits: {intj.description}")
+    print(f"INTJ Decision Prompt Example:")
     print(intj.get_decision_prompt([], "ENTP")[:200] + "...")
 
 
 def demo_game_system():
-    """演示博弈系统"""
+    """Demo game system"""
     print("\n" + "=" * 60)
-    print("囚徒困境博弈系统演示")
+    print("Prisoner's Dilemma Game System Demo")
     print("=" * 60)
     
-    # 创建博弈实例
+    # Create game instance
     game = PrisonersDilemma()
     
-    # 显示收益矩阵
-    print("标准囚徒困境收益矩阵:")
-    print("        合作    背叛")
-    print("合作   (3,3)   (0,5)")
-    print("背叛   (5,0)   (1,1)")
+    # Show payoff matrix
+    print("Standard Prisoner's Dilemma Payoff Matrix:")
+    print("        Cooperate    Defect")
+    print("Cooperate   (3,3)   (0,5)")
+    print("Defect      (5,0)   (1,1)")
     
-    # 演示博弈
-    print("\n博弈演示:")
+    # Demo game
+    print("\nGame Demo:")
     scenarios = [
-        ("双方合作", Action.COOPERATE, Action.COOPERATE),
-        ("我合作，对手背叛", Action.COOPERATE, Action.DEFECT),
-        ("我背叛，对手合作", Action.DEFECT, Action.COOPERATE),
-        ("双方背叛", Action.DEFECT, Action.DEFECT)
+        ("Both Cooperate", Action.COOPERATE, Action.COOPERATE),
+        ("I Cooperate, Opponent Defects", Action.COOPERATE, Action.DEFECT),
+        ("I Defect, Opponent Cooperates", Action.DEFECT, Action.COOPERATE),
+        ("Both Defect", Action.DEFECT, Action.DEFECT)
     ]
     
     for desc, action1, action2 in scenarios:
         result = game.play_round(action1, action2)
-        print(f"{desc:12}: 我{action1.value}, 对手{action2.value} -> 收益: 我{result.player1_payoff}, 对手{result.player2_payoff}")
+        print(f"{desc:28}: I {action1.value}, Opponent {action2.value} -> Payoff: I {result.player1_payoff}, Opponent {result.player2_payoff}")
     
-    # 演示多轮博弈
-    print("\n多轮博弈演示 (5轮):")
+    # Demo multi-round game
+    print("\nMulti-round Game Demo (5 rounds):")
     actions1 = [Action.COOPERATE, Action.DEFECT, Action.COOPERATE, Action.DEFECT, Action.COOPERATE]
     actions2 = [Action.DEFECT, Action.COOPERATE, Action.COOPERATE, Action.DEFECT, Action.DEFECT]
     
     history = game.play_game(actions1, actions2)
-    print(f"我的合作率: {history.player1_cooperation_rate:.2f}")
-    print(f"对手合作率: {history.player2_cooperation_rate:.2f}")
-    print(f"我的总收益: {history.player1_total_payoff}")
-    print(f"对手总收益: {history.player2_total_payoff}")
+    print(f"My cooperation rate: {history.player1_cooperation_rate:.2f}")
+    print(f"Opponent cooperation rate: {history.player2_cooperation_rate:.2f}")
+    print(f"My total payoff: {history.player1_total_payoff}")
+    print(f"Opponent total payoff: {history.player2_total_payoff}")
 
 
 def demo_network_system():
-    """演示网络系统"""
+    """Demo network system"""
     print("\n" + "=" * 60)
-    print("网络拓扑生成系统演示")
+    print("Network Topology Generation System Demo")
     print("=" * 60)
     
     generator = NetworkGenerator()
     
-    # 生成不同类型的网络
+    # Generate different types of networks
     network_types = [
-        ("规则网络", NetworkType.REGULAR),
-        ("小世界网络", NetworkType.SMALL_WORLD),
-        ("随机网络", NetworkType.RANDOM),
-        ("无标度网络", NetworkType.SCALE_FREE)
+        ("Regular Network", NetworkType.REGULAR),
+        ("Small-world Network", NetworkType.SMALL_WORLD),
+        ("Random Network", NetworkType.RANDOM),
+        ("Scale-free Network", NetworkType.SCALE_FREE)
     ]
     
     for name, network_type in network_types:
@@ -107,21 +107,21 @@ def demo_network_system():
         
         try:
             G = generator.generate_network(config)
-            print(f"{name:8}: 节点数={G.number_of_nodes()}, 边数={G.number_of_edges()}, 密度={G.number_of_edges()/(G.number_of_nodes()*(G.number_of_nodes()-1)/2):.3f}")
+            print(f"{name:18}: Nodes={G.number_of_nodes()}, Edges={G.number_of_edges()}, Density={G.number_of_edges()/(G.number_of_nodes()*(G.number_of_nodes()-1)/2):.3f}")
         except Exception as e:
-            print(f"{name:8}: 生成失败 - {e}")
+            print(f"{name:18}: Generation failed - {e}")
 
 
 async def demo_llm_system():
-    """演示LLM系统"""
+    """Demo LLM system"""
     print("\n" + "=" * 60)
-    print("LLM接口系统演示")
+    print("LLM Interface System Demo")
     print("=" * 60)
     
-    # 创建LLM管理器
+    # Create LLM manager
     llm_manager = LLMManager()
     
-    # 添加Mock LLM
+    # Add Mock LLM
     mock_llm = LLMFactory.create_llm(
         provider=LLMProvider.MOCK,
         model_name="demo-model",
@@ -129,63 +129,63 @@ async def demo_llm_system():
     )
     llm_manager.add_llm("demo", mock_llm)
     
-    print("支持的LLM提供商:")
+    print("Supported LLM Providers:")
     for provider in LLMProvider:
         print(f"  - {provider.value}")
     
-    print(f"\n当前使用的LLM: {mock_llm.get_provider().value}/{mock_llm.model_name}")
+    print(f"\nCurrent LLM: {mock_llm.get_provider().value}/{mock_llm.model_name}")
     
-    # 演示LLM响应
-    print("\nLLM响应演示:")
+    # Demo LLM response
+    print("\nLLM Response Demo:")
     prompts = [
-        "请选择合作或背叛",
-        "在囚徒困境中，你会如何选择？",
-        "基于你的性格，做出决策"
+        "Please choose cooperate or defect",
+        "In the prisoner's dilemma, what would you choose?",
+        "Make a decision based on your personality"
     ]
     
     for prompt in prompts:
         response = await llm_manager.generate_response("demo", prompt)
-        print(f"输入: {prompt}")
-        print(f"输出: {response.content} (响应时间: {response.response_time:.3f}s)")
+        print(f"Input: {prompt}")
+        print(f"Output: {response.content} (Response time: {response.response_time:.3f}s)")
         print()
 
 
 def demo_config_system():
-    """演示配置系统"""
+    """Demo config system"""
     print("\n" + "=" * 60)
-    print("配置管理系统演示")
+    print("Config Management System Demo")
     print("=" * 60)
     
     config_manager = ConfigManager()
     
-    # 列出配置文件
+    # List config files
     config_files = config_manager.list_configs()
-    print("可用的配置文件:")
+    print("Available config files:")
     for config_file in config_files:
         info = config_manager.get_config_info(f"configs/{config_file}")
         print(f"  - {config_file}: {info['name']} ({info['experiment_type']})")
     
-    # 演示配置验证
-    print("\n配置验证演示:")
+    # Demo config validation
+    print("\nConfig Validation Demo:")
     for config_file in config_files:
         config_path = f"configs/{config_file}" if not config_file.startswith("configs/") else config_file
         try:
             config = config_manager.load_config(config_path)
             errors = config_manager.validate_config(config)
             if errors:
-                print(f"  {config_file}: 验证失败 - {len(errors)}个错误")
+                print(f"  {config_file}: Validation failed - {len(errors)} errors")
             else:
-                print(f"  {config_file}: 验证通过 ✓")
+                print(f"  {config_file}: Validation passed ✓")
         except Exception as e:
-            print(f"  {config_file}: 加载失败 - {e}")
+            print(f"  {config_file}: Load failed - {e}")
 
 
 async def main():
-    """主演示函数"""
-    print("🎮 LLM Network Games Framework 演示")
-    print("这是一个用于研究LLM在网络博弈中行为的框架")
+    """Main demo function"""
+    print("🎮 LLM Network Games Framework Demo")
+    print("This is a framework for studying LLM behavior in network games")
     
-    # 运行各个模块的演示
+    # Run demos for each module
     demo_mbti_system()
     demo_game_system()
     demo_network_system()
@@ -193,9 +193,9 @@ async def main():
     demo_config_system()
     
     print("\n" + "=" * 60)
-    print("演示完成！")
+    print("Demo complete!")
     print("=" * 60)
-    print("\n要运行完整实验，请使用:")
+    print("\nTo run a full experiment, use:")
     print("  python main.py --experiment pair_game --config configs/pair_game.yaml")
     print("  python main.py --experiment network_game --config configs/network_game.yaml")
 

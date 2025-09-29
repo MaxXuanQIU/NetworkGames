@@ -1,6 +1,6 @@
 """
-配置模块
-包含配置管理和验证功能
+Configuration module
+Includes configuration management and validation functionality
 """
 
 from .config_manager import (
