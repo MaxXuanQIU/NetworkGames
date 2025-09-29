@@ -1,8 +1,8 @@
 description: Quick test configuration for framework validation
 experiment_type: pair_game
 game:
-  num_repetitions: 2
-  num_rounds: 10
+  num_repetitions: 1
+  num_rounds: 20
   payoff_matrix:
     COOPERATE:
       COOPERATE:

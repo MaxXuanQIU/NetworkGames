@@ -195,7 +195,64 @@ class PairGamePlotter(BasePlotter):
 
         plt.tight_layout()
         return str(self.save_plot(filename))
-    
+
+    def plot_payoff_ranking(self, payoff_rates: Dict[str, Dict[str, float]],
+                            title: str = "Personality Payoff Ranking",
+                            filename: str = "personality_payoff_ranking") -> str:
+        """Plot personality payoff ranking"""
+        # MBTI type to color mapping (as same as cooperation ranking)
+        mbti_color_map = {
+            "NT": "#8e44ad",
+            "NF": "#27ae60",
+            "SJ": "#2980b9",
+            "SP": "#e67e22",
+        }
+        def get_mbti_group(mbti: str) -> str:
+            if mbti[1:3] == "NT":
+                return "NT"
+            elif mbti[1:3] == "NF":
+                return "NF"
+            elif mbti[1] == "S" and mbti[3] == "J":
+                return "SJ"
+            elif mbti[1] == "S" and mbti[3] == "P":
+                return "SP"
+            else:
+                return "Other"
+
+        # Extract payoff, sample size, std
+        data = [
+            (ptype, pdata.get('payoff', 0), pdata.get('std', 0))
+            for ptype, pdata in payoff_rates.items()
+        ]
+        data_sorted = sorted(data, key=lambda x: x[1], reverse=True)
+        personalities, payoffs, stds = zip(*data_sorted)
+
+        bar_colors = []
+        for p in personalities:
+            group = get_mbti_group(p)
+            bar_colors.append(mbti_color_map.get(group, "#95a5a6"))
+
+        plt.figure(figsize=self.figsize)
+        bars = plt.bar(range(len(personalities)), payoffs,
+                       yerr=stds, capsize=8, ecolor='black',
+                       error_kw=dict(lw=1, capthick=1),
+                       color=bar_colors)
+        for i, (bar, payoff) in enumerate(zip(bars, payoffs)):
+            plt.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.01,
+                     f'{payoff:.2f}', ha='center', va='bottom', fontsize=9)
+        plt.xlabel('Personality Type')
+        plt.ylabel('Average Payoff')
+        plt.title(title)
+        plt.xticks(range(len(personalities)), personalities, rotation=45, ha='right')
+        plt.grid(True, alpha=0.3, axis='y')
+        legend_elements = [
+            Patch(facecolor=color, label=group)
+            for group, color in mbti_color_map.items()
+        ]
+        plt.legend(handles=legend_elements, title="MBTI Group", loc="center left", bbox_to_anchor=(1.02, 0.5), borderaxespad=0.)
+        plt.tight_layout()
+        return str(self.save_plot(filename))
+
     def plot_mbti_dimension_analysis(self, dimension_data: Dict[str, Dict[str, float]],
                                    title: str = "MBTI Dimension Analysis",
                                    filename: str = "mbti_dimension_analysis") -> str:

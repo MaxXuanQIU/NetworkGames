@@ -243,12 +243,18 @@ class PairGameExperiment:
     
     def _analyze_personalities(self, detailed_results: Dict[str, Any]) -> Dict[str, Any]:
         """Analyze personality traits (calls statistics analyzer)"""
-        # Construct personality_data: Dict[str, List[bool]]
-        personality_data = {ptype.value: [] for ptype in self.mbti_types}
+        # Construct data containers
+        cooperation_data = {ptype.value: [] for ptype in self.mbti_types}
+        payoff_data = {ptype.value: [] for ptype in self.mbti_types}
+
         for result in detailed_results.values():
-            personality_data[result["player1_type"]].extend(result["cooperation_rates"])
-        # Call unified analyzer
-        return self.personality_analyzer._analyze_personality_types(personality_data)
+            ptype = result["player1_type"]
+            cooperation_data[ptype].extend(result.get("cooperation_rates", []))
+            payoff_data[ptype].extend(result.get("payoffs", []))
+
+        # Use analyzer for both cooperation and payoff ranking
+        analysis = self.personality_analyzer._analyze_personality_types(cooperation_data, payoff_data)
+        return analysis
 
     def _analyze_mbti_dimensions(self, detailed_results: Dict[str, Any]) -> Dict[str, Any]:
         """Analyze MBTI dimensions (calls statistics analyzer)"""
@@ -291,14 +297,23 @@ class PairGameExperiment:
         )
         visualization_files["distribution"] = distribution_file
         
-        # Personality ranking
+        # Personality cooperation ranking
         personality_rates = analysis_results["personality_analysis"]["personality_rates"]
         ranking_file = self.plotter.plot_personality_ranking(
             personality_rates,
             title="Personality Cooperation Ranking",
-            filename="personality_ranking"
+            filename="personality_cooperation_ranking"
         )
-        visualization_files["ranking"] = ranking_file
+        visualization_files["cooperation_ranking"] = ranking_file
+        
+        # Payoff ranking
+        payoff_rates = analysis_results["personality_analysis"].get("payoff_rates", {})
+        payoff_ranking_file = self.plotter.plot_payoff_ranking(
+            payoff_rates,
+            title="Personality Payoff Ranking",
+            filename="personality_payoff_ranking"
+        )
+        visualization_files["payoff_ranking"] = payoff_ranking_file
         
         # MBTI dimension analysis
         dimension_data = analysis_results["dimension_analysis"]

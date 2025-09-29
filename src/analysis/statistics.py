@@ -376,26 +376,42 @@ class PersonalityAnalyzer:
         
         return dimension_results
     
-    def _analyze_personality_types(self, personality_data: Dict[str, List[bool]]) -> Dict[str, Any]:
-        """Analyze personality types"""
+    def _analyze_personality_types(self, cooperation_data: Dict[str, List[bool]], payoff_data: Dict[str, List[float]]) -> Dict[str, Any]:
+        """Analyze personality types, support both cooperation and payoff ranking"""
+        # Cooperation ranking
         personality_rates = {}
-        for personality, data in personality_data.items():
+        for personality, data in cooperation_data.items():
             if data:
                 personality_rates[personality] = {
                     "cooperation_rate": np.mean(data),
                     "sample_size": len(data),
                     "std": np.std(data)
                 }
-        
-        # Sort
         sorted_types = sorted(personality_rates.items(), key=lambda x: x[1]["cooperation_rate"], reverse=True)
         
-        return {
+        result = {
             "personality_rates": personality_rates,
-            "ranking": [item[0] for item in sorted_types],
+            "cooperation_ranking": [item[0] for item in sorted_types],
             "most_cooperative": sorted_types[0][0] if sorted_types else None,
             "least_cooperative": sorted_types[-1][0] if sorted_types else None
         }
+        
+        # Payoff ranking
+        payoff_rates = {}
+        for personality, vals in payoff_data.items():
+            if vals:
+                payoff_rates[personality] = {
+                    "payoff": float(np.mean(vals)),
+                    "sample_size": len(vals),
+                    "std": float(np.std(vals))
+                }
+        sorted_payoff = sorted(payoff_rates.items(), key=lambda x: x[1]["payoff"], reverse=True)
+        result["payoff_rates"] = payoff_rates
+        result["payoff_ranking"] = [item[0] for item in sorted_payoff]
+        result["highest_payoff"] = sorted_payoff[0][0] if sorted_payoff else None
+        result["lowest_payoff"] = sorted_payoff[-1][0] if sorted_payoff else None
+        
+        return result
     
     def _calculate_cohens_d(self, group1: List[bool], group2: List[bool]) -> float:
         """Calculate Cohen's d effect size"""
