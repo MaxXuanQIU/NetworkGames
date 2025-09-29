@@ -492,7 +492,7 @@ class NetworkGamePlotter(BasePlotter):
                               title: str = "Network Comparison",
                               filename: str = "network_comparison") -> str:
         """绘制网络比较"""
-        fig, axes = plt.subplots(2, 2, figsize=(16, 12))
+        fig, axes = plt.subplots(2, 3, figsize=(9, 12))
         
         # 提取数据
         network_names = list(network_comparison.keys())
@@ -500,6 +500,8 @@ class NetworkGamePlotter(BasePlotter):
         clustering_coeffs = [network_comparison[name].get('clustering_coefficient', 0) for name in network_names]
         avg_path_lengths = [network_comparison[name].get('avg_path_length', 0) for name in network_names]
         densities = [network_comparison[name].get('density', 0) for name in network_names]
+        num_nodes = [network_comparison[name].get('num_nodes', 0) for name in network_names]
+        num_edges = [network_comparison[name].get('num_edges', 0) for name in network_names]
         
         # 合作率比较
         axes[0, 0].bar(network_names, cooperation_rates, color='skyblue')
@@ -516,18 +518,32 @@ class NetworkGamePlotter(BasePlotter):
         axes[0, 1].grid(True, alpha=0.3, axis='y')
         
         # 平均路径长度比较
-        axes[1, 0].bar(network_names, avg_path_lengths, color='lightgreen')
-        axes[1, 0].set_title('Average Path Length by Network Type')
-        axes[1, 0].set_ylabel('Average Path Length')
+        axes[0, 2].bar(network_names, avg_path_lengths, color='lightgreen')
+        axes[0, 2].set_title('Average Path Length by Network Type')
+        axes[0, 2].set_ylabel('Average Path Length')
+        axes[0, 2].tick_params(axis='x', rotation=45)
+        axes[0, 2].grid(True, alpha=0.3, axis='y')
+        
+        # 密度比较
+        axes[1, 0].bar(network_names, densities, color='gold')
+        axes[1, 0].set_title('Network Density by Network Type')
+        axes[1, 0].set_ylabel('Density')
         axes[1, 0].tick_params(axis='x', rotation=45)
         axes[1, 0].grid(True, alpha=0.3, axis='y')
         
-        # 密度比较
-        axes[1, 1].bar(network_names, densities, color='gold')
-        axes[1, 1].set_title('Network Density by Network Type')
-        axes[1, 1].set_ylabel('Density')
+        # 节点数比较
+        axes[1, 1].bar(network_names, num_nodes, color='deepskyblue')
+        axes[1, 1].set_title('Number of Nodes by Network Type')
+        axes[1, 1].set_ylabel('Num Nodes')
         axes[1, 1].tick_params(axis='x', rotation=45)
         axes[1, 1].grid(True, alpha=0.3, axis='y')
+        
+        # 边数比较
+        axes[1, 2].bar(network_names, num_edges, color='salmon')
+        axes[1, 2].set_title('Number of Edges by Network Type')
+        axes[1, 2].set_ylabel('Num Edges')
+        axes[1, 2].tick_params(axis='x', rotation=45)
+        axes[1, 2].grid(True, alpha=0.3, axis='y')
         
         plt.suptitle(title, fontsize=16, fontweight='bold')
         plt.tight_layout()

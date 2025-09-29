@@ -393,7 +393,10 @@ class NetworkGameExperiment:
             avg_path_length = network_analysis.get("avg_path_length", 0)
             num_components = network_analysis.get("num_components", 0)
             density = nx.density(G) if G is not None else 0
-            
+            num_nodes = G.number_of_nodes() if G is not None else 0
+            num_edges = G.number_of_edges() if G is not None else 0
+            avg_degree = (2 * num_edges / num_nodes) if num_nodes > 0 else 0
+
             for scenario, results in scenarios.items():
                 evolution_data = results["evolution_data"]
                 if evolution_data:
@@ -405,7 +408,10 @@ class NetworkGameExperiment:
                 "clustering_coefficient": clustering_coefficient,
                 "avg_path_length": avg_path_length,
                 "num_components": num_components,
-                "density": density
+                "density": density,
+                "num_nodes": num_nodes,
+                "num_edges": num_edges,
+                "avg_degree": avg_degree
             }
         
         return network_metrics
