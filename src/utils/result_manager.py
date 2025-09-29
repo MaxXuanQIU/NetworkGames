@@ -304,40 +304,7 @@ class ResultManager:
                     })
         
         return sorted(experiments, key=lambda x: x["timestamp"], reverse=True)
-    
-    def export_results(self, experiment_id: str, export_format: str = "csv") -> Path:
-        """导出实验结果"""
-        experiment_dir = self.output_dir / experiment_id
-        
-        if not experiment_dir.exists():
-            raise FileNotFoundError(f"Experiment directory not found: {experiment_dir}")
-        
-        # 创建导出目录
-        export_dir = experiment_dir / f"export_{export_format}"
-        export_dir.mkdir(exist_ok=True)
-        
-        # 加载结果
-        results = self.load_experiment_results(experiment_id)
-        
-        if export_format == "csv":
-            self._export_to_csv(results, export_dir)
-        elif export_format == "excel":
-            self._export_to_excel(results, export_dir)
-        else:
-            raise ValueError(f"Unsupported export format: {export_format}")
-        
-        self.logger.info(f"Results exported to: {export_dir}")
-        return export_dir
-    
-    def _export_to_csv(self, results: Dict[str, Any], export_dir: Path):
-        """导出为CSV格式"""
-        # 这里可以实现具体的CSV导出逻辑
-        pass
-    
-    def _export_to_excel(self, results: Dict[str, Any], export_dir: Path):
-        """导出为Excel格式"""
-        # 这里可以实现具体的Excel导出逻辑
-        pass
+
     
     def cleanup_old_experiments(self, days: int = 30):
         """清理旧实验"""

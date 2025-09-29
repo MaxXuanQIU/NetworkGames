@@ -1,8 +1,8 @@
 description: 16x16 MBTI personality matrix in repeated prisoner's dilemma
 experiment_type: pair_game
 game:
-  num_repetitions: 20
-  num_rounds: 100
+  num_repetitions: 1
+  num_rounds: 1
   payoff_matrix:
     COOPERATE:
       COOPERATE:
@@ -22,7 +22,7 @@ game:
 llm:
   api_key: null
   kwargs:
-    response_delay: 0
+    response_delay: 1
   max_tokens: 50
   model_name: mock-model
   provider: mock

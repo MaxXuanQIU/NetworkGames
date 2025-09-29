@@ -100,8 +100,6 @@ NetworkGames/
 ├── configs/                     # 配置文件
 │   ├── pair_game.yaml          # 两人博弈配置
 │   └── network_game.yaml       # 网络博弈配置
-├── experiments/                 # 实验脚本
-│   └── run_experiments.py      # 实验运行脚本
 ├── results/                    # 结果输出
 ├── docs/                      # 文档
 │   ├── API_REFERENCE.md       # API参考

@@ -223,14 +223,10 @@ class PairGameExperiment:
         # MBTI维度分析
         dimension_analysis = self._analyze_mbti_dimensions(detailed_results)
         
-        # 统计检验
-        statistical_tests = self._perform_statistical_tests(detailed_results)
-        
         return {
             "basic_statistics": basic_stats,
             "personality_analysis": personality_analysis,
             "dimension_analysis": dimension_analysis,
-            "statistical_tests": statistical_tests
         }
     
     def _calculate_basic_statistics(self, cooperation_matrix: np.ndarray) -> Dict[str, Any]:
@@ -260,14 +256,6 @@ class PairGameExperiment:
         for result in detailed_results.values():
             personality_data[result["player1_type"]].extend(result["cooperation_rates"])
         return self.personality_analyzer._analyze_mbti_dimensions(personality_data)
-    
-    def _perform_statistical_tests(self, detailed_results: Dict[str, Any]) -> Dict[str, Any]:
-        """执行统计检验"""
-        # 这里可以添加更多的统计检验
-        return {
-            "note": "Statistical tests would be implemented here",
-            "tests_performed": []
-        }
     
     def _generate_visualizations(self, matrix_results: Dict[str, Any], 
                                analysis_results: Dict[str, Any]) -> Dict[str, str]:

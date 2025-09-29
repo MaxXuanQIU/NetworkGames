@@ -171,7 +171,8 @@ class PairGamePlotter(BasePlotter):
         plt.figure(figsize=self.figsize)
 
         bars = plt.bar(range(len(personalities)), rates, 
-                       yerr=stds, capsize=5,
+                       yerr=stds, capsize=8, ecolor='black',
+                       error_kw=dict(lw=1, capthick=1),  # 横线长度和粗细
                        color=bar_colors)
 
         # 添加数值标签和样本量
@@ -198,34 +199,72 @@ class PairGamePlotter(BasePlotter):
     def plot_mbti_dimension_analysis(self, dimension_data: Dict[str, Dict[str, float]],
                                    title: str = "MBTI Dimension Analysis",
                                    filename: str = "mbti_dimension_analysis") -> str:
-        """绘制MBTI维度分析"""
-        fig, axes = plt.subplots(2, 2, figsize=(16, 12))
+        """绘制MBTI维度分析（含更多统计信息，每个分组独特颜色）"""
+        # 为每个维度分组指定独特颜色
+        group_colors = {
+            'E': '#1f77b4',  # 蓝色
+            'I': '#ff7f0e',  # 橙色
+            'S': '#2ca02c',  # 绿色
+            'N': '#d62728',  # 红色
+            'T': '#9467bd',  # 紫色
+            'F': '#8c564b',  # 棕色
+            'J': '#e377c2',  # 粉色
+            'P': '#7f7f7f',  # 灰色
+        }
+
+        fig, axes = plt.subplots(2, 2, figsize=(5, 10))
         axes = axes.flatten()
-        
+
         for i, (dim, data) in enumerate(dimension_data.items()):
             if i >= 4:
                 break
-                
+
             ax = axes[i]
-            
-            # 提取均值数据
+
+            # 提取均值和标准差
             means = [(k.replace('_mean', ''), v) for k, v in data.items() if k.endswith('_mean')]
-            if len(means) == 2:
+            stds = [(k.replace('_std', ''), v) for k, v in data.items() if k.endswith('_std')]
+            if len(means) == 2 and len(stds) == 2:
                 labels, rates = zip(*means)
-                bars = ax.bar(labels, rates, color=['skyblue', 'lightcoral'])
-                
+                _, errors = zip(*stds)
+                x = np.arange(len(labels))
+
+                # 为每个分组分配颜色
+                bar_colors = [group_colors.get(label, "#cccccc") for label in labels]
+
+                bars = ax.bar(x, rates, yerr=errors, capsize=8, ecolor='black',
+                              error_kw=dict(lw=1.2, capthick=1.2), color=bar_colors)
+
                 # 添加数值标签
                 for bar, rate in zip(bars, rates):
-                    ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.01,
-                           f'{rate:.3f}', ha='center', va='bottom')
-                
-                ax.set_title(f'{dim} Dimension')
+                    ax.text(
+                        bar.get_x() + bar.get_width()/2,
+                        bar.get_height() + 0.01,
+                        f'{rate:.3f}',
+                        ha='center',
+                        va='bottom',
+                        zorder=10  # 设置较高的zorder使标签浮在其他元素之上
+                    )
+
+                # 设置x轴标签
+                ax.set_xticks(x)
+                ax.set_xticklabels(labels)
+
+                # 添加统计信息
+                diff = data.get('difference', None)
+                t_stat = data.get('t_statistic', None)
+                p_val = data.get('p_value', None)
+                stat_note = (
+                    f"Δ={diff:.3f}, t={t_stat:.2f}, p={p_val:.3f}"
+                )
+                dim_title = dim.replace('_', ' ')
+                ax.set_title(f'{dim_title} Dimension\n{stat_note}', fontsize=12)
                 ax.set_ylabel('Cooperation Rate')
                 ax.grid(True, alpha=0.3, axis='y')
-        
+
         plt.suptitle(title, fontsize=16, fontweight='bold')
         plt.tight_layout()
-        
+
         return str(self.save_plot(filename))
     
     def plot_statistical_significance(self, test_results: Dict[str, Any],

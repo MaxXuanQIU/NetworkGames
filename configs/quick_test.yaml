@@ -22,7 +22,7 @@ game:
 llm:
   api_key: null
   kwargs:
-    cooperation_rate: 0.7
+    cooperation_rate: 0.5
     response_delay: 0
   max_tokens: 50
   model_name: mock-model
