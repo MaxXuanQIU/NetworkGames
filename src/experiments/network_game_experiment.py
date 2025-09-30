@@ -487,6 +487,18 @@ class NetworkGameExperiment:
                         filename=f"network_evolution_{network_type}_{scenario}"
                     )
                     visualization_files[f"evolution_{network_type}_{scenario}"] = evolution_file
+
+        # Edge action evolution plots
+        for network_type, scenarios in all_results.items():
+            for scenario, results in scenarios.items():
+                evolution_data = results["evolution_data"]
+                if evolution_data:
+                    edge_action_file = self.plotter.plot_edge_action_evolution(
+                        evolution_data,
+                        title=f"Edge Action Evolution: {network_type} - {scenario}",
+                        filename=f"edge_action_evolution_{network_type}_{scenario}"
+                    )
+                    visualization_files[f"edge_action_evolution_{network_type}_{scenario}"] = edge_action_file
         
         # Network comparison plot
         network_comparison = analysis_results["network_comparison"]

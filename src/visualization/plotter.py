@@ -6,16 +6,17 @@ Provides various charts and visualization functions
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
-import pandas as pd
 import networkx as nx
 from typing import Dict, List, Tuple, Any, Optional
 import plotly.graph_objects as go
-import plotly.express as px
-from plotly.subplots import make_subplots
 import logging
 from pathlib import Path
 import warnings
 from matplotlib.patches import Patch
+from matplotlib.colors import ListedColormap
+import matplotlib.ticker as ticker
+
+from src.agents.mbti_personalities import get_all_mbti_types
 warnings.filterwarnings('ignore')
 
 
@@ -384,6 +385,7 @@ class NetworkGamePlotter(BasePlotter):
         axes[0, 0].set_xlabel("Round")
         axes[0, 0].set_ylabel("Cooperation Rate")
         axes[0, 0].grid(True, alpha=0.3)
+        axes[0, 0].xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
 
         # 2. Average payoff evolution
         axes[0, 1].plot(rounds, avg_payoffs, marker='o', color='tab:green')
@@ -391,6 +393,7 @@ class NetworkGamePlotter(BasePlotter):
         axes[0, 1].set_xlabel("Round")
         axes[0, 1].set_ylabel("Average Payoff")
         axes[0, 1].grid(True, alpha=0.3)
+        axes[0, 1].xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
 
         # 3. Payoff std evolution
         axes[0, 2].plot(rounds, std_payoffs, marker='o', color='tab:purple')
@@ -398,6 +401,7 @@ class NetworkGamePlotter(BasePlotter):
         axes[0, 2].set_xlabel("Round")
         axes[0, 2].set_ylabel("Payoff Std")
         axes[0, 2].grid(True, alpha=0.3)
+        axes[0, 2].xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
 
         # 4. Max cooperation cluster size evolution
         axes[1, 0].plot(rounds, cooperation_cluster_sizes, marker='o', color='tab:orange')
@@ -405,6 +409,7 @@ class NetworkGamePlotter(BasePlotter):
         axes[1, 0].set_xlabel("Round")
         axes[1, 0].set_ylabel("Max Cluster Size")
         axes[1, 0].grid(True, alpha=0.3)
+        axes[1, 0].xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
 
         # 5. Single cooperation rate evolution
         axes[1, 1].plot(rounds, single_cooperation_rates, marker='o', color='tab:red')
@@ -412,6 +417,7 @@ class NetworkGamePlotter(BasePlotter):
         axes[1, 1].set_xlabel("Round")
         axes[1, 1].set_ylabel("Single Cooperation Rate")
         axes[1, 1].grid(True, alpha=0.3)
+        axes[1, 1].xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
 
         # 6. Both-defect rates evolution
         axes[1, 2].plot(rounds, both_defect_rates, marker='o', color='tab:brown')
@@ -419,12 +425,54 @@ class NetworkGamePlotter(BasePlotter):
         axes[1, 2].set_xlabel("Round")
         axes[1, 2].set_ylabel("Both-Defect Rates")
         axes[1, 2].grid(True, alpha=0.3)
+        axes[1, 2].xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
 
         plt.suptitle(title, fontsize=16, fontweight='bold')
         plt.tight_layout()
         
         return str(self.save_plot(filename))
     
+    def plot_edge_action_evolution(self, evolution_data, title="Edge Action Evolution", filename="edge_action_evolution") -> Optional[str]:
+        """
+        Plot edge action evolution over rounds.
+        Each row: one edge; each column: one round; value: action type.
+        Color mapping: both cooperate - green, single cooperate - yellow, both defect - red.
+        """
+        # Collect all edges
+        all_edges = set()
+        for round_data in evolution_data:
+            all_edges.update(round_data["edge_actions"].keys())
+        all_edges = sorted(all_edges)
+        edge_idx = {edge: i for i, edge in enumerate(all_edges)}
+        num_edges = len(all_edges)
+        num_rounds = len(evolution_data)
+        # 0: both cooperate, 1: single cooperate, 2: both defect
+        action_matrix = np.zeros((num_edges, num_rounds), dtype=int)
+        for t, round_data in enumerate(evolution_data):
+            for edge, (a1, a2) in round_data["edge_actions"].items():
+                i = edge_idx[edge]
+                if a1 == "COOPERATE" and a2 == "COOPERATE":
+                    action_matrix[i, t] = 0
+                elif (a1 == "COOPERATE" and a2 == "DEFECT") or (a1 == "DEFECT" and a2 == "COOPERATE"):
+                    action_matrix[i, t] = 1
+                elif a1 == "DEFECT" and a2 == "DEFECT":
+                    action_matrix[i, t] = 2
+        # Custom colormap: 0-light green, 1-light yellow, 2-light red
+        cmap = ListedColormap(["#6ef06e", "#faec75", "#fb6161"])
+        plt.figure(figsize=(max(10, num_rounds/2), max(6, num_edges/10)))
+        im = plt.imshow(action_matrix, aspect="auto", cmap=cmap)
+        cbar = plt.colorbar(im, ticks=[0,1,2], label="Action Type")
+        cbar.ax.set_yticklabels(["Both Cooperate", "Single Cooperate", "Both Defect"])
+        plt.yticks(range(num_edges), all_edges, fontsize=7)
+        plt.xticks(range(num_rounds), [f"R{r+1}" for r in range(num_rounds)], fontsize=7)
+        plt.xlabel("Round")
+        plt.ylabel("Edge")
+        plt.title(title)
+        plt.tight_layout()
+
+        return str(self.save_plot(filename))
+
+
     def plot_network_snapshot(self, G, personality_assignment, title="", filename="", legend_labels=None, edge_actions=None):
         """Plot network snapshot, node color by personality type, edge color by action"""
         # MBTI type color scheme
@@ -446,7 +494,6 @@ class NetworkGamePlotter(BasePlotter):
             '#ffeb99',  # ESTP
             '#ffe066',  # ESFP
         ]
-        from src.agents.mbti_personalities import get_all_mbti_types
         mbti_types = list(get_all_mbti_types())
         mbti_color_map = {mbti_type.value: color_palette[i % len(color_palette)] for i, mbti_type in enumerate(mbti_types)}
         node_colors = [
@@ -801,3 +848,4 @@ class RadarPlotter:
         self.logger.info(f"Plot saved to: {filepath}")
         
         return str(filepath)
+

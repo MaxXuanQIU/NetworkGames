@@ -379,12 +379,12 @@ class NetworkVisualizer:
 
 # Predefined network configurations
 PREDEFINED_NETWORKS = {
-    "regular_4": NetworkConfig(NetworkType.REGULAR, 50, k=4),
-    "small_world_0.1": NetworkConfig(NetworkType.SMALL_WORLD, 50, k=4, p=0.1),
-    "small_world_0.5": NetworkConfig(NetworkType.SMALL_WORLD, 50, k=4, p=0.5),
-    "random_0.1": NetworkConfig(NetworkType.RANDOM, 50, edge_probability=0.1),
-    "scale_free": NetworkConfig(NetworkType.SCALE_FREE, 50, m=2),
-    "complete": NetworkConfig(NetworkType.COMPLETE, 20),  # Too many nodes for complete network is not recommended
-    "star": NetworkConfig(NetworkType.STAR, 20),
-    "ring": NetworkConfig(NetworkType.RING, 50)
+    "regular_4": NetworkConfig(NetworkType.REGULAR, num_nodes=50, k=4),
+    "small_world_0.1": NetworkConfig(NetworkType.SMALL_WORLD, num_nodes=50, k=4, p=0.1),
+    "small_world_0.5": NetworkConfig(NetworkType.SMALL_WORLD, num_nodes=50, k=4, p=0.5),
+    "random_0.1": NetworkConfig(NetworkType.RANDOM, num_nodes=50, edge_probability=0.1),
+    "scale_free": NetworkConfig(NetworkType.SCALE_FREE, num_nodes=50, m=2),
+    "complete": NetworkConfig(NetworkType.COMPLETE, num_nodes=20),  # Too many nodes for complete network is not recommended
+    "star": NetworkConfig(NetworkType.STAR, num_nodes=20),
+    "ring": NetworkConfig(NetworkType.RING, num_nodes=50)
 }
