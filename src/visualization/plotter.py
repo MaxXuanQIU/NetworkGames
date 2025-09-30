@@ -549,62 +549,78 @@ class NetworkGamePlotter(BasePlotter):
                               title: str = "Network Comparison",
                               filename: str = "network_comparison") -> str:
         """Plot network comparison"""
-        fig, axes = plt.subplots(2, 3, figsize=(9, 12))
-        
+        fig, axes = plt.subplots(2, 4, figsize=(12, 12))
+
         # Extract data
         network_names = list(network_comparison.keys())
-        cooperation_rates = [network_comparison[name].get('avg_final_cooperation_rate', 0) for name in network_names]
+        cooperation_rates = [network_comparison[name].get('final_cooperation_rate', 0) for name in network_names]
         clustering_coeffs = [network_comparison[name].get('clustering_coefficient', 0) for name in network_names]
         avg_path_lengths = [network_comparison[name].get('avg_path_length', 0) for name in network_names]
         densities = [network_comparison[name].get('density', 0) for name in network_names]
         num_nodes = [network_comparison[name].get('num_nodes', 0) for name in network_names]
         num_edges = [network_comparison[name].get('num_edges', 0) for name in network_names]
-        
-        # Cooperation rate comparison
-        axes[0, 0].bar(network_names, cooperation_rates, color='skyblue')
-        axes[0, 0].set_title('Final Cooperation Rate by Network Type')
-        axes[0, 0].set_ylabel('Cooperation Rate')
+        overall_avg_cooperation_rates = [network_comparison[name].get('overall_avg_cooperation_rate', 0) for name in network_names]
+        overall_avg_payoffs = [network_comparison[name].get('overall_avg_payoff', 0) for name in network_names]
+
+        # Number of nodes comparison
+        axes[0, 0].bar(network_names, num_nodes, color='deepskyblue')
+        axes[0, 0].set_title('Number of Nodes')
+        axes[0, 0].set_ylabel('Num Nodes')
         axes[0, 0].tick_params(axis='x', rotation=45)
         axes[0, 0].grid(True, alpha=0.3, axis='y')
-        
-        # Clustering coefficient comparison
-        axes[0, 1].bar(network_names, clustering_coeffs, color='lightcoral')
-        axes[0, 1].set_title('Clustering Coefficient by Network Type')
-        axes[0, 1].set_ylabel('Clustering Coefficient')
+
+        # Number of edges comparison
+        axes[0, 1].bar(network_names, num_edges, color='salmon')
+        axes[0, 1].set_title('Number of Edges')
+        axes[0, 1].set_ylabel('Num Edges')
         axes[0, 1].tick_params(axis='x', rotation=45)
         axes[0, 1].grid(True, alpha=0.3, axis='y')
-        
-        # Average path length comparison
-        axes[0, 2].bar(network_names, avg_path_lengths, color='lightgreen')
-        axes[0, 2].set_title('Average Path Length by Network Type')
-        axes[0, 2].set_ylabel('Average Path Length')
+
+        # Clustering coefficient comparison
+        axes[0, 2].bar(network_names, clustering_coeffs, color='lightgreen')
+        axes[0, 2].set_title('Clustering Coefficient')
+        axes[0, 2].set_ylabel('Clustering Coefficient')
         axes[0, 2].tick_params(axis='x', rotation=45)
         axes[0, 2].grid(True, alpha=0.3, axis='y')
-        
+
+        # Average path length comparison
+        axes[0, 3].bar(network_names, avg_path_lengths, color='lightcoral')
+        axes[0, 3].set_title('Average Path Length')
+        axes[0, 3].set_ylabel('Average Path Length')
+        axes[0, 3].tick_params(axis='x', rotation=45)
+        axes[0, 3].grid(True, alpha=0.3, axis='y')
+
         # Density comparison
         axes[1, 0].bar(network_names, densities, color='gold')
-        axes[1, 0].set_title('Network Density by Network Type')
+        axes[1, 0].set_title('Network Density')
         axes[1, 0].set_ylabel('Density')
         axes[1, 0].tick_params(axis='x', rotation=45)
         axes[1, 0].grid(True, alpha=0.3, axis='y')
-        
-        # Number of nodes comparison
-        axes[1, 1].bar(network_names, num_nodes, color='deepskyblue')
-        axes[1, 1].set_title('Number of Nodes by Network Type')
-        axes[1, 1].set_ylabel('Num Nodes')
+
+        # Final Cooperation Rate comparison
+        axes[1, 1].bar(network_names, cooperation_rates, color='skyblue')
+        axes[1, 1].set_title('Final Cooperation Rate')
+        axes[1, 1].set_ylabel('Cooperation Rate')
         axes[1, 1].tick_params(axis='x', rotation=45)
         axes[1, 1].grid(True, alpha=0.3, axis='y')
-        
-        # Number of edges comparison
-        axes[1, 2].bar(network_names, num_edges, color='salmon')
-        axes[1, 2].set_title('Number of Edges by Network Type')
-        axes[1, 2].set_ylabel('Num Edges')
+
+        # Overall average cooperation rate
+        axes[1, 2].bar(network_names, overall_avg_cooperation_rates, color='mediumorchid')
+        axes[1, 2].set_title('Overall Avg Cooperation Rate')
+        axes[1, 2].set_ylabel('Avg Cooperation Rate')
         axes[1, 2].tick_params(axis='x', rotation=45)
         axes[1, 2].grid(True, alpha=0.3, axis='y')
-        
+
+        # Overall average payoff
+        axes[1, 3].bar(network_names, overall_avg_payoffs, color='darkorange')
+        axes[1, 3].set_title('Overall Avg Payoff')
+        axes[1, 3].set_ylabel('Avg Payoff')
+        axes[1, 3].tick_params(axis='x', rotation=45)
+        axes[1, 3].grid(True, alpha=0.3, axis='y')
+
         plt.suptitle(title, fontsize=16, fontweight='bold')
         plt.tight_layout()
-        
+
         return str(self.save_plot(filename))
 
 

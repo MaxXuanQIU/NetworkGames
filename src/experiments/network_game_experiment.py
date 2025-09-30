@@ -381,6 +381,8 @@ class NetworkGameExperiment:
         for network_type, scenarios in all_results.items():
             # Calculate metrics for this network type
             final_cooperation_rates = []
+            all_cooperation_rates = []
+            all_avg_payoffs = []
             
             first_scenario = next(iter(scenarios.values()))
             G = first_scenario["network"]
@@ -397,9 +399,14 @@ class NetworkGameExperiment:
                 if evolution_data:
                     final_data = evolution_data[-1]
                     final_cooperation_rates.append(final_data["cooperation_rate"])
+                    # Collect all rounds' cooperation rates and avg_payoff
+                    all_cooperation_rates.extend([rd["cooperation_rate"] for rd in evolution_data])
+                    all_avg_payoffs.extend([rd["avg_payoff"] for rd in evolution_data])
             
             network_metrics[network_type] = {
-                "avg_final_cooperation_rate": np.mean(final_cooperation_rates) if final_cooperation_rates else 0,
+                "final_cooperation_rate": np.mean(final_cooperation_rates) if final_cooperation_rates else 0,
+                "overall_avg_cooperation_rate": np.mean(all_cooperation_rates) if all_cooperation_rates else 0,
+                "overall_avg_payoff": np.mean(all_avg_payoffs) if all_avg_payoffs else 0,
                 "clustering_coefficient": clustering_coefficient,
                 "avg_path_length": avg_path_length,
                 "num_components": num_components,

@@ -45,8 +45,6 @@ network_game_config:
   - random
   personality_scenarios:
   - uniform
-  - single_ENTJ
-  - clustered
   save_cooperation_metrics: true
   save_network_evolution: true
 output_dir: results
