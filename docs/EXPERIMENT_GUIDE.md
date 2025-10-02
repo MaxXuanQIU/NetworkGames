@@ -18,7 +18,7 @@ python main.py --create-configs
 
 ```bash
 # 使用Mock LLM进行快速测试
-python main.py --experiment pair_game --config configs/quick_test.yaml
+python main.py --experiment pair_game --config configs/quick_test_pair_game.yaml
 ```
 
 ## 实验类型
@@ -365,7 +365,7 @@ def cached_llm_response(prompt_hash):
 python main.py --experiment pair_game --log-level DEBUG
 
 # 使用Mock LLM进行快速测试
-python main.py --experiment pair_game --config configs/quick_test.yaml
+python main.py --experiment pair_game --config configs/quick_test_pair_game.yaml
 ```
 
 ### 性能监控

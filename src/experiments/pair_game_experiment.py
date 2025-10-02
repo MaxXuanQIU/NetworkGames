@@ -168,18 +168,10 @@ class PairGameExperiment:
                 history.results, 
                 player1_type.value
             )
-            
-            # Get LLM decisions
-            response1 = await self.llm_manager.generate_response(
-                "default", prompt1
-            )
-            response2 = await self.llm_manager.generate_response(
-                "default", prompt2
-            )
-            
-            # Parse decisions
-            action1 = self._parse_action(response1.content)
-            action2 = self._parse_action(response2.content)
+                        
+            # Get LLM actions
+            action1 = await self._get_llm_action(prompt1, "player1")
+            action2 = await self._get_llm_action(prompt2, "player2")
             
             # Play game round
             result = self.game.play_round(action1, action2, round_num)
@@ -187,17 +179,27 @@ class PairGameExperiment:
         
         return history
     
+    async def _get_llm_action(self, prompt: str, player_name: str, max_retries: int = 3) -> Action:
+        """Get LLM action with automatic retry on parse failure"""
+        for attempt in range(max_retries):
+            response = await self.llm_manager.generate_response("default", prompt, **self.config.llm.kwargs)
+            action = self._parse_action(response.content)
+            if action is not None:
+                return action
+            self.logger.warning(
+                f"Parse {player_name} action failed (attempt {attempt+1}): Unable to parse '{response.content}'. Retrying..."
+            )
+        raise ValueError(f"Failed to parse LLM response for {player_name} after {max_retries} attempts.")
+
     def _parse_action(self, response: str) -> Action:
         """Parse LLM response to game action"""
         response = response.strip().upper()
-        
         if "COOPERATE" in response:
             return Action.COOPERATE
         elif "DEFECT" in response:
             return Action.DEFECT
         else:
-            # If unable to parse, raise error
-            raise ValueError(f"Unable to parse LLM response: {response}")
+            return None
  
     def _parse_payoff_matrix(self, matrix_cfg: dict) -> dict:
         """Convert yaml-configured payoff_matrix to internal format"""

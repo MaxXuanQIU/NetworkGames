@@ -11,7 +11,7 @@ from typing import Dict, List, Tuple, Any, Optional
 import logging
 from pathlib import Path
 import json
-from tqdm import tqdm
+import tqdm
 import random
 from collections import defaultdict
 from scipy.stats import linregress
@@ -211,11 +211,14 @@ class NetworkGameExperiment:
         pair_histories = defaultdict(list)
         node_payoffs = {node: 0.0 for node in G.nodes()}
 
-        for round_num in range(1, self.config.game.num_rounds + 1):
-            self.logger.info(f"Running round {round_num}/{self.config.game.num_rounds}")
+        num_rounds = self.config.game.num_rounds
+        pbar = tqdm.tqdm(range(1, num_rounds + 1), desc="Network game rounds")
+
+        for round_num in pbar:
+            self.logger.info(f"Running round {round_num}/{num_rounds}")
             round_payoffs = {node: 0.0 for node in G.nodes()}
-            round_actions = {node: {} for node in G.nodes()}  # node -> neighbor -> action
-            edge_actions = {}  # Record actions for each edge
+            round_actions = {node: {} for node in G.nodes()}
+            edge_actions = {}
 
             # Decision and game
             for node in G.nodes():
@@ -228,8 +231,7 @@ class NetworkGameExperiment:
                         history,
                         personality_assignment[neighbor].value
                     )
-                    response = await self.llm_manager.generate_response("default", prompt)
-                    action = self._parse_action(response.content)
+                    action = await self._get_llm_action(prompt, f"node_{node}")
                     round_actions[node][neighbor] = action
 
             # Play all games and accumulate payoffs
@@ -243,7 +245,6 @@ class NetworkGameExperiment:
                         round_payoffs[neighbor] += result.player2_payoff
                         pair_key = (node, neighbor)
                         pair_histories[tuple(sorted(pair_key))].append(result)
-                        # Record edge actions
                         edge_actions[(node, neighbor)] = (action1, action2)
 
             # Record round data
@@ -258,15 +259,27 @@ class NetworkGameExperiment:
 
         return evolution_data
 
+    async def _get_llm_action(self, prompt: str, player_name: str, max_retries: int = 3) -> Action:
+        """Get LLM action with automatic retry on parse failure"""
+        for attempt in range(max_retries):
+            response = await self.llm_manager.generate_response("default", prompt, **self.config.llm.kwargs)
+            action = self._parse_action(response.content)
+            if action is not None:
+                return action
+            self.logger.warning(
+                f"Parse {player_name} action failed (attempt {attempt+1}): Unable to parse '{response.content}'. Retrying..."
+            )
+        raise ValueError(f"Failed to parse LLM response for {player_name} after {max_retries} attempts.")
+
     def _parse_action(self, response: str) -> Action:
-        """Parse LLM response to game action (consistent with two-player game)"""
+        """Parse LLM response to game action"""
         response = response.strip().upper()
-        if "COOPERATE" in response or "合作" in response:
+        if "COOPERATE" in response:
             return Action.COOPERATE
-        if "DEFECT" in response or "背叛" in response:
+        elif "DEFECT" in response:
             return Action.DEFECT
-        # Raise error if cannot parse
-        raise ValueError(f"Cannot parse LLM response: {response}")
+        else:
+            return None
 
     def _parse_payoff_matrix(self, matrix_cfg: dict) -> dict:
         """Convert payoff_matrix from yaml config to internal format"""

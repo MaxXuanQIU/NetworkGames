@@ -58,7 +58,7 @@ python main.py --create-configs
 
 ```bash
 # 使用Mock LLM进行快速测试
-python main.py --experiment pair_game --config configs/quick_test.yaml
+python main.py --experiment pair_game --config configs/quick_test_pair_game.yaml
 ```
 
 ### 4. 运行完整实验
@@ -295,7 +295,7 @@ for config in configs:
 python main.py --experiment pair_game --log-level DEBUG
 
 # 使用Mock LLM进行快速测试
-python main.py --experiment pair_game --config configs/quick_test.yaml
+python main.py --experiment pair_game --config configs/quick_test_pair_game.yaml
 ```
 
 ## 贡献指南

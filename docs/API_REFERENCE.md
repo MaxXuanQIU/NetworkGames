@@ -39,7 +39,7 @@ llm_manager = LLMManager()
 # 添加LLM实例
 llm = LLMFactory.create_llm(
     provider=LLMProvider.OPENAI,
-    model_name="gpt-3.5-turbo",
+    model_name="gpt-5-nano",
     api_key="your-api-key"
 )
 llm_manager.add_llm("default", llm)
@@ -222,7 +222,7 @@ experiments = result_manager.list_experiments()
 
 ```bash
 # 使用Mock LLM进行快速测试
-python main.py --experiment pair_game --config configs/quick_test.yaml
+python main.py --experiment pair_game --config configs/quick_test_pair_game.yaml
 
 # 运行两人博弈实验
 python main.py --experiment pair_game --config configs/pair_game.yaml
@@ -258,7 +258,7 @@ description: "16x16 MBTI personality matrix in repeated prisoner's dilemma"
 
 llm:
   provider: "openai"
-  model_name: "gpt-3.5-turbo"
+  model_name: "gpt-5-nano"
   api_key: "your-api-key"
   temperature: 0.7
 

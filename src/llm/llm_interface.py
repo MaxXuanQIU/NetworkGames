@@ -32,11 +32,11 @@ class LLMResponse:
     
     def is_cooperate(self) -> bool:
         """Determine if the response is cooperation"""
-        return self.content.upper() in ["COOPERATE", "COOPERATION", "合作"]
+        return self.content.upper() in ["COOPERATE", "COOPERATION"]
     
     def is_defect(self) -> bool:
         """Determine if the response is defection"""
-        return self.content.upper() in ["DEFECT", "DEFECTION", "背叛"]
+        return self.content.upper() in ["DEFECT", "DEFECTION"]
     
     def is_valid_action(self) -> bool:
         """Determine if the response is a valid game action"""
@@ -78,7 +78,7 @@ class BaseLLMInterface(ABC):
 class OpenAIInterface(BaseLLMInterface):
     """OpenAI interface implementation"""
     
-    def __init__(self, model_name: str = "gpt-3.5-turbo", api_key: str = None, **kwargs):
+    def __init__(self, model_name: str = "gpt-5-nano", api_key: str = None, **kwargs):
         super().__init__(model_name, api_key, **kwargs)
         try:
             import openai
@@ -95,8 +95,6 @@ class OpenAIInterface(BaseLLMInterface):
             response = await self.client.chat.completions.create(
                 model=self.model_name,
                 messages=[{"role": "user", "content": prompt}],
-                max_tokens=50,  # Limit output length
-                temperature=kwargs.get("temperature", 0.7),
                 **self.kwargs
             )
             
@@ -148,7 +146,7 @@ class AnthropicInterface(BaseLLMInterface):
         try:
             response = await self.client.messages.create(
                 model=self.model_name,
-                max_tokens=50,
+                max_tokens=256, # Limit output length
                 messages=[{"role": "user", "content": prompt}],
                 temperature=kwargs.get("temperature", 0.7),
                 **self.kwargs
@@ -203,7 +201,7 @@ class GoogleInterface(BaseLLMInterface):
             response = await self.model.generate_content_async(
                 prompt,
                 generation_config={
-                    "max_output_tokens": 50,
+                    "max_output_tokens": 256,  # Limit output length
                     "temperature": kwargs.get("temperature", 0.7),
                     **self.kwargs
                 }

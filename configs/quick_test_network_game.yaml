@@ -19,17 +19,25 @@ game:
       - 1
   random_seed: 42
 llm:
-  api_key: 
-  model_name: gpt-5-nano
-  provider: openai
+  api_key: null
   kwargs:
-    temperature: 1
+    response_delay: 0
+  max_tokens: 50
+  model_name: mock-model
+  provider: mock
+  temperature: 0.7
+  timeout: 30
 name: MBTI Network Game Experiment
 network_game_config:
   network_types:
+  - regular
+  - small_world_0.1
   - small_world_0.5
+  - random
   personality_scenarios:
   - uniform
+  - single_ENTJ
+  - clustered
   save_cooperation_metrics: true
   save_network_evolution: true
 output_dir: results
