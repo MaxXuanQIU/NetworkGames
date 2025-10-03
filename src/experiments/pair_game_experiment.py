@@ -92,47 +92,63 @@ class PairGameExperiment:
         
         # Create progress bar
         total_combinations = 16 * 16
-        pbar = tqdm(total=total_combinations, desc="Running matrix experiment")
+        pbar = tqdm(total=total_combinations // 2 + 8, desc="Running matrix experiment")  # 136 unique pairs (including 16 self-pairs)
         
         for i, player1_type in enumerate(self.mbti_types):
             for j, player2_type in enumerate(self.mbti_types):
-                # Run repeated experiments
-                cooperation_rates = []
-                total_payoffs = []
+                if j < i:
+                    continue  # Only run each unordered pair once
+                cooperation_rates_1, cooperation_rates_2 = [], []
+                total_payoffs_1, total_payoffs_2 = [], []
                 
                 for rep in range(self.config.game.num_repetitions):
                     # Run single experiment
                     history = await self._run_single_game(player1_type, player2_type)
-                    
-                    cooperation_rates.append(history.player1_cooperation_rate)
-                    total_payoffs.append(history.player1_total_payoff)
+                    cooperation_rates_1.append(history.player1_cooperation_rate)
+                    cooperation_rates_2.append(history.player2_cooperation_rate)
+                    total_payoffs_1.append(history.player1_total_payoff)
+                    total_payoffs_2.append(history.player2_total_payoff)
                 
-                # Calculate statistics
-                mean_cooperation = np.mean(cooperation_rates)
-                std_cooperation = np.std(cooperation_rates)
-                mean_payoff = np.mean(total_payoffs)
+                # Statistics for player1 vs player2
+                mean_coop_1 = np.mean(cooperation_rates_1)
+                std_coop_1 = np.std(cooperation_rates_1)
+                mean_payoff_1 = np.mean(total_payoffs_1)
+                # Statistics for player2 vs player1
+                mean_coop_2 = np.mean(cooperation_rates_2)
+                std_coop_2 = np.std(cooperation_rates_2)
+                mean_payoff_2 = np.mean(total_payoffs_2)
                 
-                # Update matrices
-                cooperation_matrix[i, j] = mean_cooperation
-                payoff_matrix[i, j] = mean_payoff
-                std_matrix[i, j] = std_cooperation
+                # Fill matrices
+                cooperation_matrix[i, j] = mean_coop_1
+                payoff_matrix[i, j] = mean_payoff_1
+                std_matrix[i, j] = std_coop_1
+                cooperation_matrix[j, i] = mean_coop_2
+                payoff_matrix[j, i] = mean_payoff_2
+                std_matrix[j, i] = std_coop_2
                 
-                # Store detailed results
+                # Store detailed results for both directions
                 detailed_results[f"{player1_type.value}_{player2_type.value}"] = {
                     "player1_type": player1_type.value,
                     "player2_type": player2_type.value,
-                    "cooperation_rates": cooperation_rates,
-                    "payoffs": total_payoffs,
-                    "mean_cooperation": mean_cooperation,
-                    "std_cooperation": std_cooperation,
-                    "mean_payoff": mean_payoff,
-                    "std_payoff": np.std(total_payoffs)
+                    "cooperation_rates": cooperation_rates_1,
+                    "payoffs": total_payoffs_1,
+                    "mean_cooperation": mean_coop_1,
+                    "std_cooperation": std_coop_1,
+                    "mean_payoff": mean_payoff_1,
+                    "std_payoff": np.std(total_payoffs_1)
                 }
-                
+                detailed_results[f"{player2_type.value}_{player1_type.value}"] = {
+                    "player1_type": player2_type.value,
+                    "player2_type": player1_type.value,
+                    "cooperation_rates": cooperation_rates_2,
+                    "payoffs": total_payoffs_2,
+                    "mean_cooperation": mean_coop_2,
+                    "std_cooperation": std_coop_2,
+                    "mean_payoff": mean_payoff_2,
+                    "std_payoff": np.std(total_payoffs_2)
+                }
                 pbar.update(1)
-        
         pbar.close()
-        
         return {
             "cooperation_matrix": cooperation_matrix,
             "payoff_matrix": payoff_matrix,
