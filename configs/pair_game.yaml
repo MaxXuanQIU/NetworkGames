@@ -2,7 +2,7 @@ description: 16x16 MBTI personality matrix in repeated prisoner's dilemma
 experiment_type: pair_game
 game:
   num_repetitions: 1
-  num_rounds: 1
+  num_rounds: 20
   payoff_matrix:
     COOPERATE:
       COOPERATE:
@@ -21,8 +21,6 @@ game:
   random_seed: 42
 llm:
   api_key: 
-  model_name: gpt-5-nano
-  provider: openai
   kwargs:
     temperature: 1
 name: MBTI Pair Game Experiment

@@ -229,7 +229,8 @@ class NetworkGameExperiment:
                     history = pair_histories[pair_key]
                     prompt = personality.get_decision_prompt(
                         history,
-                        personality_assignment[neighbor].value
+                        personality_assignment[neighbor].value,
+                        is_player1=(node <= neighbor)
                     )
                     action = await self._get_llm_action(prompt, f"node_{node}")
                     round_actions[node][neighbor] = action
@@ -633,6 +634,7 @@ async def run_network_game_experiment(config_file: str = "configs/network_game.y
 if __name__ == "__main__":
     # Set logging
     logging.basicConfig(level=logging.INFO)
+    logging.getLogger("httpx").setLevel(logging.WARNING) # Reduce httpx logging noise
     
     # Run experiment
     asyncio.run(run_network_game_experiment())

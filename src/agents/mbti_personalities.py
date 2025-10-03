@@ -349,16 +349,20 @@ Please make game decisions with these personality traits."""
         }
         return templates[self.mbti_type]
     
-    def get_decision_prompt(self, game_history: List[Dict], opponent_type: str = None) -> str:
+    def get_decision_prompt(self, game_history: List, opponent_type: str = None, is_player1: bool = True) -> str:
         """Generate a decision prompt for a specific game situation"""
         base_prompt = self.prompt_template
-        
+
         # Add game history information
         if game_history:
             history_text = "Game history:\n"
             for i, round_data in enumerate(game_history[-5:], 1):  # Show only the last 5 rounds
-                my_action = round_data.player1_action.value if hasattr(round_data, 'player1_action') else 'Unknown'
-                opponent_action = round_data.player2_action.value if hasattr(round_data, 'player2_action') else 'Unknown'
+                if is_player1:
+                    my_action = round_data.player1_action.value if hasattr(round_data, 'player1_action') else 'Unknown'
+                    opponent_action = round_data.player2_action.value if hasattr(round_data, 'player2_action') else 'Unknown'
+                else:
+                    my_action = round_data.player2_action.value if hasattr(round_data, 'player2_action') else 'Unknown'
+                    opponent_action = round_data.player1_action.value if hasattr(round_data, 'player1_action') else 'Unknown'
                 history_text += f"Round {i}: You chose {my_action}, opponent chose {opponent_action}\n"
         else:
             history_text = "This is the first round of the game."
@@ -373,7 +377,7 @@ Please make game decisions with these personality traits."""
 
 Now please make your decision: COOPERATE or DEFECT?
 Please answer only COOPERATE or DEFECT, do not explain your reason."""
-        
+
         return full_prompt
 
 

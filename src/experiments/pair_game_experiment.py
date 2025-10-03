@@ -162,11 +162,13 @@ class PairGameExperiment:
             # Generate decision prompt
             prompt1 = personality1.get_decision_prompt(
                 history.results, 
-                player2_type.value
+                player2_type.value,
+                is_player1=True
             )
             prompt2 = personality2.get_decision_prompt(
                 history.results, 
-                player1_type.value
+                player1_type.value,
+                is_player1=False
             )
                         
             # Get LLM actions
@@ -416,6 +418,7 @@ async def run_pair_game_experiment(config_file: str = "configs/pair_game.yaml"):
 if __name__ == "__main__":
     # Set logging
     logging.basicConfig(level=logging.INFO)
+    logging.getLogger("httpx").setLevel(logging.WARNING) # Reduce httpx logging noise
     
     # Run experiment
     asyncio.run(run_pair_game_experiment())
