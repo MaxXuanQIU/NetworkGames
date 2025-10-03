@@ -92,62 +92,82 @@ class PairGameExperiment:
         
         # Create progress bar
         total_combinations = 16 * 16
-        pbar = tqdm(total=total_combinations // 2 + 8, desc="Running matrix experiment")  # 136 unique pairs (including 16 self-pairs)
-        
+        pbar = tqdm(total=total_combinations // 2 + 8, desc="Running matrix experiment")
+
+        # Define semaphore for limiting concurrency
+        semaphore = asyncio.Semaphore(10)
+
+        # Construct all game tasks
+        tasks = []
+        pair_indices = []
         for i, player1_type in enumerate(self.mbti_types):
             for j, player2_type in enumerate(self.mbti_types):
                 if j < i:
-                    continue  # Only run each unordered pair once
-                cooperation_rates_1, cooperation_rates_2 = [], []
-                total_payoffs_1, total_payoffs_2 = [], []
-                
-                for rep in range(self.config.game.num_repetitions):
-                    # Run single experiment
+                    continue  # Only run each unique pair once
+                pair_indices.append((i, j, player1_type, player2_type))
+
+        async def run_and_collect(i, j, player1_type, player2_type):
+            cooperation_rates_1, cooperation_rates_2 = [], []
+            total_payoffs_1, total_payoffs_2 = [], []
+            for rep in range(self.config.game.num_repetitions):
+                async with semaphore:
                     history = await self._run_single_game(player1_type, player2_type)
-                    cooperation_rates_1.append(history.player1_cooperation_rate)
-                    cooperation_rates_2.append(history.player2_cooperation_rate)
-                    total_payoffs_1.append(history.player1_total_payoff)
-                    total_payoffs_2.append(history.player2_total_payoff)
-                
-                # Statistics for player1 vs player2
-                mean_coop_1 = np.mean(cooperation_rates_1)
-                std_coop_1 = np.std(cooperation_rates_1)
-                mean_payoff_1 = np.mean(total_payoffs_1)
-                # Statistics for player2 vs player1
-                mean_coop_2 = np.mean(cooperation_rates_2)
-                std_coop_2 = np.std(cooperation_rates_2)
-                mean_payoff_2 = np.mean(total_payoffs_2)
-                
-                # Fill matrices
-                cooperation_matrix[i, j] = mean_coop_1
-                payoff_matrix[i, j] = mean_payoff_1
-                std_matrix[i, j] = std_coop_1
-                cooperation_matrix[j, i] = mean_coop_2
-                payoff_matrix[j, i] = mean_payoff_2
-                std_matrix[j, i] = std_coop_2
-                
-                # Store detailed results for both directions
-                detailed_results[f"{player1_type.value}_{player2_type.value}"] = {
-                    "player1_type": player1_type.value,
-                    "player2_type": player2_type.value,
-                    "cooperation_rates": cooperation_rates_1,
-                    "payoffs": total_payoffs_1,
-                    "mean_cooperation": mean_coop_1,
-                    "std_cooperation": std_coop_1,
-                    "mean_payoff": mean_payoff_1,
-                    "std_payoff": np.std(total_payoffs_1)
-                }
-                detailed_results[f"{player2_type.value}_{player1_type.value}"] = {
-                    "player1_type": player2_type.value,
-                    "player2_type": player1_type.value,
-                    "cooperation_rates": cooperation_rates_2,
-                    "payoffs": total_payoffs_2,
-                    "mean_cooperation": mean_coop_2,
-                    "std_cooperation": std_coop_2,
-                    "mean_payoff": mean_payoff_2,
-                    "std_payoff": np.std(total_payoffs_2)
-                }
-                pbar.update(1)
+                cooperation_rates_1.append(history.player1_cooperation_rate)
+                cooperation_rates_2.append(history.player2_cooperation_rate)
+                total_payoffs_1.append(history.player1_total_payoff)
+                total_payoffs_2.append(history.player2_total_payoff)
+            # Statistics
+            mean_coop_1 = np.mean(cooperation_rates_1)
+            std_coop_1 = np.std(cooperation_rates_1)
+            mean_payoff_1 = np.mean(total_payoffs_1)
+            mean_coop_2 = np.mean(cooperation_rates_2)
+            std_coop_2 = np.std(cooperation_rates_2)
+            mean_payoff_2 = np.mean(total_payoffs_2)
+            # Return results
+            return (i, j, player1_type, player2_type,
+                    mean_coop_1, std_coop_1, mean_payoff_1, cooperation_rates_1, total_payoffs_1,
+                    mean_coop_2, std_coop_2, mean_payoff_2, cooperation_rates_2, total_payoffs_2)
+
+        # Launch all pair games concurrently
+        for i, j, player1_type, player2_type in pair_indices:
+            tasks.append(run_and_collect(i, j, player1_type, player2_type))
+
+        # Collect results in order
+        for fut in asyncio.as_completed(tasks):
+            res = await fut
+            (i, j, player1_type, player2_type,
+             mean_coop_1, std_coop_1, mean_payoff_1, cooperation_rates_1, total_payoffs_1,
+             mean_coop_2, std_coop_2, mean_payoff_2, cooperation_rates_2, total_payoffs_2) = res
+
+            cooperation_matrix[i, j] = mean_coop_1
+            payoff_matrix[i, j] = mean_payoff_1
+            std_matrix[i, j] = std_coop_1
+            cooperation_matrix[j, i] = mean_coop_2
+            payoff_matrix[j, i] = mean_payoff_2
+            std_matrix[j, i] = std_coop_2
+
+            # Store detailed results for both directions
+            detailed_results[f"{player1_type.value}_{player2_type.value}"] = {
+                "player1_type": player1_type.value,
+                "player2_type": player2_type.value,
+                "cooperation_rates": cooperation_rates_1,
+                "payoffs": total_payoffs_1,
+                "mean_cooperation": mean_coop_1,
+                "std_cooperation": std_coop_1,
+                "mean_payoff": mean_payoff_1,
+                "std_payoff": np.std(total_payoffs_1)
+            }
+            detailed_results[f"{player2_type.value}_{player1_type.value}"] = {
+                "player1_type": player2_type.value,
+                "player2_type": player1_type.value,
+                "cooperation_rates": cooperation_rates_2,
+                "payoffs": total_payoffs_2,
+                "mean_cooperation": mean_coop_2,
+                "std_cooperation": std_coop_2,
+                "mean_payoff": mean_payoff_2,
+                "std_payoff": np.std(total_payoffs_2)
+            }
+            pbar.update(1)
         pbar.close()
         return {
             "cooperation_matrix": cooperation_matrix,
@@ -186,18 +206,17 @@ class PairGameExperiment:
                 player1_type.value,
                 is_player1=False
             )
-                        
-            # Get LLM actions
-            action1 = await self._get_llm_action(prompt1, "player1")
-            action2 = await self._get_llm_action(prompt2, "player2")
-            
-            # Play game round
+            # Get actions concurrently
+            action1, action2 = await asyncio.gather(
+                self._get_llm_action(prompt1, "player1"),
+                self._get_llm_action(prompt2, "player2")
+            )
             result = self.game.play_round(action1, action2, round_num)
             history.add_result(result)
-        
+
         return history
     
-    async def _get_llm_action(self, prompt: str, player_name: str, max_retries: int = 3) -> Action:
+    async def _get_llm_action(self, prompt: str, player_name: str, max_retries: int = 10) -> Action:
         """Get LLM action with automatic retry on parse failure"""
         for attempt in range(max_retries):
             response = await self.llm_manager.generate_response("default", prompt, **self.config.llm.kwargs)
@@ -207,6 +226,8 @@ class PairGameExperiment:
             self.logger.warning(
                 f"Parse {player_name} action failed (attempt {attempt+1}): Unable to parse '{response.content}'. Retrying..."
             )
+            sleep_time = 2 ** attempt
+            await asyncio.sleep(sleep_time)
         raise ValueError(f"Failed to parse LLM response for {player_name} after {max_retries} attempts.")
 
     def _parse_action(self, response: str) -> Action:

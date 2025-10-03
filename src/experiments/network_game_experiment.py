@@ -210,9 +210,11 @@ class NetworkGameExperiment:
         # Store history for each node pair: (node, neighbor) -> List[GameResult]
         pair_histories = defaultdict(list)
         node_payoffs = {node: 0.0 for node in G.nodes()}
-
         num_rounds = self.config.game.num_rounds
         pbar = tqdm.tqdm(range(1, num_rounds + 1), desc="Network game rounds")
+
+        # Create semaphore to limit max concurrency
+        semaphore = asyncio.Semaphore(10)
 
         for round_num in pbar:
             self.logger.info(f"Running round {round_num}/{num_rounds}")
@@ -220,10 +222,16 @@ class NetworkGameExperiment:
             round_actions = {node: {} for node in G.nodes()}
             edge_actions = {}
 
-            # Decision and game
+            # Collect all node decision tasks
+            node_tasks = []
+            node_neighbors = []
             for node in G.nodes():
                 neighbors = list(G.neighbors(node))
                 personality = self.personalities[personality_assignment[node]]
+                node_neighbors.append((node, neighbors, personality))
+            
+            async def get_actions_for_node(node, neighbors, personality):
+                actions = {}
                 for neighbor in neighbors:
                     pair_key = tuple(sorted((node, neighbor)))
                     history = pair_histories[pair_key]
@@ -232,8 +240,19 @@ class NetworkGameExperiment:
                         personality_assignment[neighbor].value,
                         is_player1=(node <= neighbor)
                     )
-                    action = await self._get_llm_action(prompt, f"node_{node}")
-                    round_actions[node][neighbor] = action
+                    async with semaphore:
+                        action = await self._get_llm_action(prompt, f"node_{node}")
+                    actions[neighbor] = action
+                return node, actions
+
+            # Run all node decision tasks concurrently
+            for node, neighbors, personality in node_neighbors:
+                node_tasks.append(get_actions_for_node(node, neighbors, personality))
+            node_results = await asyncio.gather(*node_tasks)
+
+            # Fill round_actions
+            for node, actions in node_results:
+                round_actions[node] = actions
 
             # Play all games and accumulate payoffs
             for node in G.nodes():
@@ -260,7 +279,7 @@ class NetworkGameExperiment:
 
         return evolution_data
 
-    async def _get_llm_action(self, prompt: str, player_name: str, max_retries: int = 3) -> Action:
+    async def _get_llm_action(self, prompt: str, player_name: str, max_retries: int = 10) -> Action:
         """Get LLM action with automatic retry on parse failure"""
         for attempt in range(max_retries):
             response = await self.llm_manager.generate_response("default", prompt, **self.config.llm.kwargs)
@@ -270,6 +289,8 @@ class NetworkGameExperiment:
             self.logger.warning(
                 f"Parse {player_name} action failed (attempt {attempt+1}): Unable to parse '{response.content}'. Retrying..."
             )
+            sleep_time = 2 ** attempt
+            await asyncio.sleep(sleep_time)
         raise ValueError(f"Failed to parse LLM response for {player_name} after {max_retries} attempts.")
 
     def _parse_action(self, response: str) -> Action:

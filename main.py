@@ -29,6 +29,7 @@ def setup_logging(level: str = "INFO"):
             logging.FileHandler('experiment.log')
         ]
     )
+    logging.getLogger("httpx").setLevel(logging.WARNING)  # Suppress httpx INFO logs
 
 
 def create_default_configs():
