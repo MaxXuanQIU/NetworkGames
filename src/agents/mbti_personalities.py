@@ -237,8 +237,16 @@ Please make game decisions with these personality traits."""
         }
         return templates[self.mbti_type]
     
-    def get_decision_prompt(self, game_history: List, opponent_type: str = None, is_player1: bool = True) -> str:
-        """Generate a decision prompt for a specific game situation"""
+    def get_decision_prompt(
+        self, 
+        game_history: List, 
+        opponent_type: str = None, 
+        is_player1: bool = True,
+        neighbor_stats: dict = None  # For network game context
+    ) -> str:
+        """
+        Generate a decision prompt for a specific game situation.
+        """
         base_prompt = self.prompt_template
 
         # Add game history information
@@ -257,11 +265,22 @@ Please make game decisions with these personality traits."""
         
         # Add opponent information
         opponent_info = f"\nOpponent personality type: {opponent_type}" if opponent_type else ""
-        
+
+        # Add neighbor statistics for network context
+        neighbor_info = ""
+        if neighbor_stats:
+            coop_rate = neighbor_stats.get("cooperation_rate", None)
+            majority_action = neighbor_stats.get("majority_action", None)
+            neighbor_info = "\nNetwork context:\n"
+            if coop_rate is not None:
+                neighbor_info += f"- Your neighbors' recent cooperation rate: {coop_rate:.1%}\n"
+            if majority_action is not None:
+                neighbor_info += f"- Most neighbors chose: {majority_action}\n"
+
         # Combine full prompt
         full_prompt = f"""{base_prompt}
 
-{history_text}{opponent_info}
+{history_text}{opponent_info}{neighbor_info}
 
 Now please make your decision: COOPERATE or DEFECT?
 Please answer only COOPERATE or DEFECT, do not explain your reason."""

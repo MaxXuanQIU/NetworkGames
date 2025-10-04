@@ -205,7 +205,7 @@ class NetworkGameExperiment:
         return personality_assignment
     
     async def _run_network_game(self, G: nx.Graph, personality_assignment: Dict[int, MBTIType]) -> List[Dict[str, Any]]:
-        """Run network game (each node makes decisions with each neighbor)"""
+        """Run network game (each node makes decisions with each neighbor, considering network context)"""
         evolution_data = []
         # Store history for each node pair: (node, neighbor) -> List[GameResult]
         pair_histories = defaultdict(list)
@@ -215,6 +215,9 @@ class NetworkGameExperiment:
 
         # Create semaphore to limit max concurrency
         semaphore = asyncio.Semaphore(10)
+
+        # Store history of actions of neighbors for context
+        node_neighbor_actions = {node: [] for node in G.nodes()}
 
         for round_num in pbar:
             self.logger.info(f"Running round {round_num}/{num_rounds}")
@@ -232,13 +235,27 @@ class NetworkGameExperiment:
             
             async def get_actions_for_node(node, neighbors, personality):
                 actions = {}
+                # Calculate neighbor statistics
+                neighbor_stats = {"cooperation_rate": None, "majority_action": None}
+                neighbor_actions = []
+                for neighbor in neighbors:
+                    # Get the neighbor's last action (from the previous round)
+                    if node_neighbor_actions[neighbor]:
+                        neighbor_actions.append(node_neighbor_actions[neighbor][-1])
+                if neighbor_actions:
+                    coop_count = sum(1 for a in neighbor_actions if a == Action.COOPERATE)
+                    neighbor_stats["cooperation_rate"] = coop_count / len(neighbor_actions)
+                    majority_action = Action.COOPERATE if coop_count >= len(neighbor_actions)/2 else Action.DEFECT
+                    neighbor_stats["majority_action"] = majority_action.value
+
                 for neighbor in neighbors:
                     pair_key = tuple(sorted((node, neighbor)))
                     history = pair_histories[pair_key]
                     prompt = personality.get_decision_prompt(
                         history,
                         personality_assignment[neighbor].value,
-                        is_player1=(node <= neighbor)
+                        is_player1=(node <= neighbor),
+                        neighbor_stats=neighbor_stats
                     )
                     async with semaphore:
                         action = await self._get_llm_action(prompt, f"node_{node}")
@@ -266,6 +283,9 @@ class NetworkGameExperiment:
                         pair_key = (node, neighbor)
                         pair_histories[tuple(sorted(pair_key))].append(result)
                         edge_actions[(node, neighbor)] = (action1, action2)
+                        # Update neighbor action history for next round context
+                        node_neighbor_actions[node].append(action1)
+                        node_neighbor_actions[neighbor].append(action2)
 
             # Record round data
             round_data = self._record_round_data(

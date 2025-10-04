@@ -31,13 +31,10 @@ name: MBTI Network Game Experiment
 network_game_config:
   network_types:
   - regular
-  - small_world_0.1
   - small_world_0.5
-  - random
+  - scale_free
   personality_scenarios:
   - uniform
-  - single_ENTJ
-  - clustered
   save_cooperation_metrics: true
   save_network_evolution: true
 output_dir: results

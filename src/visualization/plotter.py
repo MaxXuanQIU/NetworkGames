@@ -596,7 +596,7 @@ class NetworkGamePlotter(BasePlotter):
                               title: str = "Network Comparison",
                               filename: str = "network_comparison") -> str:
         """Plot network comparison"""
-        fig, axes = plt.subplots(2, 4, figsize=(12, 12))
+        fig, axes = plt.subplots(2, 4, figsize=(9, 12))
 
         # Extract data
         network_names = list(network_comparison.keys())
