@@ -474,7 +474,7 @@ class NetworkGamePlotter(BasePlotter):
 
 
     def plot_network_snapshot(self, G, personality_assignment, title="", filename="", legend_labels=None, edge_actions=None):
-        """Plot network snapshot, node color by personality type, edge color by action"""
+        """Plot network snapshot, node color by personality type, edge color by action, node label as degree"""
         # MBTI type color scheme
         color_palette = [
             '#9467bd',  # INTJ
@@ -526,6 +526,9 @@ class NetworkGamePlotter(BasePlotter):
         else:
             edge_color_list = ["gray"] * G.number_of_edges()
 
+        # Node labels: degree
+        node_labels = {node: G.degree[node] for node in G.nodes()}
+
         nx.draw(G, pos,
                 node_color=node_colors,
                 node_size=300,
@@ -533,28 +536,42 @@ class NetworkGamePlotter(BasePlotter):
                 width=2,
                 alpha=0.8,
                 with_labels=True,
+                labels=node_labels,
                 font_size=8)
 
         plt.title(title)
         plt.axis('off')
         plt.tight_layout()
 
-        # Add legend
+        # Add node (personality type) legend
         if legend_labels:
             legend_elements = [
-                Patch(facecolor=color, label=label)
-                for label, color in legend_labels.items()
+            Patch(facecolor=color, label=label)
+            for label, color in legend_labels.items()
             ]
-            plt.legend(handles=legend_elements, title="Personality Type", loc="center left", bbox_to_anchor=(1.02, 0.5), borderaxespad=0.)
+            node_legend = plt.legend(
+            handles=legend_elements,
+            title="Personality Type",
+            loc="center left",
+            bbox_to_anchor=(1.02, 0.5),
+            borderaxespad=0.
+            )
+            plt.gca().add_artist(node_legend)  # Ensure this legend stays
 
-        # Edge action legend
+        # Add edge action legend
         edge_legend = [
             Patch(facecolor="green", edgecolor="green", label="Both Cooperate"),
             Patch(facecolor="orange", edgecolor="orange", label="One Cooperate, One Defect"),
             Patch(facecolor="red", edgecolor="red", label="Both Defect"),
             Patch(facecolor="gray", edgecolor="gray", label="No Data"),
         ]
-        plt.legend(handles=legend_elements + edge_legend, title="Legend", loc="upper left", bbox_to_anchor=(1.02, 1.0), borderaxespad=0.)
+        plt.legend(
+            handles=edge_legend,
+            title="Edge Action",
+            loc="upper left",
+            bbox_to_anchor=(1.02, 0.9),
+            borderaxespad=0.
+        )
 
         return str(self.save_plot(filename))
     
@@ -664,6 +681,52 @@ class NetworkGamePlotter(BasePlotter):
         axes[1, 3].set_ylabel('Avg Payoff')
         axes[1, 3].tick_params(axis='x', rotation=45)
         axes[1, 3].grid(True, alpha=0.3, axis='y')
+
+        plt.suptitle(title, fontsize=16, fontweight='bold')
+        plt.tight_layout()
+
+        return str(self.save_plot(filename))
+
+    def plot_scenario_comparison(self, scenario_comparison: Dict[str, Dict[str, Any]],
+                                title: str = "Personality Scenario Comparison",
+                                filename: str = "scenario_comparison") -> str:
+        """Plot personality scenario comparison"""
+        fig, axes = plt.subplots(1, 3, figsize=(9, 9))
+
+        short_name_map = {
+            "dominant_high_degree_ENTJ": "HighDegree-ENTJ",
+            "dominant_high_degree_ESFJ": "HighDegree-ESFJ",
+            "uniform": "Uniform",
+            "single_ENTJ": "All-ENTJ",
+            "clustered": "Clustered"
+        }
+
+        scenario_names = list(scenario_comparison.keys())
+        short_scenario_names = [short_name_map.get(name, name) for name in scenario_names]
+        avg_final_cooperation_rates = [scenario_comparison[name].get('avg_final_cooperation_rate', 0) for name in scenario_names]
+        overall_avg_cooperation_rates = [scenario_comparison[name].get('overall_avg_cooperation_rate', 0) for name in scenario_names]
+        overall_avg_payoffs = [scenario_comparison[name].get('overall_avg_payoff', 0) for name in scenario_names]
+
+        # Final cooperation rate
+        axes[0].bar(short_scenario_names, avg_final_cooperation_rates, color='skyblue')
+        axes[0].set_title('Final Cooperation Rate')
+        axes[0].set_ylabel('Cooperation Rate')
+        axes[0].tick_params(axis='x', rotation=45)
+        axes[0].grid(True, alpha=0.3, axis='y')
+
+        # Overall average cooperation rate
+        axes[1].bar(short_scenario_names, overall_avg_cooperation_rates, color='mediumorchid')
+        axes[1].set_title('Avg Cooperation Rate')
+        axes[1].set_ylabel('Avg Cooperation Rate')
+        axes[1].tick_params(axis='x', rotation=45)
+        axes[1].grid(True, alpha=0.3, axis='y')
+
+        # Overall average payoff
+        axes[2].bar(short_scenario_names, overall_avg_payoffs, color='darkorange')
+        axes[2].set_title('Avg Payoff')
+        axes[2].set_ylabel('Avg Payoff')
+        axes[2].tick_params(axis='x', rotation=45)
+        axes[2].grid(True, alpha=0.3, axis='y')
 
         plt.suptitle(title, fontsize=16, fontweight='bold')
         plt.tight_layout()

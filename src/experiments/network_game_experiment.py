@@ -170,7 +170,15 @@ class NetworkGameExperiment:
         elif scenario == "clustered":
             # Clustered distribution
             personality_assignment = self._assign_clustered_personalities(G)
+
+        elif scenario == "dominant_high_degree_ENTJ":
+            # High-degree nodes are ENTJ, others random
+            personality_assignment = self._assign_high_degree_personality(G, MBTIType.ENTJ, top_n=5)
         
+        elif scenario == "dominant_high_degree_ESFJ":
+            # High-degree nodes are ESFJ, others random
+            personality_assignment = self._assign_high_degree_personality(G, MBTIType.ESFJ, top_n=5)
+
         else:
             # Default to uniform distribution
             for node in nodes:
@@ -181,11 +189,7 @@ class NetworkGameExperiment:
     def _assign_clustered_personalities(self, G: nx.Graph) -> Dict[int, MBTIType]:
         """Assign clustered personality distribution"""
         # Use community detection algorithm
-        try:
-            communities = nx.community.greedy_modularity_communities(G)
-        except:
-            # If community detection fails, use simple clustering
-            communities = [list(G.nodes())]
+        communities = nx.community.greedy_modularity_communities(G)
         
         personality_assignment = {}
         
@@ -202,6 +206,19 @@ class NetworkGameExperiment:
                 else:
                     personality_assignment[node] = random.choice(self.mbti_types)
         
+        return personality_assignment
+    
+    def _assign_high_degree_personality(self, G: nx.Graph, target_type: MBTIType, top_n: int = 5) -> Dict[int, MBTIType]:
+        """
+        Assign target_type to top_n high-degree nodes, others random.
+        """
+        personality_assignment = {}
+        degrees = sorted(list(G.degree()), key=lambda x: x[1], reverse=True)
+        top_nodes = [node for node, _ in degrees[:top_n]]
+        for node in top_nodes:
+            personality_assignment[node] = target_type
+        for node in set(G.nodes()) - set(top_nodes):
+            personality_assignment[node] = random.choice(self.mbti_types)
         return personality_assignment
     
     async def _run_network_game(self, G: nx.Graph, personality_assignment: Dict[int, MBTIType]) -> List[Dict[str, Any]]:
@@ -484,6 +501,8 @@ class NetworkGameExperiment:
         
         for scenario in all_scenarios:
             final_cooperation_rates = []
+            all_cooperation_rates = []
+            all_avg_payoffs = []
             
             for network_type, scenarios in all_results.items():
                 if scenario in scenarios:
@@ -491,10 +510,14 @@ class NetworkGameExperiment:
                     if evolution_data:
                         final_data = evolution_data[-1]
                         final_cooperation_rates.append(final_data["cooperation_rate"])
+                        # Collect all rounds' cooperation rates and avg_payoff
+                        all_cooperation_rates.extend([rd["cooperation_rate"] for rd in evolution_data])
+                        all_avg_payoffs.extend([rd["avg_payoff"] for rd in evolution_data])
             
             scenario_metrics[scenario] = {
                 "avg_final_cooperation_rate": np.mean(final_cooperation_rates) if final_cooperation_rates else 0,
-                "std_final_cooperation_rate": np.std(final_cooperation_rates) if final_cooperation_rates else 0
+                "overall_avg_cooperation_rate": np.mean(all_cooperation_rates) if all_cooperation_rates else 0,
+                "overall_avg_payoff": np.mean(all_avg_payoffs) if all_avg_payoffs else 0
             }
         
         return scenario_metrics
@@ -563,6 +586,15 @@ class NetworkGameExperiment:
             filename="network_comparison"
         )
         visualization_files["network_comparison"] = comparison_file
+        
+        # Scenarios comparison plot
+        scenario_comparison = analysis_results["scenario_comparison"]
+        scenario_comparison_file = self.plotter.plot_scenario_comparison(
+            scenario_comparison,
+            title="Personality Scenario Comparison",
+            filename="scenario_comparison"
+        )
+        visualization_files["scenario_comparison"] = scenario_comparison_file
         
         # Network snapshots
         for network_type, scenarios in all_results.items():
