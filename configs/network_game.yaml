@@ -27,7 +27,7 @@ llm:
 name: MBTI Network Game Experiment
 network_game_config:
   network_types:
-  - small_world_0.5
+  - scale_free
   personality_scenarios:
   - uniform
   save_cooperation_metrics: true

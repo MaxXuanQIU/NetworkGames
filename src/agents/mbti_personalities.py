@@ -249,6 +249,14 @@ Please make game decisions with these personality traits."""
         """
         base_prompt = self.prompt_template
 
+        # Add Prisoner's Dilemma payoff matrix info
+        pd_matrix_text = (
+            "Prisoner's Dilemma payoff matrix:\n"
+            "- If both choose COOPERATE, each gets 3 points\n"
+            "- If one chooses COOPERATE and the other DEFECT, COOPERATE gets 0 points, DEFECT gets 5 points\n"
+            "- If both choose DEFECT, each gets 1 point\n"
+        )
+
         # Add game history information
         if game_history:
             history_text = "Game history:\n"
@@ -280,6 +288,7 @@ Please make game decisions with these personality traits."""
         # Combine full prompt
         full_prompt = f"""{base_prompt}
 
+{pd_matrix_text}
 {history_text}{opponent_info}{neighbor_info}
 
 Now please make your decision: COOPERATE or DEFECT?

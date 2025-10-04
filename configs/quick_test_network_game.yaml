@@ -30,11 +30,11 @@ llm:
 name: MBTI Network Game Experiment
 network_game_config:
   network_types:
+  - regular
+  - small_world_0.5
   - scale_free
   personality_scenarios:
   - uniform
-  - dominant_high_degree_ENTJ
-  - dominant_high_degree_ESFJ
   save_cooperation_metrics: true
   save_network_evolution: true
 output_dir: results
