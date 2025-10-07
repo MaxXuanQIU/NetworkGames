@@ -21,6 +21,8 @@ game:
   random_seed: 42
 llm:
   api_key: 
+  model_name: gpt-5-nano
+  provider: openai
   kwargs:
     temperature: 1
 name: MBTI Pair Game Experiment

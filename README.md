@@ -1,173 +1,173 @@
 # LLM Network Games Framework
 
-一个用于研究LLM在网络博弈中行为的可复现、可修改的框架。
+A reproducible and customizable framework for studying LLM behavior in network games.
 
-## 项目概述
+## Project Overview
 
-本项目旨在探究不同LLM模型在网络博弈中的行为模式，特别是：
-- 基于MBTI 16人格分类的LLM行为差异
-- 重复囚徒困境中的合作与背叛策略
-- 网络拓扑对博弈行为的影响
-- 人格分布对网络演化的影响
+This project aims to explore behavioral patterns of different LLM models in network games, focusing on:
+- Behavioral differences based on MBTI 16 personality types
+- Cooperation and betrayal strategies in repeated Prisoner's Dilemma
+- Impact of network topology on game behavior
+- Influence of personality distribution on network evolution
 
-## 主要特性
+## Main Features
 
-- **多LLM支持**: 支持调用多种具有代表性的LLM模型（OpenAI、Anthropic、Google、Mock）
-- **MBTI人格系统**: 16种人格类型的夸张刻板印象prompt
-- **网络博弈**: 支持多种网络拓扑（规则、小世界、随机网络、无标度网络）
-- **可配置实验**: 通过YAML配置文件管理实验参数
-- **丰富可视化**: 热力图、网络图、时间序列等多种统计图表
-- **可复现性**: 完整的随机种子控制和结果输出
-- **统计分析**: 完整的统计检验和效应量分析
+- **Multi-LLM Support**: Supports various representative LLM models (OpenAI, Anthropic, Google, Mock)
+- **MBTI Personality System**: Implements typical personality traits for all 16 MBTI types
+- **Network Games**: Supports multiple network topologies (regular, small-world, random, scale-free)
+- **Configurable Experiments**: Manage experiment parameters via YAML config files
+- **Rich Visualization**: Heatmaps, network graphs, time series, and other statistical charts
+- **Reproducibility**: Complete random seed control and result output
+- **Statistical Analysis**: Comprehensive statistical tests and effect size analysis
 
-## 实验设计
+## Experiment Design
 
-### 实验1: 两人博弈
-- **目标**: 16x16人格组合矩阵在重复囚徒困境中的行为基线
-- **设计**: 所有MBTI人格两两组合进行重复囚徒困境博弈
-- **参数**: 可调节的博弈轮数（默认100轮）和重复次数（默认20次）
-- **输出**: 16x16合作率热力图、统计显著性分析、人格排名
+### Experiment 1: Pairwise Game
+- **Goal**: Baseline behavior of 16x16 personality combinations in repeated Prisoner's Dilemma
+- **Design**: All MBTI personality pairs play repeated Prisoner's Dilemma
+- **Parameters**: Adjustable game rounds (default 100) and repetitions (default 20)
+- **Output**: 16x16 cooperation rate heatmap, statistical significance analysis, personality ranking
 
-### 实验2: 网络博弈
-- **目标**: 不同网络拓扑和人格分布下的网络博弈演化
-- **变量1**: 网络拓扑（规则、小世界、随机网络）
-- **变量2**: 人格分布（均匀、单一类型、聚类分布）
-- **变量3**: 交互轮次（默认100轮）
-- **输出**: 网络演化动图、合作率时间序列、网络快照
+### Experiment 2: Network Game
+- **Goal**: Network game evolution under different topologies and personality distributions
+- **Variable 1**: Network topology (regular, small-world, random)
+- **Variable 2**: Personality distribution (uniform, single type, clustered)
+- **Variable 3**: Interaction rounds (default 100)
+- **Output**: Network evolution animation, cooperation rate time series, network snapshots
 
-## 快速开始
+## Quick Start
 
-### 1. 安装依赖
+### 1. Install Dependencies
 
 ```bash
-# 克隆项目
+# Clone the project
 git clone https://github.com/MaxXuanQIU/NetworkGames.git
 cd LLM-Network-Games
 
-# 安装依赖
+# Install dependencies
 pip install -r requirements.txt
 ```
 
-### 2. 创建默认配置
+### 2. Create Default Configs
 
 ```bash
 python main.py --create-configs
 ```
 
-### 3. 运行快速测试
+### 3. Run Quick Test
 
 ```bash
-# 使用Mock LLM进行快速测试
+# Quick test with Mock LLM
 python main.py --experiment pair_game --config configs/quick_test_pair_game.yaml
 ```
 
-### 4. 运行完整实验
+### 4. Run Full Experiments
 
 ```bash
-# 运行两人博弈实验
+# Run pairwise game experiment
 python main.py --experiment pair_game
 
-# 运行网络博弈实验
+# Run network game experiment
 python main.py --experiment network_game
 
-# 注意，使用真实LLM需要API密钥，请在 --config configs/pair_game.yaml 和 --config configs/network_game.yaml" 中配置
+# Note: Real LLMs require API keys, configure them in --config configs/pair_game.yaml and --config configs/network_game.yaml
 ```
 
-## 项目结构
+## Project Structure
 
 ```
 NetworkGames/
-├── src/                           # 源代码
-│   ├── agents/                   # 智能体相关
-│   │   └── mbti_personalities.py # MBTI人格系统
-│   ├── games/                    # 博弈逻辑
-│   │   └── prisoners_dilemma.py  # 囚徒困境实现
-│   ├── networks/                 # 网络拓扑
-│   │   └── network_generator.py  # 网络生成器
-│   ├── llm/                     # LLM接口
-│   │   └── llm_interface.py     # LLM抽象层
-│   ├── analysis/                # 数据分析
-│   │   └── statistics.py        # 统计分析
-│   ├── visualization/           # 可视化
-│   │   └── plotter.py          # 绘图工具
-│   ├── config/                  # 配置管理
-│   │   └── config_manager.py    # 配置管理器
-│   ├── experiments/             # 实验实现
-│   │   ├── pair_game_experiment.py      # 两人博弈实验
-│   │   └── network_game_experiment.py   # 网络博弈实验
-│   └── utils/                   # 工具函数
-│       └── result_manager.py    # 结果管理
-├── configs/                     # 配置文件
-│   ├── pair_game.yaml          # 两人博弈配置
-│   └── network_game.yaml       # 网络博弈配置
-├── results/                    # 结果输出
-├── docs/                      # 文档
-│   ├── API_REFERENCE.md       # API参考
-│   └── EXPERIMENT_GUIDE.md    # 实验指南
-├── main.py                    # 主程序入口
-├── requirements.txt           # 依赖列表
-└── README.md                 # 项目说明
+├── src/                           # Source code
+│   ├── agents/                   # Agents
+│   │   └── mbti_personalities.py # MBTI personality system
+│   ├── games/                    # Game logic
+│   │   └── prisoners_dilemma.py  # Prisoner's Dilemma implementation
+│   ├── networks/                 # Network topology
+│   │   └── network_generator.py  # Network generator
+│   ├── llm/                     # LLM interface
+│   │   └── llm_interface.py     # LLM abstraction layer
+│   ├── analysis/                # Data analysis
+│   │   └── statistics.py        # Statistical analysis
+│   ├── visualization/           # Visualization
+│   │   └── plotter.py          # Plotting tools
+│   ├── config/                  # Config management
+│   │   └── config_manager.py    # Config manager
+│   ├── experiments/             # Experiment implementations
+│   │   ├── pair_game_experiment.py      # Pairwise game experiment
+│   │   └── network_game_experiment.py   # Network game experiment
+│   └── utils/                   # Utility functions
+│       └── result_manager.py    # Result manager
+├── configs/                     # Config files
+│   ├── pair_game.yaml          # Pairwise game config
+│   └── network_game.yaml       # Network game config
+├── results/                    # Output results
+├── docs/                      # Documentation
+│   ├── API_REFERENCE.md       # API reference
+│   └── EXPERIMENT_GUIDE.md    # Experiment guide
+├── main.py                    # Main entry point
+├── requirements.txt           # Dependency list
+└── README.md                 # Project description
 ```
 
-## 使用示例
+## Usage Examples
 
-### 基本使用
+### Basic Usage
 
 ```python
 import asyncio
 from src.experiments.pair_game_experiment import run_pair_game_experiment
 
-# 运行两人博弈实验
+# Run pairwise game experiment
 results = await run_pair_game_experiment("configs/pair_game.yaml")
-print("实验完成！结果保存在 results/ 目录")
+print("Experiment completed! Results saved in results/ directory")
 ```
 
-### 自定义配置
+### Custom Config
 
 ```python
 from src.config.config_manager import ConfigManager, ExperimentConfig
 
-# 创建自定义配置
+# Create custom config
 config = ExperimentConfig(
-    experiment_type="pair_game",
-    name="My Custom Experiment",
-    llm_provider="openai",
-    llm_model="gpt-4",
-    num_rounds=200,
-    num_repetitions=50
+  experiment_type="pair_game",
+  name="My Custom Experiment",
+  llm_provider="openai",
+  llm_model="gpt-4",
+  num_rounds=200,
+  num_repetitions=50
 )
 
-# 保存配置
+# Save config
 config_manager = ConfigManager()
 config_manager.save_config(config, "my_config.yaml")
 ```
 
-### 结果分析
+### Result Analysis
 
 ```python
 import pandas as pd
 import matplotlib.pyplot as plt
 
-# 加载结果
+# Load results
 results = pd.read_csv("results/cooperation_matrix.csv", index_col=0)
 
-# 绘制热力图
+# Plot heatmap
 plt.figure(figsize=(12, 10))
 sns.heatmap(results, annot=True, cmap='RdYlBu_r')
 plt.title("MBTI Cooperation Rate Matrix")
 plt.show()
 
-# 分析人格排名
+# Analyze personality ranking
 personality_rates = results.mean(axis=1).sort_values(ascending=False)
-print("最合作的人格类型:", personality_rates.index[0])
-print("最不合作的人格类型:", personality_rates.index[-1])
+print("Most cooperative personality type:", personality_rates.index[0])
+print("Least cooperative personality type:", personality_rates.index[-1])
 ```
 
-## 配置说明
+## Config Explanation
 
-### LLM配置
+### LLM Config
 
-支持多种LLM提供商：
+Supports multiple LLM providers:
 
 ```yaml
 # OpenAI
@@ -188,147 +188,147 @@ llm:
   model_name: "gemini-pro"
   api_key: "your-google-api-key"
 
-# Mock（用于测试）
+# Mock (for testing)
 llm:
   provider: "mock"
   model_name: "mock-model"
 ```
 
-### 网络配置
+### Network Config
 
 ```yaml
-# 小世界网络
+# Small-world network
 network:
   network_type: "small_world"
   num_nodes: 50
   k: 4
   p: 0.1
 
-# 规则网络
+# Regular network
 network:
   network_type: "regular"
   num_nodes: 50
   k: 4
 
-# 随机网络
+# Random network
 network:
   network_type: "random"
   num_nodes: 50
   edge_probability: 0.1
 ```
 
-## 输出结果
+## Output Results
 
-### 两人博弈实验输出
+### Pairwise Game Experiment Output
 
-- `cooperation_matrix.csv`: 16x16合作率矩阵
-- `payoff_matrix.csv`: 16x16收益矩阵
-- `detailed_results.csv`: 详细结果数据
-- `analysis_results.json`: 统计分析结果
-- `experiment_config.json`: 实验配置信息
-- `cooperation_heatmap.png`: 合作率热力图
-- `cooperation_distribution.png`: 合作率分布图
-- `personality_ranking.png`: 人格合作率排名
-- `mbti_dimension_analysis.png`: MBTI维度分析
+- `cooperation_matrix.csv`: 16x16 cooperation rate matrix
+- `payoff_matrix.csv`: 16x16 payoff matrix
+- `detailed_results.csv`: Detailed result data
+- `analysis_results.json`: Statistical analysis results
+- `experiment_config.json`: Experiment config info
+- `cooperation_heatmap.png`: Cooperation rate heatmap
+- `cooperation_distribution.png`: Cooperation rate distribution
+- `personality_ranking.png`: Personality cooperation ranking
+- `mbti_dimension_analysis.png`: MBTI dimension analysis
 
-### 网络博弈实验输出
+### Network Game Experiment Output
 
-- `network_results.json`: 网络博弈详细结果
-- `network_analysis.json`: 网络分析结果
-- `network_evolution_*.png`: 网络演化图
-- `network_comparison.png`: 网络类型比较
-- `network_snapshot_*.png`: 网络快照
-- `cooperation_clusters.png`: 合作集群分析
+- `network_results.json`: Detailed network game results
+- `network_analysis.json`: Network analysis results
+- `network_evolution_*.png`: Network evolution plots
+- `network_comparison.png`: Network type comparison
+- `network_snapshot_*.png`: Network snapshots
+- `cooperation_clusters.png`: Cooperation cluster analysis
 
-## 高级功能
+## Advanced Features
 
-### 自定义人格类型
+### Custom Personality Types
 
 ```python
 from src.agents.mbti_personalities import MBTIPersonality, MBTIType
 
 class CustomPersonality(MBTIPersonality):
-    def _get_prompt_template(self) -> str:
-        return "Your custom prompt template here..."
+  def _get_prompt_template(self) -> str:
+    return "Your custom prompt template here..."
 ```
 
-### 自定义网络拓扑
+### Custom Network Topology
 
 ```python
 from src.networks.network_generator import NetworkGenerator
 
 def create_custom_network(num_nodes):
-    # 实现自定义网络生成逻辑
-    pass
+  # Implement custom network generation logic
+  pass
 ```
 
-### 批量实验
+### Batch Experiments
 
 ```python
-# 运行多个配置的实验
+# Run experiments for multiple configs
 configs = ["config1.yaml", "config2.yaml", "config3.yaml"]
 for config in configs:
-    results = await run_experiment(config)
-    # 处理结果
+  results = await run_experiment(config)
+  # Process results
 ```
 
-## 性能优化
+## Performance Optimization
 
-- 支持异步并行处理
-- 可配置的批处理大小
-- 结果缓存机制
-- 内存使用优化
+- Supports asynchronous parallel processing
+- Configurable batch size
+- Result caching mechanism
+- Memory usage optimization
 
-## 故障排除
+## Troubleshooting
 
-### 常见问题
+### Common Issues
 
-1. **API密钥错误**: 检查LLM API密钥是否正确设置
-2. **内存不足**: 减少网络节点数或重复次数
-3. **结果不一致**: 设置固定随机种子
-4. **网络连接问题**: 检查网络连接和防火墙设置
+1. **API key error**: Check if LLM API key is set correctly
+2. **Out of memory**: Reduce network node count or repetitions
+3. **Inconsistent results**: Set a fixed random seed
+4. **Network connection issues**: Check network and firewall settings
 
-### 调试模式
+### Debug Mode
 
 ```bash
-# 启用详细日志
+# Enable detailed logs
 python main.py --experiment pair_game --log-level DEBUG
 
-# 使用Mock LLM进行快速测试
+# Quick test with Mock LLM
 python main.py --experiment pair_game --config configs/quick_test_pair_game.yaml
 ```
 
-## 贡献指南
+## Contribution Guide
 
-欢迎贡献代码、报告问题或提出改进建议！
+Contributions, bug reports, and suggestions are welcome!
 
-### 开发环境设置
+### Development Setup
 
 ```bash
-# 安装开发依赖
+# Install dev dependencies
 pip install -r requirements-dev.txt
 
-# 运行测试
+# Run tests
 pytest tests/
 
-# 代码格式化
+# Code formatting
 black src/
 flake8 src/
 ```
 
-### 提交规范
+### Commit Guidelines
 
-- 使用清晰的提交信息
-- 添加适当的测试
-- 更新相关文档
+- Use clear commit messages
+- Add appropriate tests
+- Update relevant documentation
 
-## 许可证
+## License
 
 Apache 2.0 License
 
-## 引用
+## Citation
 
-如果您在研究中使用了本项目，请引用：
+If you use this project in your research, please cite:
 
 ```bibtex
 @software{llm_network_games,
@@ -339,8 +339,8 @@ Apache 2.0 License
 }
 ```
 
-## 联系方式
+## Contact
 
-- 项目主页: https://github.com/MaxXuanQIU/NetworkGames
-- 问题反馈: https://github.com/MaxXuanQIU/NetworkGames/issues
-- 邮箱: maxxuanqiu@hkust-gz.edu.cn
+- Project homepage: https://github.com/MaxXuanQIU/NetworkGames
+- Issue tracker: https://github.com/MaxXuanQIU/NetworkGames/issues
+- Email: maxxuanqiu@gmail.com

@@ -20,7 +20,6 @@ game:
   random_seed: 42
 llm:
   api_key: 
-  model_name: gpt-5-nano
   provider: openai
   kwargs:
     temperature: 1
@@ -30,6 +29,8 @@ network_game_config:
   - scale_free
   personality_scenarios:
   - uniform
+  - dominant_high_degree_ENTJ
+  - dominant_high_degree_ESFJ
   save_cooperation_metrics: true
   save_network_evolution: true
 output_dir: results

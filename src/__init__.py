@@ -5,7 +5,7 @@ A reproducible and modifiable framework for studying LLM behavior in network gam
 
 __version__ = "1.0.0"
 __author__ = "Xuan Qiu"
-__email__ = "maxxuanqiu@hkust-gz.edu.cn"
+__email__ = "maxxuanqiu@gmail.com"
 __description__ = "A framework for studying LLM behavior in network games"
 
 # Import main modules

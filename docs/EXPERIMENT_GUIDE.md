@@ -1,47 +1,51 @@
-# 实验指南
+# Experiment Guide
 
-## 快速开始
+## Quick Start
 
-### 1. 安装依赖
+### 1. Install Dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 2. 创建默认配置
+### 2. Create Default Configurations
 
 ```bash
 python main.py --create-configs
 ```
 
-### 3. 运行快速测试
+### 3. Run Quick Test
 
 ```bash
-# 使用Mock LLM进行快速测试
+# Use Mock LLM for quick testing
 python main.py --experiment pair_game --config configs/quick_test_pair_game.yaml
 ```
 
-## 实验类型
+## Experiment Types
 
-### 实验1：两人博弈
+### Experiment 1: Pair Game
 
-#### 目标
-探究16种MBTI人格类型在重复囚徒困境中的行为模式，生成16x16合作率矩阵。
+#### Objective
+Explore the behavioral patterns of 16 MBTI personality types in repeated Prisoner's Dilemma, generating 16x16 cooperation rate and payoff matrices.
 
-#### 配置
+#### Configuration
 ```yaml
 # configs/pair_game.yaml
 experiment_type: pair_game
 name: "MBTI Pair Game Experiment"
 
 llm:
-  provider: "mock"  # 或 "openai", "anthropic", "google"
+  provider: "mock"  # or "openai", "anthropic", "google"
   model_name: "mock-model"
+  api_key: null
+  kwargs:
+    temperature: 0.7
+    max_tokens: 50
 
 game:
-  num_rounds: 100      # 每对组合的博弈轮数
-  num_repetitions: 20  # 重复实验次数
-  random_seed: 42      # 随机种子
+  num_rounds: 100      # Number of rounds per pair
+  num_repetitions: 20  # Number of repetitions
+  random_seed: 42      # Random seed
 
 pair_game_config:
   matrix_size: 16
@@ -49,25 +53,37 @@ pair_game_config:
   save_statistics: true
 ```
 
-#### 运行
+#### Run
 ```bash
 python main.py --experiment pair_game --config configs/pair_game.yaml
 ```
 
-#### 输出
-- `cooperation_matrix.csv`: 16x16合作率矩阵
-- `payoff_matrix.csv`: 16x16收益矩阵
-- `detailed_results.csv`: 详细结果数据
-- `cooperation_heatmap.png`: 合作率热力图
-- `personality_ranking.png`: 人格合作率排名
-- `mbti_dimension_analysis.png`: MBTI维度分析
+#### Output Files
+- `cooperation_matrix.csv`: 16x16 cooperation rate matrix
+- `payoff_matrix.csv`: 16x16 payoff matrix  
+- `detailed_results.csv`: Detailed results (includes mean and std)
+- `analysis_results.json`: Full analysis results
+- `experiment_config.json`: Experiment configuration record
+- **Visualization files:**
+  - `cooperation_heatmap.png`: Cooperation rate heatmap
+  - `payoff_heatmap.png`: Payoff heatmap
+  - `cooperation_distribution.png`: Cooperation rate distribution
+  - `personality_cooperation_ranking.png`: Personality cooperation ranking
+  - `personality_payoff_ranking.png`: Personality payoff ranking
+  - `mbti_dimension_analysis.png`: MBTI dimension analysis
 
-### 实验2：网络博弈
+#### Features
+- **Concurrent Execution:** Uses asynchronous concurrency for efficiency, supports semaphore control (default 10)
+- **Smart Retry:** Automatically retries LLM parsing failures (up to 10 times) with exponential backoff
+- **Symmetric Matrix:** Each personality pair runs once, symmetric results auto-filled
+- **Detailed Statistics:** Includes mean, std, and other metrics for cooperation and payoff
 
-#### 目标
-研究不同网络拓扑和人格分布对网络博弈演化的影响。
+### Experiment 2: Network Game
 
-#### 配置
+#### Objective
+Study the impact of different network topologies and personality distributions on network game evolution.
+
+#### Configuration
 ```yaml
 # configs/network_game.yaml
 experiment_type: network_game
@@ -86,21 +102,21 @@ network_game_config:
   snapshot_rounds: [1, 25, 50, 75, 100]
 ```
 
-#### 运行
+#### Run
 ```bash
 python main.py --experiment network_game --config configs/network_game.yaml
 ```
 
-#### 输出
-- `network_results.json`: 网络博弈详细结果
-- `network_analysis.json`: 网络分析结果
-- `network_evolution_*.png`: 网络演化图
-- `network_comparison.png`: 网络类型比较
-- `network_snapshot_*.png`: 网络快照
+#### Output
+- `network_results.json`: Detailed network game results
+- `network_analysis.json`: Network analysis results
+- `network_evolution_*.png`: Network evolution plots
+- `network_comparison.png`: Network type comparison
+- `network_snapshot_*.png`: Network snapshots
 
-## 高级配置
+## Advanced Configuration
 
-### LLM配置
+### LLM Configuration
 
 #### OpenAI
 ```yaml
@@ -130,26 +146,26 @@ llm:
   temperature: 0.7
 ```
 
-### 网络配置
+### Network Configuration
 
-#### 规则网络
+#### Regular Network
 ```yaml
 network:
   network_type: "regular"
   num_nodes: 50
-  k: 4  # 每个节点的邻居数
+  k: 4  # Number of neighbors per node
 ```
 
-#### 小世界网络
+#### Small World Network
 ```yaml
 network:
   network_type: "small_world"
   num_nodes: 50
   k: 4
-  p: 0.1  # 重连概率
+  p: 0.1  # Rewiring probability
 ```
 
-#### 随机网络
+#### Random Network
 ```yaml
 network:
   network_type: "random"
@@ -157,30 +173,30 @@ network:
   edge_probability: 0.1
 ```
 
-#### 无标度网络
+#### Scale-Free Network
 ```yaml
 network:
   network_type: "scale_free"
   num_nodes: 50
-  m: 2  # 新节点连接的边数
+  m: 2  # Number of edges for new node
 ```
 
-### 人格分布配置
+### Personality Distribution Configuration
 
-#### 均匀分布
+#### Uniform Distribution
 ```yaml
 personality_distribution:
   distribution_type: "uniform"
 ```
 
-#### 单一类型
+#### Single Type
 ```yaml
 personality_distribution:
   distribution_type: "single"
   single_type: "ENTJ"
 ```
 
-#### 聚类分布
+#### Clustered Distribution
 ```yaml
 personality_distribution:
   distribution_type: "clustered"
@@ -189,14 +205,14 @@ personality_distribution:
     cluster_size_variance: 0.2
 ```
 
-## 自定义实验
+## Custom Experiments
 
-### 创建自定义配置
+### Create Custom Configuration
 
 ```python
 from src.config.config_manager import ConfigManager, ExperimentConfig, LLMConfig, GameConfig
 
-# 创建自定义配置
+# Create custom config
 config = ExperimentConfig(
     experiment_type=ExperimentType.PAIR_GAME,
     name="Custom Experiment",
@@ -212,85 +228,103 @@ config = ExperimentConfig(
     )
 )
 
-# 保存配置
+# Save config
 config_manager = ConfigManager()
 config_manager.save_config(config, "my_custom_config.yaml")
 ```
 
-### 自定义人格类型
+### Run Experiment Directly
+
+```python
+import asyncio
+from src.experiments.pair_game_experiment import run_pair_game_experiment
+
+# Run experiment
+results = await run_pair_game_experiment("configs/my_config.yaml")
+```
+
+### Custom Personality Types
 
 ```python
 from src.agents.mbti_personalities import MBTIPersonality, MBTIType
 
-# 创建自定义人格
+# Create custom personality
 class CustomPersonality(MBTIPersonality):
     def _get_prompt_template(self) -> str:
         return "Your custom prompt template here..."
 
-# 使用自定义人格
+# Use custom personality
 personality = CustomPersonality(MBTIType.INTJ)
 ```
 
-### 自定义网络拓扑
+### Custom Network Topology
 
 ```python
 from src.networks.network_generator import NetworkGenerator, NetworkConfig, NetworkType
 
-# 创建自定义网络
+# Create custom network
 def create_custom_network(num_nodes):
     G = nx.Graph()
-    # 添加节点和边的逻辑
+    # Add nodes and edges logic
     return G
 
-# 注册自定义网络类型
+# Register custom network type
 NetworkType.CUSTOM = "custom"
 ```
 
-## 结果分析
+## Result Analysis
 
-### 基本统计
+### Load and Analyze Structure
 
 ```python
 import pandas as pd
 import numpy as np
+import json
 
-# 加载结果
-results = pd.read_csv("results/cooperation_matrix.csv", index_col=0)
+# Load results
+cooperation_matrix = pd.read_csv("results/cooperation_matrix.csv", index_col=0)
 
-# 计算统计量
-print("平均合作率:", results.values.mean())
-print("标准差:", results.values.std())
-print("最高合作率:", results.values.max())
-print("最低合作率:", results.values.min())
+# Load detailed results
+detailed_results = pd.read_csv("results/pair_game/detailed_results.csv")
+
+# Load analysis results
+with open("results/pair_game/analysis_results.json", 'r', encoding='utf-8') as f:
+    analysis = json.load(f)
+
+# Basic statistics
+print("Average cooperation rate:", cooperation_matrix.values.mean())
+print("Std deviation:", cooperation_matrix.values.std())
+print("Max cooperation rate:", cooperation_matrix.values.max())
+print("Min cooperation rate:", cooperation_matrix.values.min())
 ```
 
-### 人格分析
+### Personality Analysis
 
 ```python
-# 按人格类型分析
+# Analyze by personality type
 personality_rates = results.mean(axis=1)
-print("最合作的人格:", personality_rates.idxmax())
-print("最不合作的人格:", personality_rates.idxmin())
+print("Most cooperative personality:", personality_rates.idxmax())
+print("Least cooperative personality:", personality_rates.idxmin())
 
-# 按MBTI维度分析
+# Analyze by MBTI dimension
 E_types = [t for t in results.index if t.startswith('E')]
 I_types = [t for t in results.index if t.startswith('I')]
 E_rate = results.loc[E_types].values.mean()
 I_rate = results.loc[I_types].values.mean()
-print(f"E型平均合作率: {E_rate:.3f}")
-print(f"I型平均合作率: {I_rate:.3f}")
+print(f"E-type average cooperation rate: {E_rate:.3f}")
+print(f"I-type average cooperation rate: {I_rate:.3f}")
 ```
 
-### 网络分析
+### Network Analysis
 
 ```python
 import json
 
-# 加载网络结果
+# Load network results
 with open("results/network_results.json", 'r') as f:
     network_results = json.load(f)
 
-# 分析不同网络类型
+# Analyze different network types
 for network_type, scenarios in network_results.items():
     for scenario, results in scenarios.items():
         evolution_data = results["evolution_data"]
@@ -298,95 +332,147 @@ for network_type, scenarios in network_results.items():
         print(f"{network_type} - {scenario}: {final_cooperation:.3f}")
 ```
 
-## 性能优化
+## Performance Optimization
 
-### 并行处理
+### Concurrency Control
 
 ```python
-import asyncio
-from concurrent.futures import ThreadPoolExecutor
-
-# 并行运行多个实验
-async def run_parallel_experiments():
-    tasks = []
-    for config_file in config_files:
-        task = run_experiment(config_file)
-        tasks.append(task)
-    
-    results = await asyncio.gather(*tasks)
-    return results
+# Adjust concurrency in PairGameExperiment
+semaphore = asyncio.Semaphore(5)  # Lower concurrency to reduce resource usage
 ```
 
-### 内存优化
+### Memory Optimization
 
 ```python
-# 分批处理大数据集
+# Batch process large datasets
 def process_large_dataset(data, batch_size=1000):
     for i in range(0, len(data), batch_size):
         batch = data[i:i+batch_size]
         yield process_batch(batch)
 ```
 
-### 缓存结果
+### Cache LLM Responses
 
 ```python
-import pickle
 from functools import lru_cache
+import hashlib
 
-# 缓存LLM响应
 @lru_cache(maxsize=1000)
 def cached_llm_response(prompt_hash):
     return llm.generate_response(prompt)
+
+def get_prompt_hash(prompt):
+    return hashlib.md5(prompt.encode()).hexdigest()
 ```
 
-## 故障排除
+## Troubleshooting
 
-### 常见问题
+### Common Issues
 
-1. **LLM API错误**
-   - 检查API密钥是否正确
-   - 确认网络连接
-   - 检查API配额
+1. **LLM API Error**
+   - Check API key
+   - Ensure network connection
+   - Check API quota
 
-2. **内存不足**
-   - 减少网络节点数
-   - 减少重复实验次数
-   - 使用批处理
+2. **Out of Memory**
+   - Reduce network node count
+   - Reduce experiment repetitions
+   - Use batch processing
 
-3. **结果不一致**
-   - 设置固定随机种子
-   - 检查配置参数
-   - 验证数据输入
+3. **Inconsistent Results**
+   - Set fixed random seed
+   - Check config parameters
+   - Validate data input
 
-### 调试模式
+### Debug Mode
 
 ```bash
-# 启用详细日志
+# Enable detailed logging
 python main.py --experiment pair_game --log-level DEBUG
 
-# 使用Mock LLM进行快速测试
+# Use Mock LLM for quick testing
 python main.py --experiment pair_game --config configs/quick_test_pair_game.yaml
 ```
 
-### 性能监控
+### Performance Monitoring
 
 ```python
 import time
 import psutil
+import logging
 
-# 监控资源使用
+# Set logging to monitor performance
+logging.basicConfig(level=logging.INFO)
+logging.getLogger("httpx").setLevel(logging.WARNING)  # Reduce HTTP request logs
+
+# Monitor resource usage
 def monitor_performance():
     start_time = time.time()
     start_memory = psutil.Process().memory_info().rss
     
-    # 运行实验
+    # Run experiment
     results = run_experiment()
     
     end_time = time.time()
     end_memory = psutil.Process().memory_info().rss
     
-    print(f"运行时间: {end_time - start_time:.2f}秒")
-    print(f"内存使用: {(end_memory - start_memory) / 1024 / 1024:.2f}MB")
+    print(f"Run time: {end_time - start_time:.2f}s")
+    print(f"Memory usage: {(end_memory - start_memory) / 1024 / 1024:.2f}MB")
     
     return results
+```
+
+### Error Recovery
+
+```python
+# Resume experiment after failure
+def resume_experiment(checkpoint_file):
+    """Resume experiment from checkpoint"""
+    try:
+        with open(checkpoint_file, 'r') as f:
+            checkpoint = json.load(f)
+        # Restore experiment state
+        return checkpoint
+    except FileNotFoundError:
+        print("Checkpoint file not found, starting experiment from scratch")
+        return None
+```
+
+## Extensions
+
+### Add New MBTI Personality
+
+```python
+from src.agents.mbti_personalities import MBTIType, MBTIPersonality
+
+# Extend MBTIType enum (if needed)
+class ExtendedMBTIType(MBTIType):
+    CUSTOM_TYPE = "CUST"
+
+class CustomMBTIPersonality(MBTIPersonality):
+    def get_decision_prompt(self, history, opponent_type, is_player1=True):
+        # Implement custom logic
+        return custom_prompt
+```
+
+### Custom Analyzer
+
+```python
+from src.analysis.statistics import CooperationAnalyzer
+
+class CustomAnalyzer(CooperationAnalyzer):
+    def analyze_custom_metrics(self, data):
+        # Implement custom analysis logic
+        return custom_analysis_results
+```
+
+### Custom Visualization
+
+```python
+from src.visualization.plotter import PairGamePlotter
+
+class CustomPlotter(PairGamePlotter):
+    def plot_custom_visualization(self, data, **kwargs):
+        # Implement custom visualization
+        return plot_file_path
 ```

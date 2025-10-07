@@ -68,7 +68,7 @@ class PairGamePlotter(BasePlotter):
                    annot=True, 
                    fmt='.3f',
                    annot_kws={"size": 8},
-                   cmap='RdYlBu_r',
+                   cmap='YlGnBu',
                    center=0.5,
                    square=True,
                    cbar_kws={'label': 'Cooperation Rate'})
@@ -95,7 +95,7 @@ class PairGamePlotter(BasePlotter):
                     annot=True,
                     fmt='.2f',
                     annot_kws={"size": 8},
-                    cmap='YlGnBu',
+                    cmap='RdYlBu_r',
                     center=np.mean(payoff_matrix),
                     square=True,
                     cbar_kws={'label': 'Average Payoff'})
