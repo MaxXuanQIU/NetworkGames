@@ -63,18 +63,19 @@ python main.py --create-configs
 ```bash
 # Quick test with Mock LLM
 python main.py --experiment pair_game --config configs/quick_test_pair_game.yaml
+python main.py --experiment network_game --config configs/quick_test_network_game.yaml
 ```
 
 ### 4. Run Full Experiments
 
 ```bash
 # Run pairwise game experiment
-python main.py --experiment pair_game
+python main.py --experiment pair_game --config configs/your_pair_game.yaml
 
 # Run network game experiment
-python main.py --experiment network_game
+python main.py --experiment network_game --config configs/your_network_game.yaml
 
-# Note: Real LLMs require API keys, configure them in --config configs/pair_game.yaml and --config configs/network_game.yaml
+# Note: Real LLMs require API keys, configure them in --config configs/pair_game.yaml and --config configs/your_network_game.yaml
 ```
 
 ## Project Structure

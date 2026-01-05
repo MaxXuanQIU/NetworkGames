@@ -1,5 +1,6 @@
 description: Network-based prisoner's dilemma with different personality distributions
 experiment_type: network_game
+name: MBTI Network Game Experiment
 game:
   num_rounds: 20
   payoff_matrix:
@@ -18,12 +19,14 @@ game:
       - 1
       - 1
   random_seed: 42
+
 llm:
   api_key: 
+  model_name: gpt-5-nano
   provider: openai
   kwargs:
     temperature: 1
-name: MBTI Network Game Experiment
+
 network_game_config:
   network_types:
   - scale_free
@@ -31,12 +34,15 @@ network_game_config:
   - uniform
   - dominant_high_degree_ENTJ
   - dominant_high_degree_ESFJ
+  seed: 42
   save_cooperation_metrics: true
   save_network_evolution: true
+
 output_dir: results
 save_detailed_results: true
 save_network_snapshots: true
 save_visualizations: true
+
 visualization_config:
   color_palette: Set2
   dpi: 300
