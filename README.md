@@ -37,18 +37,22 @@ This project aims to explore behavioral patterns of different LLM models in netw
 
 ## Quick Start
 
-### 1. Install Dependencies
+### 1. Set Up Your Environment
 
 ```bash
 # Clone the project
 git clone https://github.com/MaxXuanQIU/NetworkGames.git
-cd LLM-Network-Games
+cd NetworkGames
 
-# Install dependencies
+# Install the required dependencies using Conda
+conda env create -f environment.yml
+conda activate networkgames
+
+# Alternatively, you can use pip to install dependencies
 pip install -r requirements.txt
 ```
 
-### 2. Create Default Configs
+### 2. Create Default Configurations
 
 ```bash
 python main.py --create-configs
