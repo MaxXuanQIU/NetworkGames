@@ -89,17 +89,13 @@ class ExperimentConfig:
     llm: LLMConfig
     game: GameConfig
     network: NetworkConfig
-    personality_distribution: PersonalityDistributionConfig
-    
+
     # Experiment-specific configuration (now typed)
     pair_game_config: Optional[PairGameConfig] = None
     network_game_config: Optional[NetworkGameConfig] = None
     
     # Output configuration
     output_dir: str = "results"
-    save_detailed_results: bool = True
-    save_visualizations: bool = True
-    save_network_snapshots: bool = True
     
     # Visualization configuration
     visualization_config: Dict[str, Any] = field(default_factory=lambda: {
@@ -233,12 +229,6 @@ class ConfigManager:
         network_seed = network_data.get("seed") if network_data else None
         network_directed = network_data.get("directed") if network_data else None
 
-        # Personality distribution (required)
-        personality_data = _require_section("personality_distribution")
-        personality_dist_type = _require_key(personality_data, "distribution_type", "personality_distribution")
-        personality_single_type = personality_data.get("single_type") if personality_data else None
-        personality_cluster_config = personality_data.get("cluster_config") if personality_data else None
-        personality_custom = personality_data.get("custom_distribution") if personality_data else None
 
         # Experiment-specific configs (optional sections)
         pg_cfg = None
@@ -288,12 +278,7 @@ class ConfigManager:
             missing.append("description")
         if "output_dir" not in data or data.get("output_dir") is None:
             missing.append("output_dir")
-        if "save_detailed_results" not in data or data.get("save_detailed_results") is None:
-            missing.append("save_detailed_results")
-        if "save_visualizations" not in data or data.get("save_visualizations") is None:
-            missing.append("save_visualizations")
-        if "save_network_snapshots" not in data or data.get("save_network_snapshots") is None:
-            missing.append("save_network_snapshots")
+
         if "visualization_config" not in data or data.get("visualization_config") is None:
             missing.append("visualization_config")
 
@@ -330,12 +315,6 @@ class ConfigManager:
             directed=network_directed if network_directed is not None else False
         )
 
-        personality_config = PersonalityDistributionConfig(
-            distribution_type=personality_dist_type,
-            single_type=personality_single_type,
-            cluster_config=personality_cluster_config,
-            custom_distribution=personality_custom
-        )
 
         experiment_type = ExperimentType(data["experiment_type"])
 
@@ -346,13 +325,9 @@ class ConfigManager:
             llm=llm_config,
             game=game_config,
             network=network_config,
-            personality_distribution=personality_config,
             pair_game_config=pg_cfg,
             network_game_config=ng_cfg,
             output_dir=data["output_dir"],
-            save_detailed_results=data["save_detailed_results"],
-            save_visualizations=data["save_visualizations"],
-            save_network_snapshots=data["save_network_snapshots"],
             visualization_config=data["visualization_config"]
         )
 
@@ -389,12 +364,6 @@ class ConfigManager:
                 "seed": config.network.seed,
                 "directed": config.network.directed
             },
-            "personality_distribution": {
-                "distribution_type": config.personality_distribution.distribution_type,
-                "single_type": config.personality_distribution.single_type,
-                "cluster_config": config.personality_distribution.cluster_config,
-                "custom_distribution": config.personality_distribution.custom_distribution
-            },
         }
         # serialize pair_game_config if present
         if config.pair_game_config:
@@ -422,9 +391,6 @@ class ConfigManager:
         # remaining fields
         data.update({
             "output_dir": config.output_dir,
-            "save_detailed_results": config.save_detailed_results,
-            "save_visualizations": config.save_visualizations,
-            "save_network_snapshots": config.save_network_snapshots,
             "visualization_config": config.visualization_config
         })
         return data
@@ -449,9 +415,6 @@ class ConfigManager:
             network=NetworkConfig(
                 network_type="small_world",
                 num_nodes=50
-            ),
-            personality_distribution=PersonalityDistributionConfig(
-                distribution_type="uniform"
             ),
             pair_game_config=PairGameConfig(
                 matrix_size=16,
@@ -480,9 +443,6 @@ class ConfigManager:
                 num_nodes=50,
                 k=4,
                 p=0.1
-            ),
-            personality_distribution=PersonalityDistributionConfig(
-                distribution_type="uniform"
             ),
             network_game_config=NetworkGameConfig(
                 network_types=["regular", "small_world_0.1", "small_world_0.5", "random", "scale_free"],
@@ -527,10 +487,6 @@ class ConfigManager:
         if config.network.k >= config.network.num_nodes:
             errors.append("k must be less than number of nodes")
         
-        # Validate personality distribution configuration
-        if config.personality_distribution.distribution_type == "single":
-            if not config.personality_distribution.single_type:
-                errors.append("Single type must be specified for single distribution")
 
         # Validate experiment-specific configs
         if config.pair_game_config:
@@ -565,7 +521,6 @@ class ConfigManager:
                 "num_repetitions": config.game.num_repetitions,
                 "network_type": config.network.network_type,
                 "num_nodes": config.network.num_nodes,
-                "personality_distribution": config.personality_distribution.distribution_type
             }
         except Exception as e:
             return {"error": str(e)}
