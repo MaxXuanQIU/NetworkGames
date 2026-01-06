@@ -106,10 +106,8 @@ NetworkGames/
 │   ├── pair_game.yaml          # Pairwise game config
 │   └── network_game.yaml       # Network game config
 ├── results/                    # Output results
-├── docs/                      # Documentation
-│   ├── API_REFERENCE.md       # API reference
-│   └── EXPERIMENT_GUIDE.md    # Experiment guide
 ├── main.py                    # Main entry point
+├── environment.yml            # Conda environment
 ├── requirements.txt           # Dependency list
 └── README.md                 # Project description
 ```
@@ -297,7 +295,7 @@ for config in configs:
 
 ```bash
 # Enable detailed logs
-python main.py --experiment pair_game --log-level DEBUG
+python main.py --experiment pair_game --log-level DEBUG --config configs/your_pair_game.yaml
 
 # Quick test with Mock LLM
 python main.py --experiment pair_game --config configs/quick_test_pair_game.yaml
