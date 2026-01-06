@@ -67,8 +67,10 @@ class NetworkGameExperiment:
         
         # Get experiment config
         network_game_config = self.config.network_game_config
-        network_types = network_game_config.get("network_types")
-        personality_scenarios = network_game_config.get("personality_scenarios")
+        if network_game_config is None:
+            raise ValueError("network_game_config must be provided for NETWORK_GAME experiments")
+        network_types = network_game_config.network_types
+        personality_scenarios = network_game_config.personality_scenarios
         
         # Run experiments for different network types
         all_results = {}

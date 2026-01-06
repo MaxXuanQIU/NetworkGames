@@ -8,7 +8,6 @@ from .config_manager import (
     LLMConfig,
     GameConfig,
     NetworkConfig,
-    PersonalityDistributionConfig,
     ExperimentConfig,
     ConfigManager
 )
@@ -18,7 +17,6 @@ __all__ = [
     "LLMConfig",
     "GameConfig",
     "NetworkConfig",
-    "PersonalityDistributionConfig",
     "ExperimentConfig",
     "ConfigManager"
 ]

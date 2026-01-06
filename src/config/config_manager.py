@@ -55,14 +55,6 @@ class NetworkConfig:
 
 
 @dataclass
-class PersonalityDistributionConfig:
-    """Personality distribution configuration"""
-    distribution_type: str  # "uniform", "clustered", "single", "custom"
-    single_type: Optional[str] = None  # Used when distribution_type is "single"
-    cluster_config: Optional[Dict[str, Any]] = None  # Clustered distribution configuration
-    custom_distribution: Optional[Dict[str, float]] = None  # Custom distribution
-
-@dataclass
 class PairGameConfig:
     """Pair game specific configuration"""
     matrix_size: int = 16
@@ -88,7 +80,7 @@ class ExperimentConfig:
     # Basic configuration
     llm: LLMConfig
     game: GameConfig
-    network: NetworkConfig
+    network: Optional[NetworkConfig] = None
 
     # Experiment-specific configuration (now typed)
     pair_game_config: Optional[PairGameConfig] = None
@@ -151,7 +143,13 @@ class ConfigManager:
         with open(config_path, 'r', encoding='utf-8') as f:
             config_data = yaml.safe_load(f)
         
-        return self._parse_config(config_data)
+        # parse first
+        config = self._parse_config(config_data)
+        # validate and raise if invalid (validate_config enforces experiment-type-specific rules)
+        errors = self.validate_config(config)
+        if errors:
+            raise ValueError(f"Configuration validation failed: {', '.join(errors)}")
+        return config
     
     def save_config(self, config: ExperimentConfig, config_file: str):
         """Save configuration file
@@ -217,18 +215,29 @@ class ConfigManager:
         game_num_repetitions = _require_key(game_data, "num_repetitions", "game")
         game_random_seed = game_data.get("random_seed") if game_data else None
 
-        # Network section (required)
-        network_data = _require_section("network")
-        network_type = _require_key(network_data, "network_type", "network")
-        network_num_nodes = _require_key(network_data, "num_nodes", "network")
-        # optional network parameters
-        network_k = network_data.get("k") if network_data else None
-        network_p = network_data.get("p") if network_data else None
-        network_edge_probability = network_data.get("edge_probability") if network_data else None
-        network_m = network_data.get("m") if network_data else None
-        network_seed = network_data.get("seed") if network_data else None
-        network_directed = network_data.get("directed") if network_data else None
-
+        # Network section (parsed permissively; validated later only for NETWORK_GAME)
+        network_data = data.get("network")
+        if network_data:
+            network_type = network_data.get("network_type")
+            network_num_nodes = network_data.get("num_nodes")
+            network_k = network_data.get("k")
+            network_p = network_data.get("p")
+            network_edge_probability = network_data.get("edge_probability")
+            network_m = network_data.get("m")
+            network_seed = network_data.get("seed")
+            network_directed = network_data.get("directed")
+            network_config = NetworkConfig(
+                network_type=network_type,
+                num_nodes=network_num_nodes,
+                k=network_k if network_k is not None else 4,
+                p=network_p if network_p is not None else 0.1,
+                edge_probability=network_edge_probability if network_edge_probability is not None else 0.1,
+                m=network_m if network_m is not None else 2,
+                seed=network_seed,
+                directed=network_directed if network_directed is not None else False
+            )
+        else:
+            network_config = None
 
         # Experiment-specific configs (optional sections)
         pg_cfg = None
@@ -241,7 +250,7 @@ class ConfigManager:
                 missing.append("pair_game_config.save_heatmap")
             if "save_statistics" not in pg or pg.get("save_statistics") is None:
                 missing.append("pair_game_config.save_statistics")
-            if not missing:
+            if not any(m.startswith("pair_game_config") for m in missing):
                 pg_cfg = PairGameConfig(
                     matrix_size=pg["matrix_size"],
                     save_heatmap=pg["save_heatmap"],
@@ -260,7 +269,7 @@ class ConfigManager:
                 missing.append("network_game_config.save_network_evolution")
             if "save_cooperation_metrics" not in ng or ng.get("save_cooperation_metrics") is None:
                 missing.append("network_game_config.save_cooperation_metrics")
-            if not missing:
+            if not any(m.startswith("network_game_config") for m in missing):
                 ng_cfg = NetworkGameConfig(
                     network_types=ng["network_types"],
                     personality_scenarios=ng["personality_scenarios"],
@@ -282,9 +291,9 @@ class ConfigManager:
         if "visualization_config" not in data or data.get("visualization_config") is None:
             missing.append("visualization_config")
 
-        # If any required fields are missing -> raise with list
+        # parsing-level missing fields are fatal for parsing
         if missing:
-            raise ValueError(f"Missing required configuration fields: {', '.join(missing)}")
+            raise ValueError(f"Missing required configuration fields: {', '.join(sorted(set(missing)))}")
 
         # All required values present -> construct dataclasses (use values from config)
         llm_config = LLMConfig(
@@ -303,18 +312,6 @@ class ConfigManager:
             num_repetitions=game_num_repetitions,
             random_seed=game_random_seed
         )
-
-        network_config = NetworkConfig(
-            network_type=network_type,
-            num_nodes=network_num_nodes,
-            k=network_k if network_k is not None else 4,
-            p=network_p if network_p is not None else 0.1,
-            edge_probability=network_edge_probability if network_edge_probability is not None else 0.1,
-            m=network_m if network_m is not None else 2,
-            seed=network_seed,
-            directed=network_directed if network_directed is not None else False
-        )
-
 
         experiment_type = ExperimentType(data["experiment_type"])
 
@@ -354,7 +351,7 @@ class ConfigManager:
                 "num_repetitions": config.game.num_repetitions,
                 "random_seed": config.game.random_seed
             },
-            "network": {
+            "network": None if config.network is None else {
                 "network_type": config.network.network_type,
                 "num_nodes": config.network.num_nodes,
                 "k": config.network.k,
@@ -371,7 +368,6 @@ class ConfigManager:
                 "matrix_size": config.pair_game_config.matrix_size,
                 "save_heatmap": config.pair_game_config.save_heatmap,
                 "save_statistics": config.pair_game_config.save_statistics,
-                **(config.pair_game_config.extra or {})
             }
         else:
             data["pair_game_config"] = None
@@ -383,7 +379,6 @@ class ConfigManager:
                 "seed": config.network_game_config.seed,
                 "save_network_evolution": config.network_game_config.save_network_evolution,
                 "save_cooperation_metrics": config.network_game_config.save_cooperation_metrics,
-                **(config.network_game_config.extra or {})
             }
         else:
             data["network_game_config"] = None
@@ -411,10 +406,6 @@ class ConfigManager:
                 num_rounds=100,
                 num_repetitions=20,
                 random_seed=42
-            ),
-            network=NetworkConfig(
-                network_type="small_world",
-                num_nodes=50
             ),
             pair_game_config=PairGameConfig(
                 matrix_size=16,
@@ -462,41 +453,48 @@ class ConfigManager:
         """Validate configuration"""
         errors = []
         
-        # Validate experiment type
-        if config.experiment_type not in ExperimentType:
-            errors.append(f"Invalid experiment type: {config.experiment_type}")
-        
+        # Only support the two known experiment types
+        if config.experiment_type not in (ExperimentType.PAIR_GAME, ExperimentType.NETWORK_GAME):
+            errors.append(f"Unsupported experiment type: {config.experiment_type}")
+            return errors
+
         # Validate LLM configuration
         if not config.llm.provider:
             errors.append("LLM provider is required")
-        
         if not config.llm.model_name:
             errors.append("LLM model name is required")
         
         # Validate game configuration
         if config.game.num_rounds <= 0:
             errors.append("Number of rounds must be positive")
-        
         if config.game.num_repetitions <= 0:
             errors.append("Number of repetitions must be positive")
         
-        # Validate network configuration
-        if config.network.num_nodes <= 0:
-            errors.append("Number of nodes must be positive")
-        
-        if config.network.k >= config.network.num_nodes:
-            errors.append("k must be less than number of nodes")
-        
-
-        # Validate experiment-specific configs
-        if config.pair_game_config:
-            if config.pair_game_config.matrix_size <= 0:
-                errors.append("pair_game_config.matrix_size must be positive")
-        if config.network_game_config:
-            if not config.network_game_config.network_types:
-                errors.append("network_game_config.network_types must be specified")
-            if not config.network_game_config.personality_scenarios:
-                errors.append("network_game_config.personality_scenarios must be specified")
+        # Experiment-type specific requirements
+        if config.experiment_type == ExperimentType.PAIR_GAME:
+            # pair_game_config is mandatory
+            if not config.pair_game_config:
+                errors.append("pair_game_config must be provided for PAIR_GAME experiments")
+            else:
+                if config.pair_game_config.matrix_size <= 0:
+                    errors.append("pair_game_config.matrix_size must be positive")
+        else:  # NETWORK_GAME
+            # network_game_config and network are mandatory
+            if not config.network_game_config:
+                errors.append("network_game_config must be provided for NETWORK_GAME experiments")
+            else:
+                if not config.network_game_config.network_types:
+                    errors.append("network_game_config.network_types must be specified")
+                if not config.network_game_config.personality_scenarios:
+                    errors.append("network_game_config.personality_scenarios must be specified")
+            # network config presence and basic validation
+            if not config.network:
+                errors.append("network configuration must be provided for NETWORK_GAME experiments")
+            else:
+                if config.network.num_nodes <= 0:
+                    errors.append("Number of nodes must be positive")
+                if config.network.k >= config.network.num_nodes:
+                    errors.append("k must be less than number of nodes")
         
         return errors
     

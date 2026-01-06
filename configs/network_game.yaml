@@ -2,6 +2,7 @@ description: Network-based prisoner's dilemma with different personality distrib
 experiment_type: network_game
 name: MBTI Network Game Experiment
 game:
+  num_repetitions: 1
   num_rounds: 20
   payoff_matrix:
     COOPERATE:
@@ -37,6 +38,10 @@ network_game_config:
   seed: 42
   save_cooperation_metrics: true
   save_network_evolution: true
+
+network:
+  num_nodes: 50
+  seed: 42
 
 output_dir: results
 save_detailed_results: true
