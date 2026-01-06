@@ -35,9 +35,6 @@ network_game_config:
   - uniform
   - dominant_high_degree_ENTJ
   - dominant_high_degree_ESFJ
-  seed: 42
-  save_cooperation_metrics: true
-  save_network_evolution: true
 
 network:
   num_nodes: 50

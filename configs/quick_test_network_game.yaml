@@ -37,9 +37,6 @@ network_game_config:
   - scale_free
   personality_scenarios:
   - uniform
-  seed: 42
-  save_cooperation_metrics: true
-  save_network_evolution: true
 
 network:
   num_nodes: 50

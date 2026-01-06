@@ -66,9 +66,6 @@ class NetworkGameConfig:
     """Network game specific configuration"""
     network_types: List[str] = field(default_factory=lambda: ["regular", "small_world_0.1", "random"])
     personality_scenarios: List[str] = field(default_factory=lambda: ["uniform"])
-    seed: Optional[int] = None
-    save_network_evolution: bool = True
-    save_cooperation_metrics: bool = True
 
 @dataclass
 class ExperimentConfig:
@@ -265,17 +262,10 @@ class ConfigManager:
                 missing.append("network_game_config.network_types")
             if "personality_scenarios" not in ng or ng.get("personality_scenarios") is None:
                 missing.append("network_game_config.personality_scenarios")
-            if "save_network_evolution" not in ng or ng.get("save_network_evolution") is None:
-                missing.append("network_game_config.save_network_evolution")
-            if "save_cooperation_metrics" not in ng or ng.get("save_cooperation_metrics") is None:
-                missing.append("network_game_config.save_cooperation_metrics")
             if not any(m.startswith("network_game_config") for m in missing):
                 ng_cfg = NetworkGameConfig(
                     network_types=ng["network_types"],
-                    personality_scenarios=ng["personality_scenarios"],
-                    seed=ng.get("seed"),
-                    save_network_evolution=ng["save_network_evolution"],
-                    save_cooperation_metrics=ng["save_cooperation_metrics"]
+                    personality_scenarios=ng["personality_scenarios"]
                 )
 
         # Other top-level required fields
@@ -376,9 +366,6 @@ class ConfigManager:
             data["network_game_config"] = {
                 "network_types": config.network_game_config.network_types,
                 "personality_scenarios": config.network_game_config.personality_scenarios,
-                "seed": config.network_game_config.seed,
-                "save_network_evolution": config.network_game_config.save_network_evolution,
-                "save_cooperation_metrics": config.network_game_config.save_cooperation_metrics,
             }
         else:
             data["network_game_config"] = None
@@ -438,8 +425,6 @@ class ConfigManager:
             network_game_config=NetworkGameConfig(
                 network_types=["regular", "small_world_0.1", "small_world_0.5", "random", "scale_free"],
                 personality_scenarios=["uniform", "single_ENTJ", "clustered"],
-                save_network_evolution=True,
-                save_cooperation_metrics=True
             )
         )
         
