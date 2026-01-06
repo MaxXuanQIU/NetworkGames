@@ -4,7 +4,6 @@ Supports loading, validating, and managing YAML configuration files
 """
 
 import yaml
-import os
 from typing import Dict, Any, Optional, List
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -63,6 +62,21 @@ class PersonalityDistributionConfig:
     cluster_config: Optional[Dict[str, Any]] = None  # Clustered distribution configuration
     custom_distribution: Optional[Dict[str, float]] = None  # Custom distribution
 
+@dataclass
+class PairGameConfig:
+    """Pair game specific configuration"""
+    matrix_size: int = 16
+    save_heatmap: bool = True
+    save_statistics: bool = True
+
+@dataclass
+class NetworkGameConfig:
+    """Network game specific configuration"""
+    network_types: List[str] = field(default_factory=lambda: ["regular", "small_world_0.1", "random"])
+    personality_scenarios: List[str] = field(default_factory=lambda: ["uniform"])
+    seed: Optional[int] = None
+    save_network_evolution: bool = True
+    save_cooperation_metrics: bool = True
 
 @dataclass
 class ExperimentConfig:
@@ -77,9 +91,9 @@ class ExperimentConfig:
     network: NetworkConfig
     personality_distribution: PersonalityDistributionConfig
     
-    # Experiment-specific configuration
-    pair_game_config: Optional[Dict[str, Any]] = None
-    network_game_config: Optional[Dict[str, Any]] = None
+    # Experiment-specific configuration (now typed)
+    pair_game_config: Optional[PairGameConfig] = None
+    network_game_config: Optional[NetworkGameConfig] = None
     
     # Output configuration
     output_dir: str = "results"
@@ -166,83 +180,187 @@ class ConfigManager:
         self.logger.info(f"Config saved to: {config_path}")
     
     def _parse_config(self, data: Dict[str, Any]) -> ExperimentConfig:
-        """Parse configuration data"""
-        # Parse LLM configuration
-        llm_data = data.get("llm", {})
+        """Parse configuration data
+
+        Strict mode: no sensible defaults are used. Required fields must be present
+        in the provided YAML; otherwise a ValueError listing missing fields is raised.
+        """
+        missing = []
+
+        # Helper to mark missing nested keys
+        def _require_section(section_name: str):
+            if section_name not in data or data.get(section_name) is None:
+                missing.append(section_name)
+                return None
+            return data[section_name]
+
+        def _require_key(container: Dict[str, Any], key_path: str, container_name: str):
+            if container is None:
+                # section already missing, don't duplicate errors for inner keys
+                return None
+            if key_path not in container or container.get(key_path) is None:
+                missing.append(f"{container_name}.{key_path}")
+                return None
+            return container.get(key_path)
+
+        # LLM section (required)
+        llm_data = _require_section("llm")
+        llm_provider = _require_key(llm_data, "provider", "llm")
+        llm_model = _require_key(llm_data, "model_name", "llm")
+        # optional fields (will be taken as-is if present)
+        llm_api_key = llm_data.get("api_key") if llm_data else None
+        llm_temperature = llm_data.get("temperature") if llm_data else None
+        llm_max_tokens = llm_data.get("max_tokens") if llm_data else None
+        llm_timeout = llm_data.get("timeout") if llm_data else None
+        llm_kwargs = llm_data.get("kwargs") if llm_data else None
+
+        # Game section (required)
+        game_data = _require_section("game")
+        game_payoff = _require_key(game_data, "payoff_matrix", "game")
+        game_num_rounds = _require_key(game_data, "num_rounds", "game")
+        game_num_repetitions = _require_key(game_data, "num_repetitions", "game")
+        game_random_seed = game_data.get("random_seed") if game_data else None
+
+        # Network section (required)
+        network_data = _require_section("network")
+        network_type = _require_key(network_data, "network_type", "network")
+        network_num_nodes = _require_key(network_data, "num_nodes", "network")
+        # optional network parameters
+        network_k = network_data.get("k") if network_data else None
+        network_p = network_data.get("p") if network_data else None
+        network_edge_probability = network_data.get("edge_probability") if network_data else None
+        network_m = network_data.get("m") if network_data else None
+        network_seed = network_data.get("seed") if network_data else None
+        network_directed = network_data.get("directed") if network_data else None
+
+        # Personality distribution (required)
+        personality_data = _require_section("personality_distribution")
+        personality_dist_type = _require_key(personality_data, "distribution_type", "personality_distribution")
+        personality_single_type = personality_data.get("single_type") if personality_data else None
+        personality_cluster_config = personality_data.get("cluster_config") if personality_data else None
+        personality_custom = personality_data.get("custom_distribution") if personality_data else None
+
+        # Experiment-specific configs (optional sections)
+        pg_cfg = None
+        if "pair_game_config" in data and data.get("pair_game_config") is not None:
+            pg = data.get("pair_game_config")
+            # require explicit fields inside pair_game_config (no defaults)
+            if "matrix_size" not in pg or pg.get("matrix_size") is None:
+                missing.append("pair_game_config.matrix_size")
+            if "save_heatmap" not in pg or pg.get("save_heatmap") is None:
+                missing.append("pair_game_config.save_heatmap")
+            if "save_statistics" not in pg or pg.get("save_statistics") is None:
+                missing.append("pair_game_config.save_statistics")
+            if not missing:
+                pg_cfg = PairGameConfig(
+                    matrix_size=pg["matrix_size"],
+                    save_heatmap=pg["save_heatmap"],
+                    save_statistics=pg["save_statistics"]
+                )
+
+        ng_cfg = None
+        if "network_game_config" in data and data.get("network_game_config") is not None:
+            ng = data.get("network_game_config")
+            # require explicit fields inside network_game_config (no defaults)
+            if "network_types" not in ng or ng.get("network_types") is None:
+                missing.append("network_game_config.network_types")
+            if "personality_scenarios" not in ng or ng.get("personality_scenarios") is None:
+                missing.append("network_game_config.personality_scenarios")
+            if "save_network_evolution" not in ng or ng.get("save_network_evolution") is None:
+                missing.append("network_game_config.save_network_evolution")
+            if "save_cooperation_metrics" not in ng or ng.get("save_cooperation_metrics") is None:
+                missing.append("network_game_config.save_cooperation_metrics")
+            if not missing:
+                ng_cfg = NetworkGameConfig(
+                    network_types=ng["network_types"],
+                    personality_scenarios=ng["personality_scenarios"],
+                    seed=ng.get("seed"),
+                    save_network_evolution=ng["save_network_evolution"],
+                    save_cooperation_metrics=ng["save_cooperation_metrics"]
+                )
+
+        # Other top-level required fields
+        if "experiment_type" not in data or data.get("experiment_type") is None:
+            missing.append("experiment_type")
+        if "name" not in data or data.get("name") is None:
+            missing.append("name")
+        if "description" not in data or data.get("description") is None:
+            missing.append("description")
+        if "output_dir" not in data or data.get("output_dir") is None:
+            missing.append("output_dir")
+        if "save_detailed_results" not in data or data.get("save_detailed_results") is None:
+            missing.append("save_detailed_results")
+        if "save_visualizations" not in data or data.get("save_visualizations") is None:
+            missing.append("save_visualizations")
+        if "save_network_snapshots" not in data or data.get("save_network_snapshots") is None:
+            missing.append("save_network_snapshots")
+        if "visualization_config" not in data or data.get("visualization_config") is None:
+            missing.append("visualization_config")
+
+        # If any required fields are missing -> raise with list
+        if missing:
+            raise ValueError(f"Missing required configuration fields: {', '.join(missing)}")
+
+        # All required values present -> construct dataclasses (use values from config)
         llm_config = LLMConfig(
-            provider=llm_data.get("provider", "mock"),
-            model_name=llm_data.get("model_name", "mock-model"),
-            api_key=llm_data.get("api_key"),
-            temperature=llm_data.get("temperature", 0.7),
-            max_tokens=llm_data.get("max_tokens", 50),
-            timeout=llm_data.get("timeout", 30),
-            kwargs=llm_data.get("kwargs", {})
+            provider=llm_provider,
+            model_name=llm_model,
+            api_key=llm_api_key,
+            temperature=llm_temperature,
+            max_tokens=llm_max_tokens,
+            timeout=llm_timeout,
+            kwargs=llm_kwargs or {}
         )
-        
-        # Parse game configuration
-        game_data = data.get("game", {})
+
         game_config = GameConfig(
-            payoff_matrix=game_data.get("payoff_matrix", {
-                "COOPERATE": {"COOPERATE": [3, 3], "DEFECT": [0, 5]},
-                "DEFECT": {"COOPERATE": [5, 0], "DEFECT": [1, 1]}
-            }),
-            num_rounds=game_data.get("num_rounds", 100),
-            num_repetitions=game_data.get("num_repetitions", 20),
-            random_seed=game_data.get("random_seed")
+            payoff_matrix=game_payoff,
+            num_rounds=game_num_rounds,
+            num_repetitions=game_num_repetitions,
+            random_seed=game_random_seed
         )
-        
-        # Parse network configuration
-        network_data = data.get("network", {})
+
         network_config = NetworkConfig(
-            network_type=network_data.get("network_type", "small_world"),
-            num_nodes=network_data.get("num_nodes", 50),
-            k=network_data.get("k", 4),
-            p=network_data.get("p", 0.1),
-            edge_probability=network_data.get("edge_probability", 0.1),
-            m=network_data.get("m", 2),
-            seed=network_data.get("seed"),
-            directed=network_data.get("directed", False)
+            network_type=network_type,
+            num_nodes=network_num_nodes,
+            k=network_k if network_k is not None else 4,
+            p=network_p if network_p is not None else 0.1,
+            edge_probability=network_edge_probability if network_edge_probability is not None else 0.1,
+            m=network_m if network_m is not None else 2,
+            seed=network_seed,
+            directed=network_directed if network_directed is not None else False
         )
-        
-        # Parse personality distribution configuration
-        personality_data = data.get("personality_distribution", {})
+
         personality_config = PersonalityDistributionConfig(
-            distribution_type=personality_data.get("distribution_type", "uniform"),
-            single_type=personality_data.get("single_type"),
-            cluster_config=personality_data.get("cluster_config"),
-            custom_distribution=personality_data.get("custom_distribution")
+            distribution_type=personality_dist_type,
+            single_type=personality_single_type,
+            cluster_config=personality_cluster_config,
+            custom_distribution=personality_custom
         )
-        
-        # Parse experiment configuration
-        experiment_type = ExperimentType(data.get("experiment_type", "pair_game"))
-        
+
+        experiment_type = ExperimentType(data["experiment_type"])
+
         experiment_config = ExperimentConfig(
             experiment_type=experiment_type,
-            name=data.get("name", "unnamed_experiment"),
-            description=data.get("description", ""),
+            name=data["name"],
+            description=data["description"],
             llm=llm_config,
             game=game_config,
             network=network_config,
             personality_distribution=personality_config,
-            pair_game_config=data.get("pair_game_config"),
-            network_game_config=data.get("network_game_config"),
-            output_dir=data.get("output_dir", "results"),
-            save_detailed_results=data.get("save_detailed_results", True),
-            save_visualizations=data.get("save_visualizations", True),
-            save_network_snapshots=data.get("save_network_snapshots", True),
-            visualization_config=data.get("visualization_config", {
-                "figsize": [12, 8],
-                "dpi": 300,
-                "style": "seaborn-v0_8",
-                "color_palette": "Set2"
-            })
+            pair_game_config=pg_cfg,
+            network_game_config=ng_cfg,
+            output_dir=data["output_dir"],
+            save_detailed_results=data["save_detailed_results"],
+            save_visualizations=data["save_visualizations"],
+            save_network_snapshots=data["save_network_snapshots"],
+            visualization_config=data["visualization_config"]
         )
-        
+
         return experiment_config
     
     def _serialize_config(self, config: ExperimentConfig) -> Dict[str, Any]:
         """Serialize configuration object"""
-        return {
+        data = {
             "experiment_type": config.experiment_type.value,
             "name": config.name,
             "description": config.description,
@@ -277,14 +395,39 @@ class ConfigManager:
                 "cluster_config": config.personality_distribution.cluster_config,
                 "custom_distribution": config.personality_distribution.custom_distribution
             },
-            "pair_game_config": config.pair_game_config,
-            "network_game_config": config.network_game_config,
+        }
+        # serialize pair_game_config if present
+        if config.pair_game_config:
+            data["pair_game_config"] = {
+                "matrix_size": config.pair_game_config.matrix_size,
+                "save_heatmap": config.pair_game_config.save_heatmap,
+                "save_statistics": config.pair_game_config.save_statistics,
+                **(config.pair_game_config.extra or {})
+            }
+        else:
+            data["pair_game_config"] = None
+        # serialize network_game_config if present
+        if config.network_game_config:
+            data["network_game_config"] = {
+                "network_types": config.network_game_config.network_types,
+                "personality_scenarios": config.network_game_config.personality_scenarios,
+                "seed": config.network_game_config.seed,
+                "save_network_evolution": config.network_game_config.save_network_evolution,
+                "save_cooperation_metrics": config.network_game_config.save_cooperation_metrics,
+                **(config.network_game_config.extra or {})
+            }
+        else:
+            data["network_game_config"] = None
+
+        # remaining fields
+        data.update({
             "output_dir": config.output_dir,
             "save_detailed_results": config.save_detailed_results,
             "save_visualizations": config.save_visualizations,
             "save_network_snapshots": config.save_network_snapshots,
             "visualization_config": config.visualization_config
-        }
+        })
+        return data
     
     def create_default_configs(self):
         """Create default configuration files"""
@@ -310,11 +453,11 @@ class ConfigManager:
             personality_distribution=PersonalityDistributionConfig(
                 distribution_type="uniform"
             ),
-            pair_game_config={
-                "matrix_size": 16,
-                "save_heatmap": True,
-                "save_statistics": True
-            }
+            pair_game_config=PairGameConfig(
+                matrix_size=16,
+                save_heatmap=True,
+                save_statistics=True
+            )
         )
         
         # Network game experiment configuration
@@ -341,12 +484,12 @@ class ConfigManager:
             personality_distribution=PersonalityDistributionConfig(
                 distribution_type="uniform"
             ),
-            network_game_config={
-                "network_types": ["regular", "small_world_0.1", "small_world_0.5", "random"],
-                "personality_scenarios": ["uniform", "single_ENTJ", "clustered"],
-                "save_network_evolution": True,
-                "save_cooperation_metrics": True
-            }
+            network_game_config=NetworkGameConfig(
+                network_types=["regular", "small_world_0.1", "small_world_0.5", "random", "scale_free"],
+                personality_scenarios=["uniform", "single_ENTJ", "clustered"],
+                save_network_evolution=True,
+                save_cooperation_metrics=True
+            )
         )
         
         # Save configuration files
@@ -388,6 +531,16 @@ class ConfigManager:
         if config.personality_distribution.distribution_type == "single":
             if not config.personality_distribution.single_type:
                 errors.append("Single type must be specified for single distribution")
+
+        # Validate experiment-specific configs
+        if config.pair_game_config:
+            if config.pair_game_config.matrix_size <= 0:
+                errors.append("pair_game_config.matrix_size must be positive")
+        if config.network_game_config:
+            if not config.network_game_config.network_types:
+                errors.append("network_game_config.network_types must be specified")
+            if not config.network_game_config.personality_scenarios:
+                errors.append("network_game_config.personality_scenarios must be specified")
         
         return errors
     

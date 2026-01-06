@@ -66,9 +66,9 @@ class NetworkGameExperiment:
         output_dir.mkdir(exist_ok=True)
         
         # Get experiment config
-        network_config = self.config.network_game_config
-        network_types = network_config.get("network_types", ["small_world"])
-        personality_scenarios = network_config.get("personality_scenarios", ["uniform"])
+        network_game_config = self.config.network_game_config
+        network_types = network_game_config.get("network_types")
+        personality_scenarios = network_game_config.get("personality_scenarios")
         
         # Run experiments for different network types
         all_results = {}
@@ -149,7 +149,9 @@ class NetworkGameExperiment:
         elif network_type == "scale_free":
             base_config.network_type = NetworkType.SCALE_FREE
             base_config.m = 2
-        
+        else:
+            raise ValueError(f"Unknown network type: {network_type}")
+
         return base_config
     
     def _assign_personalities(self, G: nx.Graph, scenario: str) -> Dict[int, MBTIType]:
