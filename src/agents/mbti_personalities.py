@@ -297,11 +297,11 @@ Please make game decisions with these personality traits."""
         # Add neighbor statistics for network context
         neighbor_info = ""
         if include_neighbor_stats and neighbor_stats:
-            coop_rate = neighbor_stats.get("cooperation_rate", None)
-            neighbor_info = "\nNetwork context:\n"
+            coop_rate = neighbor_stats.get("cooperation_rate", None) 
             if coop_rate is not None:
                 defect_rate = 1 - coop_rate
-                neighbor_info += f"- In the last round, {coop_rate:.0%} of your neighbors cooperated and {defect_rate:.0%} defected.\n"
+                neighbor_info = "\nNetwork context:\n" + \
+                f"- In the last round, {coop_rate:.0%} of your neighbors cooperated and {defect_rate:.0%} defected.\n"
 
         # Combine full prompt
         full_prompt = f"""{personality_prompt}
