@@ -28,6 +28,12 @@ llm:
   kwargs:
     temperature: 1
 
+prompt_config:
+  personality_injection: strong
+  include_history: true
+  include_opponent_type: true
+  include_neighbor_stats: true
+
 network_game_config:
   network_types:
   - scale_free

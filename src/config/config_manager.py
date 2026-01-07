@@ -68,6 +68,15 @@ class NetworkGameConfig:
     personality_scenarios: List[str] = field(default_factory=lambda: ["uniform"])
 
 @dataclass
+class PromptConfig:
+    """Prompt composition configuration"""
+    include_history: bool = True
+    include_opponent_type: bool = True
+    include_neighbor_stats: bool = True
+    # 'strong' (full personality text), 'weak' (short), 'none' (no personality injection)
+    personality_injection: str = "strong"
+
+@dataclass
 class ExperimentConfig:
     """Experiment configuration"""
     experiment_type: ExperimentType
@@ -78,7 +87,8 @@ class ExperimentConfig:
     llm: LLMConfig
     game: GameConfig
     network: Optional[NetworkConfig] = None
-
+    prompt_config: PromptConfig = field(default_factory=PromptConfig)
+ 
     # Experiment-specific configuration (now typed)
     pair_game_config: Optional[PairGameConfig] = None
     network_game_config: Optional[NetworkGameConfig] = None
@@ -268,6 +278,17 @@ class ConfigManager:
                     personality_scenarios=ng["personality_scenarios"]
                 )
 
+        # Prompt config (optional)
+        prompt_cfg = None
+        if "prompt_config" in data and data.get("prompt_config") is not None:
+            pc = data.get("prompt_config")
+            prompt_cfg = PromptConfig(
+                include_history=pc.get("include_history", True),
+                include_opponent_type=pc.get("include_opponent_type", True),
+                include_neighbor_stats=pc.get("include_neighbor_stats", True),
+                personality_injection=pc.get("personality_injection", "strong")
+            )
+
         # Other top-level required fields
         if "experiment_type" not in data or data.get("experiment_type") is None:
             missing.append("experiment_type")
@@ -314,6 +335,7 @@ class ConfigManager:
             network=network_config,
             pair_game_config=pg_cfg,
             network_game_config=ng_cfg,
+            prompt_config=prompt_cfg or PromptConfig(),
             output_dir=data["output_dir"],
             visualization_config=data["visualization_config"]
         )

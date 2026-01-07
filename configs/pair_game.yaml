@@ -29,6 +29,12 @@ llm:
   kwargs:
     temperature: 1
 
+prompt_config:
+  personality_injection: strong
+  include_history: true
+  include_opponent_type: true
+  include_neighbor_stats: false
+
 pair_game_config:
   matrix_size: 16
   save_heatmap: true

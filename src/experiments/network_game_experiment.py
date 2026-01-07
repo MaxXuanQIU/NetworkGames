@@ -276,8 +276,13 @@ class NetworkGameExperiment:
                         history,
                         personality_assignment[neighbor].value,
                         is_player1=(node <= neighbor),
-                        neighbor_stats=neighbor_stats
-                    )
+                        neighbor_stats=neighbor_stats,
+                        # Prompt Details Config
+                        include_history=self.config.prompt_config.include_history,
+                        include_opponent_type=self.config.prompt_config.include_opponent_type,
+                        include_neighbor_stats=self.config.prompt_config.include_neighbor_stats,
+                        personality_strength=self.config.prompt_config.personality_injection
+                     )
                     async with semaphore:
                         action = await self._get_llm_action(prompt, f"node_{node}")
                     actions[neighbor] = action

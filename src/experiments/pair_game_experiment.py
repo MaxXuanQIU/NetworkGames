@@ -196,15 +196,29 @@ class PairGameExperiment:
         # Run multiple rounds
         for round_num in range(1, self.config.game.num_rounds + 1):
             # Generate decision prompt
+            # pass prompt composition options from config.prompt_config
+            pc = self.config.prompt_config
             prompt1 = personality1.get_decision_prompt(
-                history.results, 
+                history.results,
                 player2_type.value,
-                is_player1=True
+                is_player1=True,
+                neighbor_stats=None,
+                # Prompt Details Config
+                include_history=pc.include_history,
+                include_opponent_type=pc.include_opponent_type,
+                include_neighbor_stats=pc.include_neighbor_stats,
+                personality_strength=pc.personality_injection
             )
             prompt2 = personality2.get_decision_prompt(
-                history.results, 
+                history.results,
                 player1_type.value,
-                is_player1=False
+                is_player1=False,
+                neighbor_stats=None,
+                # Prompt Details Config
+                include_history=pc.include_history,
+                include_opponent_type=pc.include_opponent_type,
+                include_neighbor_stats=pc.include_neighbor_stats,
+                personality_strength=pc.personality_injection
             )
             # Get actions concurrently
             action1, action2 = await asyncio.gather(
