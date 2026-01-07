@@ -247,7 +247,7 @@ Please make game decisions with these personality traits."""
         """
         Generate a decision prompt for a specific game situation.
         """
-        base_prompt = self.prompt_template
+        personality_prompt = self.prompt_template
 
         # Add Prisoner's Dilemma payoff matrix info
         pd_matrix_text = (
@@ -259,7 +259,7 @@ Please make game decisions with these personality traits."""
 
         # Add game history information
         if game_history:
-            history_text = "Game history:\n"
+            history_text = "\nGame history:\n"
             for i, round_data in enumerate(game_history[-5:], 1):  # Show only the last 5 rounds
                 if is_player1:
                     my_action = round_data.player1_action.value if hasattr(round_data, 'player1_action') else 'Unknown'
@@ -272,24 +272,21 @@ Please make game decisions with these personality traits."""
             history_text = "This is the first round of the game."
         
         # Add opponent information
-        opponent_info = f"\nOpponent personality type: {opponent_type}" if opponent_type else ""
+        opponent_info = f"\nOpponent personality type: {opponent_type}\n" if opponent_type else ""
 
         # Add neighbor statistics for network context
         neighbor_info = ""
         if neighbor_stats:
             coop_rate = neighbor_stats.get("cooperation_rate", None)
-            majority_action = neighbor_stats.get("majority_action", None)
             neighbor_info = "\nNetwork context:\n"
             if coop_rate is not None:
-                neighbor_info += f"- Your neighbors' recent cooperation rate: {coop_rate:.1%}\n"
-            if majority_action is not None:
-                neighbor_info += f"- Most neighbors chose: {majority_action}\n"
+                defect_rate = 1 - coop_rate
+                neighbor_info += f"- In the last round, {coop_rate:.0%} of your neighbors cooperated and {defect_rate:.0%} defected.\n"
 
         # Combine full prompt
-        full_prompt = f"""{base_prompt}
+        full_prompt = f"""{personality_prompt}
 
-{pd_matrix_text}
-{history_text}{opponent_info}{neighbor_info}
+{pd_matrix_text}{history_text}{opponent_info}{neighbor_info}
 
 Now please make your decision: COOPERATE or DEFECT?
 Please answer only COOPERATE or DEFECT, do not explain your reason."""

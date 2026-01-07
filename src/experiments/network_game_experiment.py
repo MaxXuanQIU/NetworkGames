@@ -237,8 +237,8 @@ class NetworkGameExperiment:
         # Create semaphore to limit max concurrency
         semaphore = asyncio.Semaphore(10)
 
-        # Store history of actions of neighbors for context
-        node_neighbor_actions = {node: [] for node in G.nodes()}
+        # Store history of actions of each node for neighbor context
+        node_actions_history = {node: [] for node in G.nodes()}
 
         for round_num in pbar:
             self.logger.info(f"Running round {round_num}/{num_rounds}")
@@ -254,15 +254,15 @@ class NetworkGameExperiment:
                 personality = self.personalities[personality_assignment[node]]
                 node_neighbors.append((node, neighbors, personality))
             
-            async def get_actions_for_node(node, neighbors, personality):
+            async def get_actions_for_node(node, neighbors, personality: MBTIPersonality):
                 actions = {}
                 # Calculate neighbor statistics
                 neighbor_stats = {"cooperation_rate": None, "majority_action": None}
                 neighbor_actions = []
                 for neighbor in neighbors:
                     # Get the neighbor's last action (from the previous round)
-                    if node_neighbor_actions[neighbor]:
-                        neighbor_actions.append(node_neighbor_actions[neighbor][-1])
+                    if node_actions_history[neighbor]:
+                        neighbor_actions.append(node_actions_history[neighbor][-1])
                 if neighbor_actions:
                     coop_count = sum(1 for a in neighbor_actions if a == Action.COOPERATE)
                     neighbor_stats["cooperation_rate"] = coop_count / len(neighbor_actions)
@@ -305,8 +305,8 @@ class NetworkGameExperiment:
                         pair_histories[tuple(sorted(pair_key))].append(result)
                         edge_actions[(node, neighbor)] = (action1, action2)
                         # Update neighbor action history for next round context
-                        node_neighbor_actions[node].append(action1)
-                        node_neighbor_actions[neighbor].append(action2)
+                        node_actions_history[node].append(action1)
+                        node_actions_history[neighbor].append(action2)
 
             # Record round data
             round_data = self._record_round_data(
