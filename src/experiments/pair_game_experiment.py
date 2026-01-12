@@ -95,7 +95,7 @@ class PairGameExperiment:
         pbar = tqdm(total=total_combinations // 2 + 8, desc="Running matrix experiment")
 
         # Define semaphore for limiting concurrency
-        semaphore = asyncio.Semaphore(10)
+        semaphore = asyncio.Semaphore(self.config.llm.concurrency)
 
         # Construct all game tasks
         tasks = []
@@ -240,7 +240,7 @@ class PairGameExperiment:
             self.logger.warning(
                 f"Parse {player_name} action failed (attempt {attempt+1}): Unable to parse '{response.content}'. Retrying..."
             )
-            sleep_time = 2 ** attempt
+            sleep_time = 2 * attempt
             await asyncio.sleep(sleep_time)
         raise ValueError(f"Failed to parse LLM response for {player_name} after {max_retries} attempts.")
 

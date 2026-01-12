@@ -26,6 +26,7 @@ class LLMConfig:
     temperature: float = 0.7
     max_tokens: int = 50
     timeout: int = 30
+    concurrency: int = 10
     kwargs: Dict[str, Any] = field(default_factory=dict)
 
 
@@ -213,6 +214,7 @@ class ConfigManager:
         llm_temperature = llm_data.get("temperature") if llm_data else None
         llm_max_tokens = llm_data.get("max_tokens") if llm_data else None
         llm_timeout = llm_data.get("timeout") if llm_data else None
+        llm_concurrency = llm_data.get("concurrency") if llm_data else 10
         llm_kwargs = llm_data.get("kwargs") if llm_data else None
 
         # Game section (required)
@@ -314,6 +316,7 @@ class ConfigManager:
             temperature=llm_temperature,
             max_tokens=llm_max_tokens,
             timeout=llm_timeout,
+            concurrency=llm_concurrency,
             kwargs=llm_kwargs or {}
         )
 
@@ -355,6 +358,7 @@ class ConfigManager:
                 "temperature": config.llm.temperature,
                 "max_tokens": config.llm.max_tokens,
                 "timeout": config.llm.timeout,
+                "concurrency": config.llm.concurrency,
                 "kwargs": config.llm.kwargs
             },
             "game": {

@@ -235,7 +235,7 @@ class NetworkGameExperiment:
         pbar = tqdm.tqdm(range(1, num_rounds + 1), desc="Network game rounds")
 
         # Create semaphore to limit max concurrency
-        semaphore = asyncio.Semaphore(10)
+        semaphore = asyncio.Semaphore(self.config.llm.concurrency)
 
         # Store history of actions of each node for neighbor context
         node_actions_history = {node: [] for node in G.nodes()}
@@ -335,7 +335,7 @@ class NetworkGameExperiment:
             self.logger.warning(
                 f"Parse {player_name} action failed (attempt {attempt+1}): Unable to parse '{response.content}'. Retrying..."
             )
-            sleep_time = 2 ** attempt
+            sleep_time = 2 * attempt
             await asyncio.sleep(sleep_time)
         raise ValueError(f"Failed to parse LLM response for {player_name} after {max_retries} attempts.")
 

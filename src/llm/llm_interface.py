@@ -15,6 +15,7 @@ class LLMProvider(Enum):
     OPENAI = "openai"
     ANTHROPIC = "anthropic"
     GOOGLE = "google"
+    LOCAL = "local"
     MOCK = "mock"  # For testing
 
 
@@ -78,11 +79,11 @@ class BaseLLMInterface(ABC):
 class OpenAIInterface(BaseLLMInterface):
     """OpenAI interface implementation"""
     
-    def __init__(self, model_name: str = "gpt-5-nano", api_key: str = None, **kwargs):
+    def __init__(self, model_name: str, api_key: str = None, base_url: str = None, **kwargs):
         super().__init__(model_name, api_key, **kwargs)
         try:
             import openai
-            self.client = openai.AsyncOpenAI(api_key=api_key)
+            self.client = openai.AsyncOpenAI(api_key=api_key, base_url=base_url)
         except ImportError:
             raise ImportError("OpenAI package not installed. Install with: pip install openai")
     
@@ -148,7 +149,7 @@ class AnthropicInterface(BaseLLMInterface):
                 model=self.model_name,
                 max_tokens=256, # Limit output length
                 messages=[{"role": "user", "content": prompt}],
-                temperature=kwargs.get("temperature", 0.7),
+                temperature=kwargs.get("temperature"),
                 **self.kwargs
             )
             
@@ -202,7 +203,7 @@ class GoogleInterface(BaseLLMInterface):
                 prompt,
                 generation_config={
                     "max_output_tokens": 256,  # Limit output length
-                    "temperature": kwargs.get("temperature", 0.7),
+                    "temperature": kwargs.get("temperature"),
                     **self.kwargs
                 }
             )
@@ -235,6 +236,16 @@ class GoogleInterface(BaseLLMInterface):
         return LLMProvider.GOOGLE
 
 
+class LocalInterface(OpenAIInterface):
+    """Local LLM interface implementation (Support locally deployed LLaMA, Qwen, etc.)"""
+    
+    def __init__(self, model_name: str, api_key: str = "EMPTY", base_url: str = "http://localhost:11434/v1", **kwargs):
+        super().__init__(model_name, api_key=api_key or "EMPTY", base_url=base_url, **kwargs)
+    
+    def get_provider(self) -> LLMProvider:
+        return LLMProvider.LOCAL
+
+
 class MockLLMInterface(BaseLLMInterface):
     """Mock LLM interface for testing"""
     
@@ -258,9 +269,9 @@ class MockLLMInterface(BaseLLMInterface):
             content = "COOPERATE"
         else:
             content = "DEFECT"
-        
+
         response_time = time.time() - start_time
-        
+
         return LLMResponse(
             content=content,
             model=self.model_name,
@@ -283,6 +294,10 @@ class LLMFactory:
             return AnthropicInterface(model_name, api_key, **kwargs)
         elif provider == LLMProvider.GOOGLE:
             return GoogleInterface(model_name, api_key, **kwargs)
+        elif provider == LLMProvider.LOCAL:
+            # For local models, extracting base_url is important
+            base_url = kwargs.pop("base_url", "http://localhost:11434/v1")
+            return LocalInterface(model_name, api_key, base_url=base_url, **kwargs)
         elif provider == LLMProvider.MOCK:
             return MockLLMInterface(model_name, **kwargs)
         else:
