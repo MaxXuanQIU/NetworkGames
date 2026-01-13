@@ -234,25 +234,19 @@ class PairGameExperiment:
         """Get LLM action with automatic retry on parse failure"""
         for attempt in range(max_retries):
             response = await self.llm_manager.generate_response("default", prompt, **self.config.llm.kwargs)
-            action = self._parse_action(response.content)
-            if action is not None:
-                return action
+
+            if response.is_cooperate():
+                return Action.COOPERATE
+            if response.is_defect():
+                return Action.DEFECT
+            
+            content = response.content[:12] + "..." if len(response.content) > 12 else response.content
             self.logger.warning(
-                f"Parse {player_name} action failed (attempt {attempt+1}): Unable to parse '{response.content}'. Retrying..."
+                f"Parse {player_name} action failed (attempt {attempt+1}): Unable to parse '{content}'. Retrying..."
             )
             sleep_time = 2 * attempt
             await asyncio.sleep(sleep_time)
         raise ValueError(f"Failed to parse LLM response for {player_name} after {max_retries} attempts.")
-
-    def _parse_action(self, response: str) -> Action:
-        """Parse LLM response to game action"""
-        response = response.strip().upper()
-        if "COOPERATE" in response:
-            return Action.COOPERATE
-        elif "DEFECT" in response:
-            return Action.DEFECT
-        else:
-            return None
  
     def _parse_payoff_matrix(self, matrix_cfg: dict) -> dict:
         """Convert yaml-configured payoff_matrix to internal format"""

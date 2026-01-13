@@ -33,12 +33,14 @@ class LLMResponse:
     
     def is_cooperate(self) -> bool:
         """Determine if the response is cooperation"""
-        return self.content.upper() in ["COOPERATE", "COOPERATION"]
-    
+        upper = self.content.upper()
+        return upper.rfind("COOPERATE") > upper.rfind("DEFECT")
+
     def is_defect(self) -> bool:
         """Determine if the response is defection"""
-        return self.content.upper() in ["DEFECT", "DEFECTION"]
-    
+        upper = self.content.upper()
+        return upper.rfind("DEFECT") > upper.rfind("COOPERATE")
+
     def is_valid_action(self) -> bool:
         """Determine if the response is a valid game action"""
         return self.is_cooperate() or self.is_defect()
@@ -345,9 +347,9 @@ class LLMManager:
         llm = self.get_llm(llm_name)
         response = await llm.generate_response(prompt, **kwargs)
         
-        if not llm.validate_response(response):
-            self.logger.warning(f"Invalid response from {llm_name}: {response.content}")
-        
+        # validate_response handles validation logging internally
+        llm.validate_response(response)
+
         self._log_prompt_response(llm_name, prompt, response.content)
         
         return response

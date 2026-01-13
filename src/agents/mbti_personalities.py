@@ -307,9 +307,8 @@ Please make game decisions with these personality traits."""
         full_prompt = f"""{personality_prompt}
 
 {pd_matrix_text}{history_text}{opponent_info}{neighbor_info}
-
-Now please make your decision: COOPERATE or DEFECT?
-Please answer only COOPERATE or DEFECT, do not explain your reason."""
+Will you COOPERATE or DEFECT? 
+Answer only COOPERATE or DEFECT, do not explain your reason."""
 
         return full_prompt
 
