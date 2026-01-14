@@ -306,9 +306,11 @@ Please make game decisions with these personality traits."""
         # Combine full prompt
         full_prompt = f"""{personality_prompt}
 
-{pd_matrix_text}{history_text}{opponent_info}{neighbor_info}
+    {pd_matrix_text}{history_text}{opponent_info}{neighbor_info}
 Will you COOPERATE or DEFECT? 
-Answer only COOPERATE or DEFECT, do not explain your reason."""
+Think briefly (one short sentence).
+Then output your decision on a new line as either 'COOPERATE' or 'DEFECT' only.
+"""
 
         return full_prompt
 

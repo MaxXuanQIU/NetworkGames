@@ -33,13 +33,15 @@ class LLMResponse:
     
     def is_cooperate(self) -> bool:
         """Determine if the response is cooperation"""
-        upper = self.content.upper()
-        return upper.rfind("COOPERATE") > upper.rfind("DEFECT")
+        coop_idx = self.content.find("COOPERATE")
+        def_idx = self.content.find("DEFECT")
+        return coop_idx != -1 and (def_idx == -1 or coop_idx < def_idx)
 
     def is_defect(self) -> bool:
         """Determine if the response is defection"""
-        upper = self.content.upper()
-        return upper.rfind("DEFECT") > upper.rfind("COOPERATE")
+        coop_idx = self.content.find("COOPERATE")
+        def_idx = self.content.find("DEFECT")
+        return def_idx != -1 and (coop_idx == -1 or def_idx < coop_idx)
 
     def is_valid_action(self) -> bool:
         """Determine if the response is a valid game action"""
