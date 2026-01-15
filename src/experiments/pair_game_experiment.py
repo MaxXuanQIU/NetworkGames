@@ -349,9 +349,9 @@ class PairGameExperiment:
         visualization_files["distribution"] = distribution_file
         
         # Personality cooperation ranking
-        personality_rates = analysis_results["personality_analysis"]["personality_rates"]
-        ranking_file = self.plotter.plot_personality_ranking(
-            personality_rates,
+        personality_cooperation_rates = analysis_results["personality_analysis"]["cooperation_rates"]
+        ranking_file = self.plotter.plot_cooperation_ranking(
+            personality_cooperation_rates,
             title="Personality Cooperation Ranking",
             filename="personality_cooperation_ranking"
         )

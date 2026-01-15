@@ -130,7 +130,7 @@ class PairGamePlotter(BasePlotter):
         
         return str(self.save_plot(filename))
     
-    def plot_personality_ranking(self, personality_rates: Dict[str, Dict[str, float]],
+    def plot_cooperation_ranking(self, cooperation_rates: Dict[str, Dict[str, float]],
                                title: str = "Personality Cooperation Ranking",
                                filename: str = "personality_ranking") -> str:
         """Plot personality cooperation rate ranking (colored by MBTI type)"""
@@ -157,7 +157,7 @@ class PairGamePlotter(BasePlotter):
         # Extract cooperation rate, sample size, and std
         data = [
             (ptype, pdata.get('cooperation_rate', 0), pdata.get('sample_size', 0), pdata.get('std', 0))
-            for ptype, pdata in personality_rates.items()
+            for ptype, pdata in cooperation_rates.items()
         ]
         # Sort by cooperation rate
         data_sorted = sorted(data, key=lambda x: x[1], reverse=True)

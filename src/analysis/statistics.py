@@ -114,13 +114,13 @@ class CooperationAnalyzer:
             return {}
         
         # Calculate cooperation rate for each personality type
-        personality_rates = {}
+        personality_cooperation_rates = {}
         for personality, data in personality_data.items():
             if data:
-                personality_rates[personality] = np.mean(data)
+                personality_cooperation_rates[personality] = np.mean(data)
         
         # Statistical tests
-        if len(personality_rates) >= 2:
+        if len(personality_cooperation_rates) >= 2:
             # Kruskal-Wallis test (non-parametric)
             groups = [data for data in personality_data.values() if data]
             if len(groups) >= 2:
@@ -130,7 +130,7 @@ class CooperationAnalyzer:
                 pairwise_tests = self._pairwise_comparisons(personality_data)
                 
                 return {
-                    "personality_rates": personality_rates,
+                    "cooperation_rates": personality_cooperation_rates,
                     "kruskal_wallis": {
                         "h_statistic": h_stat,
                         "p_value": p_value,
@@ -139,7 +139,7 @@ class CooperationAnalyzer:
                     "pairwise_tests": pairwise_tests
                 }
         
-        return {"personality_rates": personality_rates}
+        return {"cooperation_rates": personality_cooperation_rates}
     
     def _pairwise_comparisons(self, personality_data: Dict[str, List[bool]]) -> Dict[str, Dict]:
         """Perform pairwise comparisons"""
@@ -379,18 +379,18 @@ class PersonalityAnalyzer:
     def _analyze_personality_types(self, cooperation_data: Dict[str, List[bool]], payoff_data: Dict[str, List[float]]) -> Dict[str, Any]:
         """Analyze personality types, support both cooperation and payoff ranking"""
         # Cooperation ranking
-        personality_rates = {}
+        cooperation_rates = {}
         for personality, data in cooperation_data.items():
             if data:
-                personality_rates[personality] = {
+                cooperation_rates[personality] = {
                     "cooperation_rate": np.mean(data),
                     "sample_size": len(data),
                     "std": np.std(data)
                 }
-        sorted_types = sorted(personality_rates.items(), key=lambda x: x[1]["cooperation_rate"], reverse=True)
+        sorted_types = sorted(cooperation_rates.items(), key=lambda x: x[1]["cooperation_rate"], reverse=True)
         
         result = {
-            "personality_rates": personality_rates,
+            "cooperation_rates": cooperation_rates,
             "cooperation_ranking": [item[0] for item in sorted_types],
             "most_cooperative": sorted_types[0][0] if sorted_types else None,
             "least_cooperative": sorted_types[-1][0] if sorted_types else None

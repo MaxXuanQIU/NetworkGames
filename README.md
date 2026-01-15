@@ -161,9 +161,9 @@ plt.title("MBTI Cooperation Rate Matrix")
 plt.show()
 
 # Analyze personality ranking
-personality_rates = results.mean(axis=1).sort_values(ascending=False)
-print("Most cooperative personality type:", personality_rates.index[0])
-print("Least cooperative personality type:", personality_rates.index[-1])
+personality_cooperation_rates = results.mean(axis=1).sort_values(ascending=False)
+print("Most cooperative personality type:", personality_cooperation_rates.index[0])
+print("Least cooperative personality type:", personality_cooperation_rates.index[-1])
 ```
 
 ## Config Explanation
