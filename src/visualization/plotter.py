@@ -156,12 +156,12 @@ class PairGamePlotter(BasePlotter):
 
         # Extract cooperation rate, sample size, and std
         data = [
-            (ptype, pdata.get('cooperation_rate', 0), pdata.get('std', 0))
+            (ptype, pdata.get('cooperation_rate', 0), pdata.get('sample_size', 0), pdata.get('std', 0))
             for ptype, pdata in personality_rates.items()
         ]
         # Sort by cooperation rate
         data_sorted = sorted(data, key=lambda x: x[1], reverse=True)
-        personalities, rates, stds = zip(*data_sorted)
+        personalities, rates, sample_sizes, stds = zip(*data_sorted)
 
         # Color by MBTI group
         bar_colors = []
@@ -193,6 +193,33 @@ class PairGamePlotter(BasePlotter):
             for group, color in mbti_color_map.items()
         ]
         plt.legend(handles=legend_elements, title="MBTI Group", loc="center left", bbox_to_anchor=(1.02, 0.5), borderaxespad=0.)
+            
+        # Check if all sample sizes are equal
+        unique_sizes = set(sample_sizes)
+        if len(unique_sizes) == 1:
+            # If all sizes are equal, add one line to legend indicating common sample size
+            common_size = unique_sizes.pop()
+            total_samples = sum(sample_sizes)
+            
+            # Create independent legend for sample info
+            sample_legend_elements = [
+            Patch(facecolor='none', edgecolor='none', label=f'N = {common_size} (Each)'),
+            Patch(facecolor='none', edgecolor='none', label=f'Total N = {total_samples}')
+            ]
+            
+            # Important: Add the existing legend (MBTI Group) as an artist so it's not overwritten
+            ax = plt.gca()
+            if ax.get_legend():
+                ax.add_artist(ax.get_legend())
+            
+            # Add the new sample size legend in a different position (e.g., lower right side)
+            plt.legend(handles=sample_legend_elements, 
+                   title="", 
+                   loc="upper left", 
+                   bbox_to_anchor=(1.02, 0.1), 
+                   borderaxespad=0.,
+                   handlelength=0,
+                   handletextpad=0)
 
         plt.tight_layout()
         return str(self.save_plot(filename))
@@ -222,11 +249,11 @@ class PairGamePlotter(BasePlotter):
 
         # Extract payoff, sample size, std
         data = [
-            (ptype, pdata.get('payoff', 0), pdata.get('std', 0))
+            (ptype, pdata.get('payoff', 0), pdata.get('sample_size', 0), pdata.get('std', 0))
             for ptype, pdata in payoff_rates.items()
         ]
         data_sorted = sorted(data, key=lambda x: x[1], reverse=True)
-        personalities, payoffs, stds = zip(*data_sorted)
+        personalities, payoffs, sample_sizes, stds = zip(*data_sorted)
 
         bar_colors = []
         for p in personalities:
@@ -240,7 +267,7 @@ class PairGamePlotter(BasePlotter):
                        color=bar_colors)
         for i, (bar, payoff) in enumerate(zip(bars, payoffs)):
             plt.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.01,
-                     f'{payoff:.2f}', ha='center', va='bottom', fontsize=9)
+                     f'{payoff:.3f}', ha='center', va='bottom', fontsize=8)
         plt.xlabel('Personality Type')
         plt.ylabel('Average Payoff')
         plt.title(title)
@@ -251,6 +278,33 @@ class PairGamePlotter(BasePlotter):
             for group, color in mbti_color_map.items()
         ]
         plt.legend(handles=legend_elements, title="MBTI Group", loc="center left", bbox_to_anchor=(1.02, 0.5), borderaxespad=0.)
+        # Check if all sample sizes are equal
+        unique_sizes = set(sample_sizes)
+        if len(unique_sizes) == 1:
+            # If all sizes are equal, add one line to legend indicating common sample size
+            common_size = unique_sizes.pop()
+            total_samples = sum(sample_sizes)
+            
+            # Create independent legend for sample info
+            sample_legend_elements = [
+            Patch(facecolor='none', edgecolor='none', label=f'N = {common_size} (Each)'),
+            Patch(facecolor='none', edgecolor='none', label=f'Total N = {total_samples}')
+            ]
+            
+            # Important: Add the existing legend (MBTI Group) as an artist so it's not overwritten
+            ax = plt.gca()
+            if ax.get_legend():
+                ax.add_artist(ax.get_legend())
+            
+            # Add the new sample size legend in a different position (e.g., lower right side)
+            plt.legend(handles=sample_legend_elements, 
+                   title="", 
+                   loc="upper left", 
+                   bbox_to_anchor=(1.02, 0.1), 
+                   borderaxespad=0.,
+                   handlelength=0,
+                   handletextpad=0)
+
         plt.tight_layout()
         return str(self.save_plot(filename))
 

@@ -25,6 +25,7 @@ llm:
   api_key: null
   provider: mock
   model_name: mock-model
+  concurrency: 4
   kwargs:
     cooperation_rate: 0.5
     response_delay: 0

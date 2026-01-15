@@ -411,6 +411,36 @@ class PersonalityAnalyzer:
         result["highest_payoff"] = sorted_payoff[0][0] if sorted_payoff else None
         result["lowest_payoff"] = sorted_payoff[-1][0] if sorted_payoff else None
         
+        # Statistical significance calculation (Kruskal-Wallis H-test)
+        # 1. Cooperation Rate Significance
+        # Filter out empty groups to avoid errors
+        coop_groups = [data for data in cooperation_data.values() if len(data) > 0]
+        if len(coop_groups) >= 2:
+            try:
+                h_stat, p_val = kruskal(*coop_groups)
+                result["cooperation_significance"] = {
+                    "test": "Kruskal-Wallis",
+                    "statistic": h_stat,
+                    "p_value": p_val,
+                    "significant": p_val < 0.05
+                }
+            except ValueError:
+                result["cooperation_significance"] = {"error": "Insufficient data"}
+
+        # 2. Payoff Significance
+        payoff_groups = [vals for vals in payoff_data.values() if len(vals) > 0]
+        if len(payoff_groups) >= 2:
+            try:
+                h_stat, p_val = kruskal(*payoff_groups)
+                result["payoff_significance"] = {
+                    "test": "Kruskal-Wallis",
+                    "statistic": h_stat,
+                    "p_value": p_val,
+                    "significant": p_val < 0.05
+                }
+            except ValueError:
+                result["payoff_significance"] = {"error": "Insufficient data"}
+        
         return result
     
     def _calculate_cohens_d(self, group1: List[bool], group2: List[bool]) -> float:
