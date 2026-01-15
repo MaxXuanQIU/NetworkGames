@@ -28,6 +28,8 @@ class PairGameExperiment:
         self.config = config
         self.llm_manager = llm_manager
         self.logger = logging.getLogger(self.__class__.__name__)
+        # Use the actual model name from config as the key (e.g., "qwen2.5", "llama3")
+        self.model_name = config.llm.model_name
         
         # Initialize components
         payoff_matrix = self._parse_payoff_matrix(config.game.payoff_matrix)
@@ -233,7 +235,7 @@ class PairGameExperiment:
     async def _get_llm_action(self, prompt: str, player_name: str, max_retries: int = 10) -> Action:
         """Get LLM action with automatic retry on parse failure"""
         for attempt in range(max_retries):
-            response = await self.llm_manager.generate_response("default", prompt, **self.config.llm.kwargs)
+            response = await self.llm_manager.generate_response(self.model_name, prompt, **self.config.llm.kwargs)
 
             if response.is_cooperate():
                 return Action.COOPERATE
@@ -451,7 +453,7 @@ async def run_pair_game_experiment(config_file: str = "configs/pair_game.yaml"):
         "api_key": config.llm.api_key,
         "kwargs": config.llm.kwargs
     })
-    llm_manager.add_llm("default", llm)
+    llm_manager.add_llm(config.llm.model_name, llm)
     
     # Run experiment
     experiment = PairGameExperiment(config, llm_manager)
