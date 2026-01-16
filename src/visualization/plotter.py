@@ -321,7 +321,7 @@ class PairGamePlotter(BasePlotter):
             'J': '#e377c2', 'P': '#7f7f7f',
         }
 
-        fig, axes = plt.subplots(2, 2, figsize=(5, 10))
+        fig, axes = plt.subplots(1, 4, figsize=(9, 6))
         axes = axes.flatten()
 
         for i, (dim, data) in enumerate(dimension_data.items()):
