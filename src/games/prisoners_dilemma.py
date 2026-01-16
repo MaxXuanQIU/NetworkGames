@@ -191,9 +191,9 @@ class StagHunt(TwoPlayerGame):
     """
     PAYOFF_MATRIX = {
         (Action.COOPERATE, Action.COOPERATE): (5, 5),  # Both Cooperate (Stag)
-        (Action.COOPERATE, Action.DEFECT): (0, 3),    # I Cooperate (Stag), Opponent Defects (Hare)
-        (Action.DEFECT, Action.COOPERATE): (3, 0),    # I Defect (Hare), Opponent Cooperates (Stag)
-        (Action.DEFECT, Action.DEFECT): (1, 1)        # Both Defect (Hare)
+        (Action.COOPERATE, Action.DEFECT): (0, 2),    # I Cooperate (Stag), Opponent Defects (Hare)
+        (Action.DEFECT, Action.COOPERATE): (2, 0),    # I Defect (Hare), Opponent Cooperates (Stag)
+        (Action.DEFECT, Action.DEFECT): (2, 2)        # Both Defect (Hare)
     }
 
     def __init__(self, payoff_matrix: Optional[Dict[Tuple[Action, Action], Tuple[float, float]]] = None):
@@ -209,8 +209,8 @@ class Snowdrift(TwoPlayerGame):
     """
     PAYOFF_MATRIX = {
         (Action.COOPERATE, Action.COOPERATE): (3, 3),  # Both Shovel (Reward)
-        (Action.COOPERATE, Action.DEFECT): (1, 5),    # I Shovel, Opponent Waits (Sucker, Temptation)
-        (Action.DEFECT, Action.COOPERATE): (5, 1),    # I Wait, Opponent Shovels (Temptation, Sucker)
+        (Action.COOPERATE, Action.DEFECT): (2, 5),    # I Shovel, Opponent Waits (Sucker, Temptation)
+        (Action.DEFECT, Action.COOPERATE): (5, 2),    # I Wait, Opponent Shovels (Temptation, Sucker)
         (Action.DEFECT, Action.DEFECT): (0, 0)        # Both Wait (Punishment/Crash)
     }
 
