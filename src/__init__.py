@@ -10,7 +10,7 @@ __description__ = "A framework for studying LLM behavior in network games"
 
 # Import main modules
 from .agents.mbti_personalities import MBTIType, MBTIPersonality, get_all_mbti_types
-from .games.prisoners_dilemma import PrisonersDilemma, Action, GameHistory
+from .games.two_player_game import PrisonersDilemma, Action, GameHistory
 from .llm.llm_interface import LLMManager, LLMFactory, LLMProvider
 from .networks.network_generator import NetworkGenerator, NetworkConfig, NetworkType
 from .config.config_manager import ConfigManager, ExperimentConfig

@@ -15,7 +15,7 @@ import random
 
 from src.agents.mbti_personalities import MBTIType, MBTIPersonality, get_all_mbti_types
 from src.llm.llm_interface import LLMManager, LLMFactory, LLMProvider
-from src.games.prisoners_dilemma import GameFactory, Action, GameHistory
+from src.games.two_player_game import GameFactory, Action, GameHistory
 from src.analysis.statistics import CooperationAnalyzer, PersonalityAnalyzer
 from src.visualization.plotter import PairGamePlotter
 from src.config.config_manager import ExperimentConfig

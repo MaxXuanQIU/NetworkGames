@@ -18,7 +18,7 @@ from scipy.stats import linregress
 
 from src.agents.mbti_personalities import MBTIType, MBTIPersonality, get_all_mbti_types
 from src.llm.llm_interface import LLMManager, LLMFactory
-from src.games.prisoners_dilemma import GameFactory, Action, GameHistory
+from src.games.two_player_game import GameFactory, Action, GameHistory
 from src.networks.network_generator import NetworkGenerator, NetworkConfig, NetworkType, NetworkAnalyzer
 from src.analysis.statistics import CooperationAnalyzer, NetworkAnalyzer as NetworkStatsAnalyzer
 from src.visualization.plotter import NetworkGamePlotter, InteractivePlotter

@@ -86,7 +86,7 @@ NetworkGames/
 │   ├── agents/                   # Agents
 │   │   └── mbti_personalities.py # MBTI personality system
 │   ├── games/                    # Game logic
-│   │   └── prisoners_dilemma.py  # Prisoner's Dilemma implementation
+│   │   └── two_player_game.py    # Two player game including Prisoner's Dilemma
 │   ├── networks/                 # Network topology
 │   │   └── network_generator.py  # Network generator
 │   ├── llm/                     # LLM interface

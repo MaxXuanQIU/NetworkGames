@@ -12,7 +12,7 @@ sys.path.append(str(Path(__file__).parent / "src"))
 
 from src.agents.mbti_personalities import MBTIType, MBTIPersonality, get_all_mbti_types
 from src.config.config_manager import ConfigManager
-from src.games.prisoners_dilemma import PrisonersDilemma, Action
+from src.games.two_player_game import PrisonersDilemma, Action
 from src.llm.llm_interface import LLMManager, LLMFactory, LLMProvider
 from src.networks.network_generator import NetworkGenerator, NetworkConfig, NetworkType
 

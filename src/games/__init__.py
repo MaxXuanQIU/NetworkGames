@@ -3,7 +3,7 @@ Game module
 Contains Prisoner's Dilemma game logic and strategy analysis
 """
 
-from .prisoners_dilemma import (
+from .two_player_game import (
     Action,
     GameResult,
     GameHistory,
