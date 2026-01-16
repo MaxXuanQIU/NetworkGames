@@ -309,10 +309,23 @@ class PairGameExperiment:
 
     def _analyze_mbti_dimensions(self, detailed_results: Dict[str, Any]) -> Dict[str, Any]:
         """Analyze MBTI dimensions (calls statistics analyzer)"""
+        # Initialize containers
         personality_data = {ptype.value: [] for ptype in self.mbti_types}
+        payoff_data = {ptype.value: [] for ptype in self.mbti_types}
+        
         for result in detailed_results.values():
-            personality_data[result["player1_type"]].extend(result["cooperation_rates"])
-        return self.personality_analyzer._analyze_mbti_dimensions(personality_data)
+            p1_type = result["player1_type"]
+            
+            # detailed_results contains both directions (A vs B, and B vs A separately)
+            # So we only need to collect player1's data from each entry
+            # Extend with the list of rates from all repetitions
+            personality_data[p1_type].extend(result["cooperation_rates"])
+            
+            # Extend with the list of total payoffs from all repetitions
+            # Note: This uses total payoff per game.
+            payoff_data[p1_type].extend(result["payoffs"])
+            
+        return self.personality_analyzer._analyze_mbti_dimensions(personality_data, payoff_data)
     
     def _generate_visualizations(self, matrix_results: Dict[str, Any], 
                                analysis_results: Dict[str, Any]) -> Dict[str, str]:
@@ -358,7 +371,7 @@ class PairGameExperiment:
         visualization_files["cooperation_ranking"] = ranking_file
         
         # Payoff ranking
-        payoff_rates = analysis_results["personality_analysis"].get("payoff_rates", {})
+        payoff_rates = analysis_results["personality_analysis"]["payoff_rates"]
         payoff_ranking_file = self.plotter.plot_payoff_ranking(
             payoff_rates,
             title="Personality Payoff Ranking",
@@ -366,14 +379,26 @@ class PairGameExperiment:
         )
         visualization_files["payoff_ranking"] = payoff_ranking_file
         
-        # MBTI dimension analysis
-        dimension_data = analysis_results["dimension_analysis"]
-        dimension_file = self.plotter.plot_mbti_dimension_analysis(
-            dimension_data,
-            title="MBTI Dimension Analysis",
-            filename="mbti_dimension_analysis"
+        # MBTI dimension analysis (Cooperation & Payoff)
+        dimension_data_all = analysis_results["dimension_analysis"]
+        
+        # 1. Cooperation Dimension Analysis
+        dimension_file_coop = self.plotter.plot_mbti_dimension_analysis(
+            dimension_data_all["cooperation"],
+            title="MBTI Dimension Analysis - Cooperation",
+            filename="mbti_dimension_analysis_coop",
+            ylabel="Cooperation Rate"
         )
-        visualization_files["dimensions"] = dimension_file
+        visualization_files["dimensions_coop"] = dimension_file_coop
+        
+        # 2. Payoff Dimension Analysis
+        dimension_file_payoff = self.plotter.plot_mbti_dimension_analysis(
+            dimension_data_all["payoff"],
+            title="MBTI Dimension Analysis - Payoff",
+            filename="mbti_dimension_analysis_payoff",
+            ylabel="Average Payoff"
+        )
+        visualization_files["dimensions_payoff"] = dimension_file_payoff
         
         return visualization_files
     

@@ -310,69 +310,76 @@ class PairGamePlotter(BasePlotter):
 
     def plot_mbti_dimension_analysis(self, dimension_data: Dict[str, Dict[str, float]],
                                    title: str = "MBTI Dimension Analysis",
-                                   filename: str = "mbti_dimension_analysis") -> str:
+                                   filename: str = "mbti_dimension_analysis",
+                                   ylabel: str = "Average Cooperation/Payoff") -> str:
         """Plot MBTI dimension analysis"""
         # Assign unique color for each dimension group
         group_colors = {
-            'E': '#1f77b4',  # Blue
-            'I': '#ff7f0e',  # Orange
-            'S': '#2ca02c',  # Green
-            'N': '#d62728',  # Red
-            'T': '#9467bd',  # Purple
-            'F': '#8c564b',  # Brown
-            'J': '#e377c2',  # Pink
-            'P': '#7f7f7f',  # Gray
+            'E': '#1f77b4', 'I': '#ff7f0e',
+            'S': '#2ca02c', 'N': '#d62728',
+            'T': '#9467bd', 'F': '#8c564b',
+            'J': '#e377c2', 'P': '#7f7f7f',
         }
 
         fig, axes = plt.subplots(2, 2, figsize=(5, 10))
         axes = axes.flatten()
 
         for i, (dim, data) in enumerate(dimension_data.items()):
-            if i >= 4:
-                break
-
             ax = axes[i]
+            
+            # Determine keys (e.g., E and I)
+            keys = [k.split('_')[0] for k in data.keys() if k.endswith('_mean')]
+            if len(keys) != 2:
+                raise ValueError(f"Expected 2 keys for dimension {dim}, got {len(keys)}")
+                
+            key1, key2 = keys[0], keys[1]
+            
+            # Extract stats
+            mean1 = data[f'{key1}_mean']
+            mean2 = data[f'{key2}_mean']
+            std1 = data[f'{key1}_std']
+            std2 = data[f'{key2}_std']
+            
+            labels = [key1, key2]
+            rates = [mean1, mean2]
+            errors = [std1, std2]
+            x = np.arange(len(labels))
 
-            # Extract mean and std
-            means = [(k.replace('_mean', ''), v) for k, v in data.items() if k.endswith('_mean')]
-            stds = [(k.replace('_std', ''), v) for k, v in data.items() if k.endswith('_std')]
-            if len(means) == 2 and len(stds) == 2:
-                labels, rates = zip(*means)
-                _, errors = zip(*stds)
-                x = np.arange(len(labels))
+            # Assign color for each group
+            bar_colors = [group_colors[label] for label in labels]
 
-                # Assign color for each group
-                bar_colors = [group_colors.get(label, "#cccccc") for label in labels]
+            # Plot bars (Original Style preserved: no alpha, black error bars, specific capsize)
+            bars = ax.bar(x, rates, yerr=errors, capsize=8, ecolor='black',
+                          error_kw=dict(lw=1.2, capthick=1.2), color=bar_colors)
 
-                bars = ax.bar(x, rates, yerr=errors, capsize=8, ecolor='black',
-                              error_kw=dict(lw=1.2, capthick=1.2), color=bar_colors)
-
-                # Add value labels
-                for bar, rate in zip(bars, rates):
-                    ax.text(
-                        bar.get_x() + bar.get_width()/2,
-                        bar.get_height() + 0.01,
-                        f'{rate:.3f}',
-                        ha='center',
-                        va='bottom',
-                        zorder=10  # Set higher zorder so label is above other elements
-                    )
-
-                # Set x-axis labels
-                ax.set_xticks(x)
-                ax.set_xticklabels(labels)
-
-                # Add statistics
-                diff = data.get('difference', None)
-                t_stat = data.get('t_statistic', None)
-                p_val = data.get('p_value', None)
-                stat_note = (
-                    f"Δ={diff:.3f}, t={t_stat:.2f}, p={p_val:.3f}"
+            # Add value labels (Original Style preserved)
+            for bar, rate in zip(bars, rates):
+                ax.text(
+                    bar.get_x() + bar.get_width()/2,
+                    bar.get_height() + 0.01,
+                    f'{rate:.3f}',
+                    ha='center',
+                    va='bottom',
+                    zorder=10  # Set higher zorder so label is above other elements
                 )
-                dim_title = dim.replace('_', ' ')
-                ax.set_title(f'{dim_title} Dimension\n{stat_note}', fontsize=12)
-                ax.set_ylabel('Cooperation Rate')
-                ax.grid(True, alpha=0.3, axis='y')
+            
+            ax.set_xticks(x)
+            ax.set_xticklabels(labels)
+            ax.set_ylabel(ylabel)
+            
+
+            # Add statistics
+            diff = data['difference']
+            t_stat = data['t_statistic']
+            p_val = data['p_value']
+            significant = data['significant']
+            stat_note = (
+                f"Δ={diff:.3f}, t={t_stat:.2f}, p={p_val:.3f}"
+            )
+            dim_title = dim.replace('_', ' ')
+            ax.set_title(f'{dim_title} Dimension\n{stat_note}', fontsize=12)
+            ax.set_ylabel('Cooperation Rate')
+            ax.grid(True, alpha=0.3, axis='y')
 
         plt.suptitle(title, fontsize=16, fontweight='bold')
         plt.tight_layout()

@@ -291,90 +291,118 @@ class PersonalityAnalyzer:
         if not personality_data:
             return {}
         
-        # Analyze by MBTI dimensions
+        # Note: This function was originally intended to be an external calling interface, 
+        # but the current code directly calls _analyze_mbti_dimensions and _analyze_personality_types 
+        # in pair_game_experiment.
         dimension_analysis = self._analyze_mbti_dimensions(personality_data)
         
-        # Analyze by personality type
-        type_analysis = self._analyze_personality_types(personality_data)
+        type_analysis = self._analyze_personality_types(personality_data, {}) # Placeholder if payoff data isn't available in this scope
         
         return {
             "dimension_analysis": dimension_analysis,
             "type_analysis": type_analysis
         }
     
-    def _analyze_mbti_dimensions(self, personality_data: Dict[str, List[bool]]) -> Dict[str, Any]:
-        """Analyze MBTI dimensions"""
-        # Group by dimension
-        dimensions = {
+    def _analyze_mbti_dimensions(self, personality_data: Dict[str, List[bool]], payoff_data: Optional[Dict[str, List[float]]] = None) -> Dict[str, Any]:
+        """Analyze MBTI dimensions for both cooperation and payoff"""
+        # Group by dimension for Cooperation
+        dimensions_coop = {
             "E_vs_I": {"E": [], "I": []},
             "S_vs_N": {"S": [], "N": []},
             "T_vs_F": {"T": [], "F": []},
             "J_vs_P": {"J": [], "P": []}
         }
         
+        # Group by dimension for Payoff
+        dimensions_payoff = {
+            "E_vs_I": {"E": [], "I": []},
+            "S_vs_N": {"S": [], "N": []},
+            "T_vs_F": {"T": [], "F": []},
+            "J_vs_P": {"J": [], "P": []}
+        }
+        
+        # Process Cooperation Data
         for personality, data in personality_data.items():
-            if len(personality) == 4:  # Ensure valid MBTI type
+            if len(personality) == 4:
                 # E vs I
-                if personality[0] == 'E':
-                    dimensions["E_vs_I"]["E"].extend(data)
-                else:
-                    dimensions["E_vs_I"]["I"].extend(data)
+                key = 'E' if personality[0] == 'E' else 'I'
+                dimensions_coop["E_vs_I"][key].extend(data)
                 
                 # S vs N
-                if personality[1] == 'S':
-                    dimensions["S_vs_N"]["S"].extend(data)
-                else:
-                    dimensions["S_vs_N"]["N"].extend(data)
+                key = 'S' if personality[1] == 'S' else 'N'
+                dimensions_coop["S_vs_N"][key].extend(data)
                 
                 # T vs F
-                if personality[2] == 'T':
-                    dimensions["T_vs_F"]["T"].extend(data)
-                else:
-                    dimensions["T_vs_F"]["F"].extend(data)
+                key = 'T' if personality[2] == 'T' else 'F'
+                dimensions_coop["T_vs_F"][key].extend(data)
                 
                 # J vs P
-                if personality[3] == 'J':
-                    dimensions["J_vs_P"]["J"].extend(data)
+                key = 'J' if personality[3] == 'J' else 'P'
+                dimensions_coop["J_vs_P"][key].extend(data)
+
+        # Process Payoff Data
+        for personality, data in payoff_data.items():
+            if len(personality) == 4:
+                # E vs I
+                key = 'E' if personality[0] == 'E' else 'I'
+                dimensions_payoff["E_vs_I"][key].extend(data)
+                
+                # S vs N
+                key = 'S' if personality[1] == 'S' else 'N'
+                dimensions_payoff["S_vs_N"][key].extend(data)
+                
+                # T vs F
+                key = 'T' if personality[2] == 'T' else 'F'
+                dimensions_payoff["T_vs_F"][key].extend(data)
+                
+                # J vs P
+                key = 'J' if personality[3] == 'J' else 'P'
+                dimensions_payoff["J_vs_P"][key].extend(data)
+        
+        # Helper to calculate stats
+        def calculate_dimension_stats(dimensions_dict, metric_name):
+            results = {}
+            for dim_name, groups in dimensions_dict.items():
+                if dim_name == "E_vs_I":
+                    key1, key2 = "E", "I"
+                elif dim_name == "S_vs_N":
+                    key1, key2 = "S", "N"
+                elif dim_name == "T_vs_F":
+                    key1, key2 = "T", "F"
+                elif dim_name == "J_vs_P":
+                    key1, key2 = "J", "P"
                 else:
-                    dimensions["J_vs_P"]["P"].extend(data)
-        
-        # Calculate cooperation rate differences for each dimension
-        dimension_results = {}
-        for dim_name, groups in dimensions.items():
-            # Get dimension keys
-            if dim_name == "E_vs_I":
-                key1, key2 = "E", "I"
-            elif dim_name == "S_vs_N":
-                key1, key2 = "S", "N"
-            elif dim_name == "T_vs_F":
-                key1, key2 = "T", "F"
-            elif dim_name == "J_vs_P":
-                key1, key2 = "J", "P"
-            else:
-                continue
-                
-            if groups[key1] and groups[key2]:
-                mean1 = np.mean(groups[key1])
-                mean2 = np.mean(groups[key2])
-                std1 = np.std(groups[key1], ddof=1)
-                std2 = np.std(groups[key2], ddof=1)
-                
-                # Use Welch's t-test (equal_var=False) which does not assume equal population variance
-                from scipy import stats
-                t_stat, p_value = stats.ttest_ind(groups[key1], groups[key2], equal_var=False)
-                
-                dimension_results[dim_name] = {
-                    f"{key1}_mean": mean1,
-                    f"{key2}_mean": mean2,
-                    f"{key1}_std": std1,
-                    f"{key2}_std": std2,
-                    "difference": mean1 - mean2,
-                    "t_statistic": t_stat,
-                    "p_value": p_value,
-                    "significant": p_value < 0.05
-                }
-        
-        return dimension_results
+                    continue
+                    
+                if groups[key1] and groups[key2]:
+                    mean1 = np.mean(groups[key1])
+                    mean2 = np.mean(groups[key2])
+                    std1 = np.std(groups[key1], ddof=1)
+                    std2 = np.std(groups[key2], ddof=1)
+                    
+                    # Use Welch's t-test (equal_var=False) which does not assume equal population variance
+                    from scipy import stats
+                    t_stat, p_value = stats.ttest_ind(groups[key1], groups[key2], equal_var=False)
+                    
+                    results[dim_name] = {
+                        f"{key1}_mean": mean1,
+                        f"{key2}_mean": mean2,
+                        f"{key1}_std": std1,
+                        f"{key2}_std": std2,
+                        "difference": mean1 - mean2,
+                        "t_statistic": t_stat,
+                        "p_value": p_value,
+                        "significant": p_value < 0.05
+                    }
+            return results
+
+        coop_results = calculate_dimension_stats(dimensions_coop, metric_name="rate")
+        payoff_results = calculate_dimension_stats(dimensions_payoff, metric_name="payoff")
+
+        return {
+            "cooperation": coop_results,
+            "payoff": payoff_results
+        }
     
     def _analyze_personality_types(self, cooperation_data: Dict[str, List[bool]], payoff_data: Dict[str, List[float]]) -> Dict[str, Any]:
         """Analyze personality types, support both cooperation and payoff ranking"""
@@ -385,7 +413,7 @@ class PersonalityAnalyzer:
                 cooperation_rates[personality] = {
                     "cooperation_rate": np.mean(data),
                     "sample_size": len(data),
-                    "std": np.std(data)
+                    "std": np.std(data, ddof=1)
                 }
         sorted_types = sorted(cooperation_rates.items(), key=lambda x: x[1]["cooperation_rate"], reverse=True)
         
