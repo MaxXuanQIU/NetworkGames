@@ -255,24 +255,21 @@ Please make game decisions with these personality traits."""
         opponent_type: str = None, 
         is_player1: bool = True,
         neighbor_stats: dict = None,  # For network game context
+        game_rules: str = "",
         include_history: bool = True,
         include_opponent_type: bool = True,
         include_neighbor_stats: bool = True,
-        personality_strength: str = "strong"
+        personality_strength: str = "strong",
     ) -> str:
         """
         Generate a decision prompt for a specific game situation.
         """
         personality_prompt = self._get_personality_prompt(personality_strength)
 
-        # Add Prisoner's Dilemma payoff matrix info
-        pd_matrix_text = (
-            "Prisoner's Dilemma payoff matrix:\n"
-            "- If both choose COOPERATE, each gets 3 points\n"
-            "- If one chooses COOPERATE and the other DEFECT, COOPERATE gets 0 points, DEFECT gets 5 points\n"
-            "- If both choose DEFECT, each gets 1 point\n"
-        )
-
+        # Use provided game rules
+        if not game_rules:
+            raise ValueError("Game rules must be provided for the decision prompt.")
+        
         # Add game history information
         history_text = ""
         if include_history and game_history:
@@ -304,9 +301,7 @@ Please make game decisions with these personality traits."""
                 f"- In the last round, {coop_rate:.0%} of your neighbors cooperated and {defect_rate:.0%} defected.\n"
 
         # Combine full prompt
-        full_prompt = f"""{personality_prompt}
-
-    {pd_matrix_text}{history_text}{opponent_info}{neighbor_info}
+        full_prompt = f"""{personality_prompt}\n\n{game_rules}{history_text}{opponent_info}{neighbor_info}
 Will you COOPERATE or DEFECT? 
 Think briefly (one short sentence).
 Then output your decision on a new line as either 'COOPERATE' or 'DEFECT' only.

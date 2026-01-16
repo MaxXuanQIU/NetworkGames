@@ -33,10 +33,8 @@ class LLMConfig:
 @dataclass
 class GameConfig:
     """Game configuration"""
-    payoff_matrix: Dict[str, Dict[str, List[float]]] = field(default_factory=lambda: {
-        "COOPERATE": {"COOPERATE": [3, 3], "DEFECT": [0, 5]},
-        "DEFECT": {"COOPERATE": [5, 0], "DEFECT": [1, 1]}
-    })
+    game_name: str = "prisoners_dilemma" # Added field
+    payoff_matrix: Optional[Dict[str, Dict[str, List[float]]]] = None # Made optional
     num_rounds: int = 100
     num_repetitions: int = 20
     random_seed: Optional[int] = None
@@ -219,7 +217,8 @@ class ConfigManager:
 
         # Game section (required)
         game_data = _require_section("game")
-        game_payoff = _require_key(game_data, "payoff_matrix", "game")
+        game_name = _require_key(game_data, "game_name", "game")
+        game_payoff = game_data.get("payoff_matrix") # Optional now
         game_num_rounds = _require_key(game_data, "num_rounds", "game")
         game_num_repetitions = _require_key(game_data, "num_repetitions", "game")
         game_random_seed = game_data.get("random_seed") if game_data else None
@@ -321,6 +320,7 @@ class ConfigManager:
         )
 
         game_config = GameConfig(
+            game_name=game_name,
             payoff_matrix=game_payoff,
             num_rounds=game_num_rounds,
             num_repetitions=game_num_repetitions,
@@ -416,6 +416,8 @@ class ConfigManager:
                 temperature=0.7
             ),
             game=GameConfig(
+                game_name="prisoners_dilemma",
+                payoff_matrix=None, # Use default
                 num_rounds=100,
                 num_repetitions=20,
                 random_seed=42

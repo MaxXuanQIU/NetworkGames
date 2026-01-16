@@ -8,8 +8,6 @@ from .prisoners_dilemma import (
     GameResult,
     GameHistory,
     PrisonersDilemma,
-    StrategyAnalyzer,
-    GameStatistics
 )
 
 __all__ = [
@@ -17,6 +15,4 @@ __all__ = [
     "GameResult", 
     "GameHistory",
     "PrisonersDilemma",
-    "StrategyAnalyzer",
-    "GameStatistics"
 ]

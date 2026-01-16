@@ -15,7 +15,7 @@ import random
 
 from src.agents.mbti_personalities import MBTIType, MBTIPersonality, get_all_mbti_types
 from src.llm.llm_interface import LLMManager, LLMFactory, LLMProvider
-from src.games.prisoners_dilemma import PrisonersDilemma, Action, GameHistory
+from src.games.prisoners_dilemma import GameFactory, Action, GameHistory
 from src.analysis.statistics import CooperationAnalyzer, PersonalityAnalyzer
 from src.visualization.plotter import PairGamePlotter
 from src.config.config_manager import ExperimentConfig
@@ -32,8 +32,8 @@ class PairGameExperiment:
         self.model_name = config.llm.model_name
         
         # Initialize components
-        payoff_matrix = self._parse_payoff_matrix(config.game.payoff_matrix)
-        self.game = PrisonersDilemma(payoff_matrix=payoff_matrix)
+        payoff_matrix = self._parse_payoff_matrix(config.game.payoff_matrix) if config.game.payoff_matrix else None
+        self.game = GameFactory.create_game(config.game.game_name, payoff_matrix)
         self.cooperation_analyzer = CooperationAnalyzer()
         self.personality_analyzer = PersonalityAnalyzer()
         self.plotter = PairGamePlotter(
@@ -195,6 +195,8 @@ class PairGameExperiment:
             player2_cooperation_rate=0.0
         )
         
+        game_rules = self.game.get_rules_description()
+        
         # Run multiple rounds
         for round_num in range(1, self.config.game.num_rounds + 1):
             # Generate decision prompt
@@ -205,18 +207,20 @@ class PairGameExperiment:
                 player2_type.value,
                 is_player1=True,
                 neighbor_stats=None,
-                # Prompt Details Config
+                game_rules=game_rules, # Pass rules
+                # Ablation settings
                 include_history=pc.include_history,
                 include_opponent_type=pc.include_opponent_type,
                 include_neighbor_stats=pc.include_neighbor_stats,
-                personality_strength=pc.personality_injection
+                personality_strength=pc.personality_injection,
             )
             prompt2 = personality2.get_decision_prompt(
                 history.results,
                 player1_type.value,
                 is_player1=False,
                 neighbor_stats=None,
-                # Prompt Details Config
+                game_rules=game_rules, # Pass rules
+                # Ablation settings
                 include_history=pc.include_history,
                 include_opponent_type=pc.include_opponent_type,
                 include_neighbor_stats=pc.include_neighbor_stats,

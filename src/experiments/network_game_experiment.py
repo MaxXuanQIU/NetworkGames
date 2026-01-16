@@ -18,7 +18,7 @@ from scipy.stats import linregress
 
 from src.agents.mbti_personalities import MBTIType, MBTIPersonality, get_all_mbti_types
 from src.llm.llm_interface import LLMManager, LLMFactory
-from src.games.prisoners_dilemma import PrisonersDilemma, Action, GameHistory
+from src.games.prisoners_dilemma import GameFactory, Action, GameHistory
 from src.networks.network_generator import NetworkGenerator, NetworkConfig, NetworkType, NetworkAnalyzer
 from src.analysis.statistics import CooperationAnalyzer, NetworkAnalyzer as NetworkStatsAnalyzer
 from src.visualization.plotter import NetworkGamePlotter, InteractivePlotter
@@ -36,8 +36,8 @@ class NetworkGameExperiment:
         self.model_name = config.llm.model_name
         
         # Initialize components
-        payoff_matrix = self._parse_payoff_matrix(config.game.payoff_matrix)
-        self.game = PrisonersDilemma(payoff_matrix=payoff_matrix)
+        payoff_matrix = self._parse_payoff_matrix(config.game.payoff_matrix) if config.game.payoff_matrix else None
+        self.game = GameFactory.create_game(config.game.game_name, payoff_matrix)
         self.network_generator = NetworkGenerator()
         self.network_analyzer = NetworkAnalyzer()
         self.cooperation_analyzer = CooperationAnalyzer()
@@ -242,6 +242,9 @@ class NetworkGameExperiment:
         # Store history of actions of each node for neighbor context
         node_actions_history = {node: [] for node in G.nodes()}
 
+        # Get game rules description
+        game_rules = self.game.get_rules_description()
+
         for round_num in pbar:
             self.logger.info(f"Running round {round_num}/{num_rounds}")
             round_payoffs = {node: 0.0 for node in G.nodes()}
@@ -279,7 +282,8 @@ class NetworkGameExperiment:
                         personality_assignment[neighbor].value,
                         is_player1=(node <= neighbor),
                         neighbor_stats=neighbor_stats,
-                        # Prompt Details Config
+                        game_rules=game_rules, # Pass rules
+                        # Ablation settings
                         include_history=self.config.prompt_config.include_history,
                         include_opponent_type=self.config.prompt_config.include_opponent_type,
                         include_neighbor_stats=self.config.prompt_config.include_neighbor_stats,
