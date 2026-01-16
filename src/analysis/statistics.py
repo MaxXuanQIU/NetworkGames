@@ -356,12 +356,12 @@ class PersonalityAnalyzer:
             if groups[key1] and groups[key2]:
                 mean1 = np.mean(groups[key1])
                 mean2 = np.mean(groups[key2])
-                std1 = np.std(groups[key1])
-                std2 = np.std(groups[key2])
+                std1 = np.std(groups[key1], ddof=1)
+                std2 = np.std(groups[key2], ddof=1)
                 
-                # Simple t-test
+                # Use Welch's t-test (equal_var=False) which does not assume equal population variance
                 from scipy import stats
-                t_stat, p_value = stats.ttest_ind(groups[key1], groups[key2])
+                t_stat, p_value = stats.ttest_ind(groups[key1], groups[key2], equal_var=False)
                 
                 dimension_results[dim_name] = {
                     f"{key1}_mean": mean1,
