@@ -115,13 +115,42 @@ class PairGamePlotter(BasePlotter):
         """Plot cooperation rate distribution"""
         plt.figure(figsize=self.figsize)
         
+        mean_val = np.mean(cooperation_rates)
+        std_val = np.std(cooperation_rates)
+        median_val = np.median(cooperation_rates)
+        
         plt.hist(cooperation_rates, bins=20, alpha=0.7, edgecolor='black')
-        plt.axvline(np.mean(cooperation_rates), color='red', linestyle='--', 
-                   label=f'Mean: {np.mean(cooperation_rates):.3f}')
-        plt.axvline(np.median(cooperation_rates), color='green', linestyle='--', 
-                   label=f'Median: {np.median(cooperation_rates):.3f}')
+        plt.axvline(mean_val, color='red', linestyle='--', 
+                   label=f'Mean: {mean_val:.3f} (std: {std_val:.3f})')
+        plt.axvline(median_val, color='green', linestyle='--', 
+                   label=f'Median: {median_val:.3f}')
         
         plt.xlabel('Cooperation Rate')
+        plt.ylabel('Frequency')
+        plt.title(title)
+        plt.legend()
+        plt.grid(True, alpha=0.3)
+        plt.tight_layout()
+        
+        return str(self.save_plot(filename))
+
+    def plot_payoff_distribution(self, payoffs: List[float],
+                               title: str = "Payoff Distribution",
+                               filename: str = "payoff_distribution") -> str:
+        """Plot payoff distribution"""
+        plt.figure(figsize=self.figsize)
+        
+        mean_val = np.mean(payoffs)
+        std_val = np.std(payoffs)
+        median_val = np.median(payoffs)
+        
+        plt.hist(payoffs, bins=20, alpha=0.7, edgecolor='black', color='orange')
+        plt.axvline(mean_val, color='red', linestyle='--', 
+                   label=f'Mean: {mean_val:.3f} (std: {std_val:.3f})')
+        plt.axvline(median_val, color='green', linestyle='--', 
+                   label=f'Median: {median_val:.3f}')
+        
+        plt.xlabel('Average Payoff')
         plt.ylabel('Frequency')
         plt.title(title)
         plt.legend()

@@ -361,6 +361,15 @@ class PairGameExperiment:
         )
         visualization_files["distribution"] = distribution_file
         
+        # Payoff distribution
+        all_payoffs = matrix_results["payoff_matrix"].flatten()
+        payoff_distribution_file = self.plotter.plot_payoff_distribution(
+            all_payoffs,
+            title="Payoff Distribution",
+            filename="payoff_distribution"
+        )
+        visualization_files["payoff_distribution"] = payoff_distribution_file
+        
         # Personality cooperation ranking
         personality_cooperation_rates = analysis_results["personality_analysis"]["cooperation_rates"]
         ranking_file = self.plotter.plot_cooperation_ranking(
