@@ -17,6 +17,7 @@ from src.config.config_manager import ConfigManager, ExperimentType
 from src.llm.llm_interface import LLMManager, LLMFactory
 from src.experiments.pair_game_experiment import run_pair_game_experiment
 from src.experiments.network_game_experiment import run_network_game_experiment
+from src.experiments.personality_probe_experiment import run_personality_probe_experiment
 
 
 def setup_logging(level: str = "INFO"):
@@ -76,7 +77,7 @@ def validate_config(config_file: str):
 async def main():
     """Main function"""
     parser = argparse.ArgumentParser(description="LLM Network Games Framework")
-    parser.add_argument("--experiment", choices=["pair_game", "network_game"], 
+    parser.add_argument("--experiment", choices=["pair_game", "network_game", "personality_probe"], 
                        help="Type of experiment to run")
     parser.add_argument("--config", default=None,
                        help="Configuration file path")
@@ -97,6 +98,8 @@ async def main():
             args.config = "configs/pair_game.yaml"
         elif args.experiment == "network_game":
             args.config = "configs/network_game.yaml"
+        elif args.experiment == "personality_probe":
+            args.config = "configs/personality_probe.yaml"
     
     # Set up logging
     setup_logging(args.log_level)
@@ -132,6 +135,11 @@ async def main():
             logger.info("Starting network game experiment...")
             results = await run_network_game_experiment(args.config)
             logger.info("Network game experiment completed successfully!")
+            
+        elif args.experiment == "personality_probe":
+            logger.info("Starting personality probe experiment...")
+            results = await run_personality_probe_experiment(args.config)
+            logger.info("Personality probe experiment completed successfully!")
         
         print(f"\nExperiment completed! Results saved to: {results.get('output_dir', 'results')}")
         

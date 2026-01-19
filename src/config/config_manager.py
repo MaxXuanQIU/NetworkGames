@@ -15,6 +15,7 @@ class ExperimentType(Enum):
     """Experiment type"""
     PAIR_GAME = "pair_game"
     NETWORK_GAME = "network_game"
+    PERSONALITY_PROBE = "personality_probe"
 
 
 @dataclass
@@ -67,6 +68,12 @@ class NetworkGameConfig:
     personality_scenarios: List[str] = field(default_factory=lambda: ["uniform"])
 
 @dataclass
+class PersonalityProbeConfig:
+    """Personality probe specific configuration"""
+    num_repetitions: int = 5
+    save_results: bool = True
+
+@dataclass
 class PromptConfig:
     """Prompt composition configuration"""
     include_history: bool = True
@@ -91,6 +98,7 @@ class ExperimentConfig:
     # Experiment-specific configuration (now typed)
     pair_game_config: Optional[PairGameConfig] = None
     network_game_config: Optional[NetworkGameConfig] = None
+    personality_probe_config: Optional[PersonalityProbeConfig] = None
     
     # Output configuration
     output_dir: str = "results"
@@ -279,6 +287,14 @@ class ConfigManager:
                     personality_scenarios=ng["personality_scenarios"]
                 )
 
+        pp_cfg = None
+        if "personality_probe_config" in data and data.get("personality_probe_config") is not None:
+            pp = data.get("personality_probe_config")
+            pp_cfg = PersonalityProbeConfig(
+                num_repetitions=pp.get("num_repetitions", 5),
+                save_results=pp.get("save_results", True)
+            )
+
         # Prompt config (optional)
         prompt_cfg = None
         if "prompt_config" in data and data.get("prompt_config") is not None:
@@ -338,6 +354,7 @@ class ConfigManager:
             network=network_config,
             pair_game_config=pg_cfg,
             network_game_config=ng_cfg,
+            personality_probe_config=pp_cfg,
             prompt_config=prompt_cfg or PromptConfig(),
             output_dir=data["output_dir"],
             visualization_config=data["visualization_config"]
@@ -395,6 +412,14 @@ class ConfigManager:
             }
         else:
             data["network_game_config"] = None
+
+        if config.personality_probe_config:
+            data["personality_probe_config"] = {
+                "num_repetitions": config.personality_probe_config.num_repetitions,
+                "save_results": config.personality_probe_config.save_results,
+            }
+        else:
+            data["personality_probe_config"] = None
 
         # remaining fields
         data.update({
@@ -459,17 +484,34 @@ class ConfigManager:
         # Save configuration files
         self.save_config(pair_game_config, "pair_game.yaml")
         self.save_config(network_game_config, "network_game.yaml")
+
+        # Personality probe experiment configuration
+        probe_config = ExperimentConfig(
+            experiment_type=ExperimentType.PERSONALITY_PROBE,
+            name="MBTI Personality Probe",
+            description="Validates if LLM personality injection aligns with MBTI dimensions",
+            llm=LLMConfig(
+                provider="mock",
+                model_name="mock-model",
+                temperature=0.1
+            ),
+            game=GameConfig(
+                game_name="probe", 
+                num_rounds=1, 
+                num_repetitions=1
+            ),
+            personality_probe_config=PersonalityProbeConfig(
+                num_repetitions=3,
+                save_results=True
+            )
+        )
+        self.save_config(probe_config, "personality_probe.yaml")
         
         self.logger.info("Default config files created")
     
     def validate_config(self, config: ExperimentConfig) -> List[str]:
         """Validate configuration"""
         errors = []
-        
-        # Only support the two known experiment types
-        if config.experiment_type not in (ExperimentType.PAIR_GAME, ExperimentType.NETWORK_GAME):
-            errors.append(f"Unsupported experiment type: {config.experiment_type}")
-            return errors
 
         # Validate LLM configuration
         if not config.llm.provider:
@@ -491,7 +533,7 @@ class ConfigManager:
             else:
                 if config.pair_game_config.matrix_size <= 0:
                     errors.append("pair_game_config.matrix_size must be positive")
-        else:  # NETWORK_GAME
+        elif config.experiment_type == ExperimentType.NETWORK_GAME:
             # network_game_config and network are mandatory
             if not config.network_game_config:
                 errors.append("network_game_config must be provided for NETWORK_GAME experiments")
@@ -508,6 +550,11 @@ class ConfigManager:
                     errors.append("Number of nodes must be positive")
                 if config.network.k >= config.network.num_nodes:
                     errors.append("k must be less than number of nodes")
+        elif config.experiment_type == ExperimentType.PERSONALITY_PROBE:
+            if not config.personality_probe_config:
+                errors.append("personality_probe_config must be provided for PERSONALITY_PROBE experiments")
+        else:
+            errors.append(f"Unsupported experiment type: {config.experiment_type}")
         
         return errors
     
