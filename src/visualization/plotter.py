@@ -477,19 +477,19 @@ class NetworkGamePlotter(BasePlotter):
         axes[0, 0].grid(True, alpha=0.3)
         axes[0, 0].xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
 
-        # 2. Average payoff evolution
-        axes[0, 1].plot(rounds, avg_payoffs, marker='o', color='tab:green')
-        axes[0, 1].set_title("Average Payoff Evolution")
+        # 2. Single cooperation rate evolution
+        axes[0, 1].plot(rounds, single_cooperation_rates, marker='o', color='tab:red')
+        axes[0, 1].set_title("Single Cooperation Rate Evolution")
         axes[0, 1].set_xlabel("Round")
-        axes[0, 1].set_ylabel("Average Payoff")
+        axes[0, 1].set_ylabel("Single Cooperation Rate")
         axes[0, 1].grid(True, alpha=0.3)
         axes[0, 1].xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
 
-        # 3. Payoff std evolution
-        axes[0, 2].plot(rounds, std_payoffs, marker='o', color='tab:purple')
-        axes[0, 2].set_title("Payoff Std Evolution")
+        # 3. Both-defect rates evolution
+        axes[0, 2].plot(rounds, both_defect_rates, marker='o', color='tab:brown')
+        axes[0, 2].set_title("Both-Defect Rates Evolution")
         axes[0, 2].set_xlabel("Round")
-        axes[0, 2].set_ylabel("Payoff Std")
+        axes[0, 2].set_ylabel("Both-Defect Rates")
         axes[0, 2].grid(True, alpha=0.3)
         axes[0, 2].xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
 
@@ -501,19 +501,19 @@ class NetworkGamePlotter(BasePlotter):
         axes[1, 0].grid(True, alpha=0.3)
         axes[1, 0].xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
 
-        # 5. Single cooperation rate evolution
-        axes[1, 1].plot(rounds, single_cooperation_rates, marker='o', color='tab:red')
-        axes[1, 1].set_title("Single Cooperation Rate Evolution")
+        # 5. Average payoff evolution
+        axes[1, 1].plot(rounds, avg_payoffs, marker='o', color='tab:green')
+        axes[1, 1].set_title("Average Payoff Evolution")
         axes[1, 1].set_xlabel("Round")
-        axes[1, 1].set_ylabel("Single Cooperation Rate")
+        axes[1, 1].set_ylabel("Average Payoff")
         axes[1, 1].grid(True, alpha=0.3)
         axes[1, 1].xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
 
-        # 6. Both-defect rates evolution
-        axes[1, 2].plot(rounds, both_defect_rates, marker='o', color='tab:brown')
-        axes[1, 2].set_title("Both-Defect Rates Evolution")
+        # 6. Payoff std evolution
+        axes[1, 2].plot(rounds, std_payoffs, marker='o', color='tab:purple')
+        axes[1, 2].set_title("Payoff Std Evolution")
         axes[1, 2].set_xlabel("Round")
-        axes[1, 2].set_ylabel("Both-Defect Rates")
+        axes[1, 2].set_ylabel("Payoff Std")
         axes[1, 2].grid(True, alpha=0.3)
         axes[1, 2].xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
 
@@ -549,8 +549,21 @@ class NetworkGamePlotter(BasePlotter):
                     action_matrix[i, t] = 2
         # Custom colormap: 0-light green, 1-light yellow, 2-light red
         cmap = ListedColormap(["#6ef06e", "#faec75", "#fb6161"])
-        plt.figure(figsize=(max(10, num_rounds/2), max(6, num_edges/10)))
-        im = plt.imshow(action_matrix, aspect="auto", cmap=cmap)
+
+        plt.figure(figsize=(max(10, num_rounds/2), max(6, num_edges/5)))
+        im = plt.imshow(action_matrix, aspect="auto", cmap=cmap, interpolation='nearest')
+        
+        # Configure grid lines to be between blocks instead of through them
+        ax = plt.gca()
+        # Turn off major grid (which cuts through pixel centers)
+        ax.grid(False)
+        
+        # Set minor ticks at pixel boundaries (-0.5, 0.5, 1.5, etc.) and draw grid there
+        ax.set_xticks(np.arange(-0.5, num_rounds, 1), minor=True)
+        ax.set_yticks(np.arange(-0.5, num_edges, 1), minor=True)
+        ax.grid(which='minor', color='w', linestyle='-', linewidth=2)
+        ax.tick_params(which='minor', bottom=False, left=False)
+        
         cbar = plt.colorbar(im, ticks=[0,1,2], label="Action Type")
         cbar.ax.set_yticklabels(["Both Cooperate", "Single Cooperate", "Both Defect"])
         plt.yticks(range(num_edges), all_edges, fontsize=7)
@@ -573,8 +586,8 @@ class NetworkGamePlotter(BasePlotter):
             '#c5b0d5',  # ENTP
             '#2ca02c',  # INFJ
             '#98df8a',  # INFP
-            '#17becf',  # ENFJ
-            '#bcbd22',  # ENFP
+            "#17cf76",  # ENFJ
+            "#72bd22",  # ENFP
             '#1f77b4',  # ISTJ
             '#aec7e8',  # ISFJ
             "#3556a1",  # ESTJ
@@ -703,7 +716,7 @@ class NetworkGamePlotter(BasePlotter):
                               title: str = "Network Comparison",
                               filename: str = "network_comparison") -> str:
         """Plot network comparison"""
-        fig, axes = plt.subplots(2, 4, figsize=(9, 12))
+        fig, axes = plt.subplots(2, 4, figsize=(9, 9))
 
         # Extract data
         network_names = list(network_comparison.keys())
@@ -720,56 +733,56 @@ class NetworkGamePlotter(BasePlotter):
         axes[0, 0].bar(network_names, num_nodes, color='deepskyblue')
         axes[0, 0].set_title('Number of Nodes')
         axes[0, 0].set_ylabel('Num Nodes')
-        axes[0, 0].tick_params(axis='x', rotation=45)
+        axes[0, 0].tick_params(axis='x', rotation=90)
         axes[0, 0].grid(True, alpha=0.3, axis='y')
 
         # Number of edges comparison
         axes[0, 1].bar(network_names, num_edges, color='salmon')
         axes[0, 1].set_title('Number of Edges')
         axes[0, 1].set_ylabel('Num Edges')
-        axes[0, 1].tick_params(axis='x', rotation=45)
+        axes[0, 1].tick_params(axis='x', rotation=90)
         axes[0, 1].grid(True, alpha=0.3, axis='y')
 
         # Clustering coefficient comparison
         axes[0, 2].bar(network_names, clustering_coeffs, color='lightgreen')
         axes[0, 2].set_title('Clustering Coefficient')
         axes[0, 2].set_ylabel('Clustering Coefficient')
-        axes[0, 2].tick_params(axis='x', rotation=45)
+        axes[0, 2].tick_params(axis='x', rotation=90)
         axes[0, 2].grid(True, alpha=0.3, axis='y')
 
         # Average path length comparison
         axes[0, 3].bar(network_names, avg_path_lengths, color='lightcoral')
         axes[0, 3].set_title('Average Path Length')
         axes[0, 3].set_ylabel('Average Path Length')
-        axes[0, 3].tick_params(axis='x', rotation=45)
+        axes[0, 3].tick_params(axis='x', rotation=90)
         axes[0, 3].grid(True, alpha=0.3, axis='y')
 
         # Density comparison
         axes[1, 0].bar(network_names, densities, color='gold')
         axes[1, 0].set_title('Network Density')
         axes[1, 0].set_ylabel('Density')
-        axes[1, 0].tick_params(axis='x', rotation=45)
+        axes[1, 0].tick_params(axis='x', rotation=90)
         axes[1, 0].grid(True, alpha=0.3, axis='y')
 
         # Final Cooperation Rate comparison
         axes[1, 1].bar(network_names, cooperation_rates, color='skyblue')
         axes[1, 1].set_title('Final Cooperation Rate')
         axes[1, 1].set_ylabel('Cooperation Rate')
-        axes[1, 1].tick_params(axis='x', rotation=45)
+        axes[1, 1].tick_params(axis='x', rotation=90)
         axes[1, 1].grid(True, alpha=0.3, axis='y')
 
         # Overall average cooperation rate
         axes[1, 2].bar(network_names, overall_avg_cooperation_rates, color='mediumorchid')
         axes[1, 2].set_title('Overall Avg Cooperation Rate')
         axes[1, 2].set_ylabel('Avg Cooperation Rate')
-        axes[1, 2].tick_params(axis='x', rotation=45)
+        axes[1, 2].tick_params(axis='x', rotation=90)
         axes[1, 2].grid(True, alpha=0.3, axis='y')
 
         # Overall average payoff
         axes[1, 3].bar(network_names, overall_avg_payoffs, color='darkorange')
         axes[1, 3].set_title('Overall Avg Payoff')
         axes[1, 3].set_ylabel('Avg Payoff')
-        axes[1, 3].tick_params(axis='x', rotation=45)
+        axes[1, 3].tick_params(axis='x', rotation=90)
         axes[1, 3].grid(True, alpha=0.3, axis='y')
 
         plt.suptitle(title, fontsize=16, fontweight='bold')
@@ -781,7 +794,7 @@ class NetworkGamePlotter(BasePlotter):
                                 title: str = "Personality Scenario Comparison",
                                 filename: str = "scenario_comparison") -> str:
         """Plot personality scenario comparison"""
-        fig, axes = plt.subplots(1, 3, figsize=(9, 9))
+        fig, axes = plt.subplots(1, 3, figsize=(9, 5))
 
         short_name_map = {
             "dominant_high_degree_ENTJ": "HighDegree-ENTJ",
@@ -801,21 +814,21 @@ class NetworkGamePlotter(BasePlotter):
         axes[0].bar(short_scenario_names, avg_final_cooperation_rates, color='skyblue')
         axes[0].set_title('Final Cooperation Rate')
         axes[0].set_ylabel('Cooperation Rate')
-        axes[0].tick_params(axis='x', rotation=45)
+        axes[0].tick_params(axis='x', rotation=90)
         axes[0].grid(True, alpha=0.3, axis='y')
 
         # Overall average cooperation rate
         axes[1].bar(short_scenario_names, overall_avg_cooperation_rates, color='mediumorchid')
         axes[1].set_title('Avg Cooperation Rate')
         axes[1].set_ylabel('Avg Cooperation Rate')
-        axes[1].tick_params(axis='x', rotation=45)
+        axes[1].tick_params(axis='x', rotation=90)
         axes[1].grid(True, alpha=0.3, axis='y')
 
         # Overall average payoff
         axes[2].bar(short_scenario_names, overall_avg_payoffs, color='darkorange')
         axes[2].set_title('Avg Payoff')
         axes[2].set_ylabel('Avg Payoff')
-        axes[2].tick_params(axis='x', rotation=45)
+        axes[2].tick_params(axis='x', rotation=90)
         axes[2].grid(True, alpha=0.3, axis='y')
 
         plt.suptitle(title, fontsize=16, fontweight='bold')
