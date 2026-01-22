@@ -24,9 +24,11 @@ prompt_config:
 
 network_game_config:
   network_types:
-  - regular
-  - small_world_0.5
-  - scale_free
+  - regular_k4
+  - small_world_k4_p0.1
+  - small_world_k4_p0.5
+  - random_p0.08
+  - scale_free_m2
   personality_scenarios:
   - uniform
 

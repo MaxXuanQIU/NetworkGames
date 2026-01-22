@@ -29,13 +29,13 @@ class NetworkConfig:
     network_type: NetworkType
     num_nodes: int
     # Regular network parameter
-    k: int = 4  # Number of neighbors per node
+    k: Optional[int] = None  # Number of neighbors per node
     # Small-world network parameter
-    p: float = 0.1  # Rewiring probability
+    p: Optional[float] = None  # Rewiring probability
     # Random network parameter
-    edge_probability: float = 0.1  # Edge existence probability
+    edge_probability: Optional[float] = None  # Edge existence probability
     # Scale-free network parameter
-    m: int = 2  # Number of edges to attach from a new node
+    m: Optional[int] = None  # Number of edges to attach from a new node
     # Other parameters
     seed: Optional[int] = None
     directed: bool = False
@@ -72,6 +72,9 @@ class NetworkGenerator:
     
     def _generate_regular_network(self, config: NetworkConfig) -> nx.Graph:
         """Generate regular network (k-regular graph)"""
+        if config.k is None:
+            raise ValueError("Parameter 'k' is required for Regular network")
+            
         if config.k >= config.num_nodes:
             raise ValueError(f"k ({config.k}) must be less than num_nodes ({config.num_nodes})")
         
@@ -83,6 +86,11 @@ class NetworkGenerator:
     
     def _generate_small_world_network(self, config: NetworkConfig) -> nx.Graph:
         """Generate small-world network (Watts-Strogatz model)"""
+        if config.k is None:
+            raise ValueError("Parameter 'k' is required for Small-world network")
+        if config.p is None:
+            raise ValueError("Parameter 'p' is required for Small-world network")
+
         if config.k >= config.num_nodes:
             raise ValueError(f"k ({config.k}) must be less than num_nodes ({config.num_nodes})")
         
@@ -96,6 +104,9 @@ class NetworkGenerator:
     
     def _generate_random_network(self, config: NetworkConfig) -> nx.Graph:
         """Generate random network (Erdős-Rényi model)"""
+        if config.edge_probability is None:
+            raise ValueError("Parameter 'edge_probability' is required for Random network")
+        
         G = nx.erdos_renyi_graph(
             config.num_nodes, 
             config.edge_probability, 
@@ -106,6 +117,9 @@ class NetworkGenerator:
     
     def _generate_scale_free_network(self, config: NetworkConfig) -> nx.Graph:
         """Generate scale-free network (Barabási-Albert model)"""
+        if config.m is None:
+            raise ValueError("Parameter 'm' is required for Scale-free network")
+
         if config.m >= config.num_nodes:
             raise ValueError(f"m ({config.m}) must be less than num_nodes ({config.num_nodes})")
         

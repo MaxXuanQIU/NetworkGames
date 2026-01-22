@@ -45,13 +45,13 @@ class GameConfig:
 class NetworkConfig:
     """Network configuration"""
     network_type: str
-    num_nodes: int
-    k: int = 4
-    p: float = 0.1
-    edge_probability: float = 0.1
-    m: int = 2
+    num_nodes: Optional[int] = None
+    k: Optional[int] = None
+    p: Optional[float] = None
+    edge_probability: Optional[float] = None
+    m: Optional[int] = None
     seed: Optional[int] = None
-    directed: bool = False
+    directed: Optional[bool] = None
 
 
 @dataclass
@@ -245,12 +245,12 @@ class ConfigManager:
             network_config = NetworkConfig(
                 network_type=network_type,
                 num_nodes=network_num_nodes,
-                k=network_k if network_k is not None else 4,
-                p=network_p if network_p is not None else 0.1,
-                edge_probability=network_edge_probability if network_edge_probability is not None else 0.1,
-                m=network_m if network_m is not None else 2,
+                k=network_k,
+                p=network_p,
+                edge_probability=network_edge_probability,
+                m=network_m,
                 seed=network_seed,
-                directed=network_directed if network_directed is not None else False
+                directed=network_directed
             )
         else:
             network_config = None
@@ -545,11 +545,6 @@ class ConfigManager:
             # network config presence and basic validation
             if not config.network:
                 errors.append("network configuration must be provided for NETWORK_GAME experiments")
-            else:
-                if config.network.num_nodes <= 0:
-                    errors.append("Number of nodes must be positive")
-                if config.network.k >= config.network.num_nodes:
-                    errors.append("k must be less than number of nodes")
         elif config.experiment_type == ExperimentType.PERSONALITY_PROBE:
             if not config.personality_probe_config:
                 errors.append("personality_probe_config must be provided for PERSONALITY_PROBE experiments")
