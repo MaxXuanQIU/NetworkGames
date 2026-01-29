@@ -352,11 +352,14 @@ Outgoing, friendly, and accepting. Exuberant lovers of life, people, and materia
         # Add neighbor statistics for network context
         neighbor_info = ""
         if include_neighbor_stats and neighbor_stats:
-            coop_rate = neighbor_stats.get("cooperation_rate", None) 
+            coop_rate = neighbor_stats.get("cooperation_rate", None)
+            majority_action = neighbor_stats.get("majority_action", None)
             if coop_rate is not None:
                 defect_rate = 1 - coop_rate
-                neighbor_info = "\nNetwork context:\n" + \
+                neighbor_info = "\nYour are in a network:\n" + \
                 f"- In the last round, {coop_rate:.0%} of your neighbors cooperated and {defect_rate:.0%} defected.\n"
+            if majority_action is not None:
+                neighbor_info += f"- Most of your neighbors chose: {majority_action}.\n"
 
         # Combine full prompt
         full_prompt = f"""{personality_prompt}\n\n{game_rules}{history_text}{opponent_info}{neighbor_info}
