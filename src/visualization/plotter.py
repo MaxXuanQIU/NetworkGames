@@ -605,7 +605,17 @@ class NetworkGamePlotter(BasePlotter):
         ]
         legend_labels = {mbti_type.value: mbti_color_map[mbti_type.value] for mbti_type in mbti_types}
 
-        plt.figure(figsize=self.figsize)
+        # Dynamic scaling based on node count: If nodes > 50, scale up figure size
+        num_nodes = G.number_of_nodes()
+        base_node_count = 50
+        
+        # Calculate scale factor (sqrt ensures area scales linearly with nodes, preventing image from getting too huge too fast)
+        scale_factor = max(1.0, np.sqrt(num_nodes / base_node_count))
+        
+        # Scale Figure Size
+        current_figsize = (self.figsize[0] * scale_factor, self.figsize[1] * scale_factor)
+        plt.figure(figsize=current_figsize)
+        
         pos = nx.spring_layout(G, seed=42)
 
         # Edge color handling
@@ -642,7 +652,7 @@ class NetworkGamePlotter(BasePlotter):
                 labels=node_labels,
                 font_size=8)
 
-        plt.title(title)
+        plt.title(title, fontsize=16 * scale_factor) # Scale title accordingly so it remains readable
         plt.axis('off')
         plt.tight_layout()
 

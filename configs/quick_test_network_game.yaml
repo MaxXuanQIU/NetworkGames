@@ -27,7 +27,6 @@ network_game_config:
   - regular_k4
   - small_world_k4_p0.1
   - small_world_k4_p0.5
-  - random_p0.09
   - scale_free_m2
   personality_scenarios:
   - uniform
