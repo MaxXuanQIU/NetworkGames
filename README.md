@@ -98,19 +98,22 @@ NetworkGames/
 │   ├── config/                  # Config management
 │   │   └── config_manager.py    # Config manager
 │   ├── experiments/             # Experiment implementations
-│   │   ├── pair_game_experiment.py      # Pairwise game experiment
-│   │   └── network_game_experiment.py   # Network game experiment
+│   │   ├── pair_game_experiment.py         # Pairwise game experiment
+│   │   ├── network_game_experiment.py      # Network game experiment
+│   │   └── personality_probe_experiment.py # Personality probe experiment
 │   └── utils/                   # Utility functions
 │       └── result_manager.py    # Result manager
 ├── configs/                     # Config files
-│   ├── pair_game.yaml          # Pairwise game config
-│   └── network_game.yaml       # Network game config
-├── results/                    # Output results
-├── main.py                    # Main entry point
-├── environment.yml            # Conda environment
-├── requirements.txt           # Dependency list
-└── README.md                 # Project description
-```
+│   ├── pair_game.yaml           # Pairwise game config
+│   ├── network_game.yaml        # Network game config
+│   └── ...                      # Ablation and test configs
+├── results/                     # Output results
+├── demo.py                      # System capability demonstration
+├── main.py                      # Main entry point
+├── test_ollama.py               # Ollama connection test
+├── environment.yml              # Conda environment
+├── requirements.txt             # Dependency list
+└── README.md                    # Project description
 
 ## Usage Examples
 
