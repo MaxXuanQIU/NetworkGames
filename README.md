@@ -41,7 +41,7 @@ This project aims to explore behavioral patterns of different LLM models in netw
 
 ```bash
 # Clone the project
-git clone https://github.com/MaxXuanQIU/NetworkGames.git
+git clone https://github.com/anonymous/NetworkGames.git
 cd NetworkGames
 
 # Install the required dependencies using Conda
@@ -417,12 +417,12 @@ If you use this project in your research, please cite:
   title={LLM Network Games Framework},
   author={Xuan Qiu},
   year={2025},
-  url={https://github.com/MaxXuanQIU/NetworkGames}
+  url={https://github.com/anonymous/NetworkGames}
 }
 ```
 
 ## Contact
 
-- Project homepage: https://github.com/MaxXuanQIU/NetworkGames
-- Issue tracker: https://github.com/MaxXuanQIU/NetworkGames/issues
-- Email: maxxuanqiu@gmail.com
+- Project homepage: https://github.com/anonymous/NetworkGames
+- Issue tracker: https://github.com/anonymous/NetworkGames/issues
+- Email: anonymous@gmail.com
