@@ -78,6 +78,64 @@ python main.py --experiment network_game --config configs/your_network_game.yaml
 # Note: Real LLMs require API keys, configure them in --config configs/pair_game.yaml and --config configs/your_network_game.yaml
 ```
 
+### 5. (Optional) Deploy a Local Model with Ollama (Example: `llama3.2:3b`)
+
+You can run this framework with a local model through Ollama using `provider: local`.
+
+#### Step 1: Install Ollama
+
+- macOS/Linux: follow official installer from <https://ollama.com>
+- Verify installation:
+
+```bash
+ollama --version
+```
+
+#### Step 2: Start Ollama service and pull model
+
+```bash
+# Start service (if not already running)
+ollama serve
+
+# In another terminal, pull llama3.2:3b
+ollama pull llama3.2:3b
+```
+
+#### Step 3: Quick connectivity check
+
+Use [test_ollama.py](test_ollama.py) and set `model_name="llama3.2:3b"`.
+
+```bash
+python test_ollama.py
+```
+
+#### Step 4: Configure experiment YAML for local model
+
+Example:
+
+```yaml
+llm:
+  provider: local
+  model_name: llama3.2:3b
+  api_key: null
+  concurrency: 4
+  kwargs:
+    temperature: 0.8
+    top_p: 0.9
+    # optional if you use a non-default endpoint:
+    # base_url: http://localhost:11434/v1
+```
+
+#### Step 5: Run experiment
+
+```bash
+python main.py --experiment pair_game --config configs/llama_pair_game.yaml
+python main.py --experiment network_game --config configs/llama_network_game.yaml
+```
+
+> Note: default local endpoint is `http://localhost:11434/v1` in [`src.llm.llm_interface.LocalInterface`](src/llm/llm_interface.py).
+
+
 ## Project Structure
 
 ```
@@ -198,6 +256,24 @@ llm:
 llm:
   provider: "mock"
   model_name: "mock-model"
+
+# Local LLaMA
+llm:
+  provider: local
+  model_name: llama3.2:3b
+  api_key: null
+
+# Local Gemma
+llm:
+  provider: local
+  model_name: gemma3:4b
+  api_key: null
+
+# Local Qwen
+llm:
+  provider: local
+  model_name: qwen2.5:1.5b
+  api_key: null
 ```
 
 ### Network Config
