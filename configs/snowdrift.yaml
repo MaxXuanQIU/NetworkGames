@@ -1,0 +1,40 @@
+description: Pair game configuration for Llama model
+experiment_type: pair_game
+name: Llama Pair Game Experiment
+game:
+  game_name: snowdrift
+  num_repetitions: 1
+  num_rounds: 20
+  random_seed: 42
+
+llm:
+  api_key: null
+  provider: local
+  model_name: llama3.2:3b
+  concurrency: 4
+  kwargs:
+    temperature: 0.8
+    top_p: 0.9
+
+prompt_config:
+  personality_injection: strong
+  include_history: true
+  include_opponent_type: true
+  include_neighbor_stats: false
+
+pair_game_config:
+  matrix_size: 4
+  save_heatmap: true
+  save_statistics: true
+
+output_dir: results
+save_detailed_results: true
+save_visualizations: true
+
+visualization_config:
+  color_palette: Set2
+  dpi: 300
+  figsize:
+  - 8
+  - 6
+  style: seaborn-v0_8

@@ -1,0 +1,55 @@
+description: Pair game configuration for Qwen model
+experiment_type: pair_game
+name: Qwen Pair Game Experiment
+game:
+  game_name: prisoners_dilemma
+  num_repetitions: 10
+  num_rounds: 20
+  payoff_matrix:
+    COOPERATE:
+      COOPERATE:
+      - 3
+      - 3
+      DEFECT:
+      - 0
+      - 5
+    DEFECT:
+      COOPERATE:
+      - 5
+      - 0
+      DEFECT:
+      - 1
+      - 1
+  random_seed: 42
+
+llm:
+  api_key: null
+  provider: local
+  model_name: qwen2.5:1.5b
+  concurrency: 4
+  kwargs:
+    temperature: 0.8
+    top_p: 0.9
+
+prompt_config:
+  personality_injection: strong
+  include_history: true
+  include_opponent_type: true
+  include_neighbor_stats: false
+
+pair_game_config:
+  matrix_size: 4
+  save_heatmap: true
+  save_statistics: true
+
+output_dir: results
+save_detailed_results: true
+save_visualizations: true
+
+visualization_config:
+  color_palette: Set2
+  dpi: 300
+  figsize:
+  - 8
+  - 6
+  style: seaborn-v0_8

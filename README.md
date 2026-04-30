@@ -111,7 +111,7 @@ python test_ollama.py
 
 #### Step 4: Configure experiment YAML for local model
 
-Example:
+Example (already available in [configs/llama_pair_game.yaml](configs/llama_pair_game.yaml) and [configs/llama_network_game.yaml](configs/llama_network_game.yaml)):
 
 ```yaml
 llm:
