@@ -242,9 +242,6 @@ class NetworkGameExperiment:
         # Create semaphore to limit max concurrency
         semaphore = asyncio.Semaphore(self.config.llm.concurrency)
 
-        # Store history of actions of each node for neighbor context
-        node_actions_history = {node: [] for node in G.nodes()}
-
         # Get game rules description
         game_rules = self.game.get_rules_description()
 
@@ -264,17 +261,26 @@ class NetworkGameExperiment:
             
             async def get_actions_for_node(node, neighbors, personality: MBTIPersonality):
                 actions = {}
-                # Calculate neighbor statistics
+                # Calculate neighbor statistics from LAST ROUND actions on edges incident to `node`
                 neighbor_stats = {"cooperation_rate": None, "majority_action": None}
                 neighbor_actions = []
                 for neighbor in neighbors:
-                    # Get the neighbor's last action (from the previous round)
-                    if node_actions_history[neighbor]:
-                        neighbor_actions.append(node_actions_history[neighbor][-1])
+                    pair_key = tuple(sorted((node, neighbor)))
+                    history = pair_histories[pair_key]
+                    if not history:
+                        continue
+
+                    last_result = history[-1]
+                    # pair_key is sorted; GameResult player1/player2 follow sorted node order
+                    if node < neighbor:
+                        neighbor_actions.append(last_result.player2_action)  # neighbor acted as player2 vs node
+                    else:
+                        neighbor_actions.append(last_result.player1_action)  # neighbor acted as player1 vs node
+
                 if neighbor_actions:
                     coop_count = sum(1 for a in neighbor_actions if a == Action.COOPERATE)
                     neighbor_stats["cooperation_rate"] = coop_count / len(neighbor_actions)
-                    majority_action = Action.COOPERATE if coop_count >= len(neighbor_actions)/2 else Action.DEFECT
+                    majority_action = Action.COOPERATE if coop_count >= len(neighbor_actions) / 2 else Action.DEFECT
                     neighbor_stats["majority_action"] = majority_action.value
 
                 for neighbor in neighbors:
@@ -318,9 +324,6 @@ class NetworkGameExperiment:
                         pair_key = (node, neighbor)
                         pair_histories[tuple(sorted(pair_key))].append(result)
                         edge_actions[(node, neighbor)] = (action1, action2)
-                        # Update neighbor action history for next round context
-                        node_actions_history[node].append(action1)
-                        node_actions_history[neighbor].append(action2)
 
             # Record round data
             round_data = self._record_round_data(
