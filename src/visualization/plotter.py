@@ -39,16 +39,18 @@ class BasePlotter:
         """Save plot"""
         output_path = Path(output_dir) / "visualizations"
         output_path.mkdir(parents=True, exist_ok=True)
-        
-        filepath = output_path / f"{filename}.png"
-        plt.savefig(filepath, dpi=self.dpi, bbox_inches='tight')
-        self.logger.info(f"Plot saved to: {filepath}")
-        
-        # Also save as PDF
+
+        fig = plt.gcf()
+        png_path = output_path / f"{filename}.png"
         pdf_path = output_path / f"{filename}.pdf"
-        plt.savefig(pdf_path, bbox_inches='tight')
-        
-        return filepath
+
+        fig.savefig(png_path, dpi=self.dpi, bbox_inches='tight')
+        fig.savefig(pdf_path, format='pdf', dpi=self.dpi, bbox_inches='tight')
+        self.logger.info(f"Plot saved to: {png_path}")
+        self.logger.info(f"Plot saved to: {pdf_path}")
+
+        plt.close(fig)
+        return png_path
 
 
 class PairGamePlotter(BasePlotter):
