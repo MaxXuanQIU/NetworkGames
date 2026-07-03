@@ -75,7 +75,7 @@ class PairGamePlotter(BasePlotter):
                    square=True,
                    cbar_kws={'label': 'Cooperation Rate'})
         
-        plt.title(title, fontsize=16, fontweight='bold')
+        plt.title(title, fontsize=20, fontweight='bold')
         plt.xlabel('Opponent Personality Type', fontsize=12)
         plt.ylabel('Player Personality Type', fontsize=12)
         plt.xticks(rotation=45, ha='right')
@@ -102,7 +102,7 @@ class PairGamePlotter(BasePlotter):
                     square=True,
                     cbar_kws={'label': 'Average Payoff'})
 
-        plt.title(title, fontsize=16, fontweight='bold')
+        plt.title(title, fontsize=20, fontweight='bold')
         plt.xlabel('Opponent Personality Type', fontsize=12)
         plt.ylabel('Player Personality Type', fontsize=12)
         plt.xticks(rotation=45, ha='right')
@@ -129,7 +129,7 @@ class PairGamePlotter(BasePlotter):
         
         plt.xlabel('Cooperation Rate')
         plt.ylabel('Frequency')
-        plt.title(title)
+        plt.title(title, fontsize=20, fontweight='bold')
         plt.legend()
         plt.grid(True, alpha=0.3)
         plt.tight_layout()
@@ -154,7 +154,7 @@ class PairGamePlotter(BasePlotter):
         
         plt.xlabel('Average Payoff')
         plt.ylabel('Frequency')
-        plt.title(title)
+        plt.title(title, fontsize=20, fontweight='bold')
         plt.legend()
         plt.grid(True, alpha=0.3)
         plt.tight_layout()
@@ -214,7 +214,7 @@ class PairGamePlotter(BasePlotter):
 
         plt.xlabel('Personality Type')
         plt.ylabel('Cooperation Rate')
-        plt.title(title)
+        plt.title(title, fontsize=20, fontweight='bold')
         plt.xticks(range(len(personalities)), personalities, rotation=45, ha='right')
         plt.grid(True, alpha=0.3, axis='y')
 
@@ -301,7 +301,7 @@ class PairGamePlotter(BasePlotter):
                      f'{payoff:.3f}', ha='center', va='bottom', fontsize=8)
         plt.xlabel('Personality Type')
         plt.ylabel('Average Payoff')
-        plt.title(title)
+        plt.title(title, fontsize=20, fontweight='bold')
         plt.xticks(range(len(personalities)), personalities, rotation=45, ha='right')
         plt.grid(True, alpha=0.3, axis='y')
         legend_elements = [
@@ -412,7 +412,7 @@ class PairGamePlotter(BasePlotter):
             ax.set_ylabel('Cooperation Rate')
             ax.grid(True, alpha=0.3, axis='y')
 
-        plt.suptitle(title, fontsize=16, fontweight='bold')
+        plt.suptitle(title, fontsize=20, fontweight='bold')
         plt.tight_layout()
 
         return str(self.save_plot(filename))
@@ -441,7 +441,7 @@ class PairGamePlotter(BasePlotter):
         
         plt.xlabel('Statistical Test')
         plt.ylabel('p-value')
-        plt.title(title)
+        plt.title(title, fontsize=20, fontweight='bold')
         plt.yscale('log')
         plt.legend()
         plt.grid(True, alpha=0.3, axis='y')
@@ -519,7 +519,7 @@ class NetworkGamePlotter(BasePlotter):
         axes[1, 2].grid(True, alpha=0.3)
         axes[1, 2].xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
 
-        plt.suptitle(title, fontsize=16, fontweight='bold')
+        plt.suptitle(title, fontsize=26, fontweight='bold')
         plt.tight_layout()
         
         return str(self.save_plot(filename))
@@ -572,7 +572,7 @@ class NetworkGamePlotter(BasePlotter):
         plt.xticks(range(num_rounds), [f"R{r+1}" for r in range(num_rounds)], fontsize=7)
         plt.xlabel("Round")
         plt.ylabel("Edge")
-        plt.title(title)
+        plt.title(title, fontsize=20, fontweight='bold')
         plt.tight_layout()
 
         return str(self.save_plot(filename))
@@ -654,7 +654,7 @@ class NetworkGamePlotter(BasePlotter):
                 labels=node_labels,
                 font_size=8)
 
-        plt.title(title, fontsize=16 * scale_factor) # Scale title accordingly so it remains readable
+        plt.title(title, fontsize=20 * scale_factor, fontweight='bold') # Scale title accordingly so it remains readable
         plt.axis('off')
         plt.tight_layout()
 
@@ -719,7 +719,7 @@ class NetworkGamePlotter(BasePlotter):
         axes[1].set_ylabel('Number of Clusters')
         axes[1].grid(True, alpha=0.3)
         
-        plt.suptitle(title, fontsize=16, fontweight='bold')
+        plt.suptitle(title, fontsize=20, fontweight='bold')
         plt.tight_layout()
         
         return str(self.save_plot(filename))
@@ -797,7 +797,7 @@ class NetworkGamePlotter(BasePlotter):
         axes[1, 3].tick_params(axis='x', rotation=90)
         axes[1, 3].grid(True, alpha=0.3, axis='y')
 
-        plt.suptitle(title, fontsize=16, fontweight='bold')
+        plt.suptitle(title, fontsize=20, fontweight='bold')
         plt.tight_layout()
 
         return str(self.save_plot(filename))
@@ -843,7 +843,7 @@ class NetworkGamePlotter(BasePlotter):
         axes[2].tick_params(axis='x', rotation=90)
         axes[2].grid(True, alpha=0.3, axis='y')
 
-        plt.suptitle(title, fontsize=16, fontweight='bold')
+        plt.suptitle(title, fontsize=20, fontweight='bold')
         plt.tight_layout()
 
         return str(self.save_plot(filename))
@@ -1011,7 +1011,7 @@ class RadarPlotter:
             ax.set_title(personality, fontweight='bold')
             ax.grid(True)
         
-        plt.suptitle(title, fontsize=16, fontweight='bold')
+        plt.suptitle(title, fontsize=20, fontweight='bold')
         plt.tight_layout()
         
         return self.save_plot(filename)
