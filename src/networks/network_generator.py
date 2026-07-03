@@ -15,9 +15,11 @@ from dataclasses import dataclass
 class NetworkType(Enum):
     """Network type"""
     REGULAR = "regular"           # Regular network
+    RING_LATTICE = "ring_lattice" # Ring-lattice network
     SMALL_WORLD = "small_world"   # Small-world network
     RANDOM = "random"             # Random network
     SCALE_FREE = "scale_free"     # Scale-free network
+    LATTICE_2D = "lattice_2d"     # 2D lattice network
     COMPLETE = "complete"         # Complete network
     STAR = "star"                 # Star network
     RING = "ring"                 # Ring network
@@ -57,10 +59,14 @@ class NetworkGenerator:
             return self._generate_regular_network(config)
         elif config.network_type == NetworkType.SMALL_WORLD:
             return self._generate_small_world_network(config)
+        elif config.network_type == NetworkType.RING_LATTICE:
+            return self._generate_ring_lattice_network(config)
         elif config.network_type == NetworkType.RANDOM:
             return self._generate_random_network(config)
         elif config.network_type == NetworkType.SCALE_FREE:
             return self._generate_scale_free_network(config)
+        elif config.network_type == NetworkType.LATTICE_2D:
+            return self._generate_2d_lattice_network(config)
         elif config.network_type == NetworkType.COMPLETE:
             return self._generate_complete_network(config)
         elif config.network_type == NetworkType.STAR:
@@ -81,7 +87,11 @@ class NetworkGenerator:
         if config.k % 2 == 1 and config.num_nodes % 2 == 1:
             raise ValueError("Cannot create k-regular graph with odd k and odd num_nodes")
         
-        G = nx.random_regular_graph(config.k, config.num_nodes, seed=config.seed)
+        G = nx.random_regular_graph(
+            config.k,
+            config.num_nodes,
+            seed=config.seed
+        )
         return G
     
     def _generate_small_world_network(self, config: NetworkConfig) -> nx.Graph:
@@ -93,14 +103,35 @@ class NetworkGenerator:
 
         if config.k >= config.num_nodes:
             raise ValueError(f"k ({config.k}) must be less than num_nodes ({config.num_nodes})")
+        if config.k % 2 != 0:
+            raise ValueError("For Small-world network, 'k' must be even")
         
         G = nx.watts_strogatz_graph(
             config.num_nodes, 
             config.k, 
-            config.p, 
+            config.p, # Rewiring probability
             seed=config.seed
         )
         return G
+    
+    def _generate_ring_lattice_network(self, config: NetworkConfig) -> nx.Graph:
+        """Generate ring-lattice network (Watts-Strogatz base graph with p=0)."""
+        if config.k is None:
+            raise ValueError("Parameter 'k' is required for Ring-lattice network")
+        if config.k <= 0:
+            raise ValueError("k must be a positive integer")
+        if config.k >= config.num_nodes:
+            raise ValueError(f"k ({config.k}) must be less than num_nodes ({config.num_nodes})")
+        if config.k % 2 != 0:
+            raise ValueError("For Ring-lattice network, 'k' must be even")
+
+        G = nx.watts_strogatz_graph(
+            config.num_nodes,
+            config.k,
+            0.0,
+            seed=config.seed
+        )
+        return G.to_directed() if config.directed else G
     
     def _generate_random_network(self, config: NetworkConfig) -> nx.Graph:
         """Generate random network (Erdős-Rényi model)"""
@@ -109,7 +140,7 @@ class NetworkGenerator:
         
         G = nx.erdos_renyi_graph(
             config.num_nodes, 
-            config.edge_probability, 
+            config.edge_probability, # Each possible edge exists independently with probability p.
             seed=config.seed,
             directed=config.directed
         )
@@ -125,10 +156,32 @@ class NetworkGenerator:
         
         G = nx.barabasi_albert_graph(
             config.num_nodes, 
-            config.m, 
+            config.m, # Number of edges to attach from a new node to existing nodes
             seed=config.seed
         )
         return G
+    
+    def _generate_2d_lattice_network(self, config: NetworkConfig) -> nx.Graph:
+        """Generate a 2D lattice network (rectangular grid)."""
+        if config.num_nodes < 2:
+            raise ValueError("num_nodes must be at least 2 for Lattice network")
+
+        rows, cols = self._get_2d_lattice_dimensions(config.num_nodes)
+
+        graph_type = nx.DiGraph() if config.directed else nx.Graph()
+        G = nx.grid_2d_graph(rows, cols, periodic=False, create_using=graph_type)
+
+        # Keep node labels consistent with other generators (0..n-1)
+        mapping = {node: i for i, node in enumerate(G.nodes())}
+        return nx.relabel_nodes(G, mapping)
+
+    def _get_2d_lattice_dimensions(self, num_nodes: int) -> Tuple[int, int]:
+        """Pick lattice dimensions close to a square, with rows * cols == num_nodes."""
+        root = int(np.sqrt(num_nodes))
+        for rows in range(root, 0, -1):
+            if num_nodes % rows == 0:
+                return rows, num_nodes // rows
+        return 1, num_nodes
     
     def _generate_complete_network(self, config: NetworkConfig) -> nx.Graph:
         """Generate complete network"""
@@ -137,12 +190,12 @@ class NetworkGenerator:
     
     def _generate_star_network(self, config: NetworkConfig) -> nx.Graph:
         """Generate star network"""
-        G = nx.star_graph(config.num_nodes - 1)
+        G = nx.star_graph(config.num_nodes - 1) # star_graph(n) creates a star with n+1 nodes (one center and n leaves)
         return G
     
     def _generate_ring_network(self, config: NetworkConfig) -> nx.Graph:
         """Generate ring network"""
-        G = nx.cycle_graph(config.num_nodes)
+        G = nx.cycle_graph(config.num_nodes) # Equal to watts_strogatz_graph(n, 2, 0)
         return G
     
     def generate_multiple_networks(self, configs: List[NetworkConfig]) -> Dict[str, nx.Graph]:

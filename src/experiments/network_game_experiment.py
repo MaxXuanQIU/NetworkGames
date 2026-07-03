@@ -142,6 +142,9 @@ class NetworkGameExperiment:
         if network_type == "regular_k4":
             base_config.network_type = NetworkType.REGULAR
             base_config.k = 4
+        elif network_type == "ring_lattice_k4":
+            base_config.network_type = NetworkType.RING_LATTICE
+            base_config.k = 4
         elif network_type == "small_world_k4_p0.1":
             base_config.network_type = NetworkType.SMALL_WORLD
             base_config.k = 4
@@ -156,6 +159,8 @@ class NetworkGameExperiment:
         elif network_type == "scale_free_m2":
             base_config.network_type = NetworkType.SCALE_FREE
             base_config.m = 2
+        elif network_type == "lattice_2d":
+            base_config.network_type = NetworkType.LATTICE_2D
         else:
             raise ValueError(f"Unknown network type: {network_type}")
 
