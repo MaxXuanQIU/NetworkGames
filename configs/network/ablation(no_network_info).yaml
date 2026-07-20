@@ -1,16 +1,16 @@
-description: Network game configuration for Qwen model
+description: Ablation study configuration (No Network Info) for Pair Game
 experiment_type: network_game
-name: Qwen Network Game Experiment
+name: No Network Info Pair Game Ablation Experiment
 game:
   game_name: prisoners_dilemma
   num_repetitions: 1
   num_rounds: 20
-  random_seed: 2026
+  random_seed: 42
 
 llm:
   api_key: null
   provider: local
-  model_name: qwen2.5:1.5b
+  model_name: llama3.2:3b
   concurrency: 4
   kwargs:
     temperature: 0.8
@@ -20,11 +20,11 @@ prompt_config:
   personality_injection: strong
   include_history: true
   include_opponent_type: true
-  include_neighbor_stats: true
+  include_neighbor_stats: false
 
 network_game_config:
   network_types:
-  - regular_k4
+  - ring_lattice_k4
   - small_world_k4_p0.1
   - small_world_k4_p0.5
   - scale_free_m2

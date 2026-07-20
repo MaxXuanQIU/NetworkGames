@@ -1,8 +1,8 @@
-description: Network game configuration for Llama model
+description: Network game configuration for Gemma model
 experiment_type: network_game
-name: Llama Network Game Experiment
+name: Gemma Network Game Experiment
 game:
-  game_name: stag_hunt
+  game_name: prisoners_dilemma
   num_repetitions: 1
   num_rounds: 20
   random_seed: 42
@@ -10,7 +10,7 @@ game:
 llm:
   api_key: null
   provider: local
-  model_name: llama3.2:3b
+  model_name: gemma3:4b
   concurrency: 4
   kwargs:
     temperature: 0.8
@@ -24,7 +24,7 @@ prompt_config:
 
 network_game_config:
   network_types:
-  - regular_k4
+  - ring_lattice_k4
   - small_world_k4_p0.1
   - small_world_k4_p0.5
   - scale_free_m2

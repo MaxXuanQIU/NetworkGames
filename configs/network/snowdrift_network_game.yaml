@@ -1,16 +1,16 @@
-description: Network game configuration for Qwen model
+description: Network game configuration for Llama model
 experiment_type: network_game
-name: Qwen Network Game Experiment
+name: Llama Network Game Experiment
 game:
-  game_name: prisoners_dilemma
+  game_name: snowdrift
   num_repetitions: 1
-  num_rounds: 40
-  random_seed: 100
+  num_rounds: 20
+  random_seed: 42
 
 llm:
   api_key: null
   provider: local
-  model_name: qwen2.5:1.5b
+  model_name: llama3.2:3b
   concurrency: 4
   kwargs:
     temperature: 0.8
@@ -24,15 +24,16 @@ prompt_config:
 
 network_game_config:
   network_types:
+  - ring_lattice_k4
+  - small_world_k4_p0.1
+  - small_world_k4_p0.5
   - scale_free_m2
   personality_scenarios:
   - uniform
-  - dominant_high_degree_ENTJ
-  - dominant_high_degree_ESFJ
 
 network:
   num_nodes: 50
-  seed: 100
+  seed: 42
 
 output_dir: results
 save_detailed_results: true

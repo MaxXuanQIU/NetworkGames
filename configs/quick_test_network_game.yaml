@@ -25,9 +25,11 @@ prompt_config:
 network_game_config:
   network_types:
   - regular_k4
+  - ring_lattice_k4
   - small_world_k4_p0.1
   - small_world_k4_p0.5
   - scale_free_m2
+  - lattice_2d
   personality_scenarios:
   - uniform
 

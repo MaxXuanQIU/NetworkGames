@@ -1,16 +1,16 @@
-description: Network game configuration for Gemma model
+description: Network game configuration for Llama model
 experiment_type: network_game
-name: Gemma Network Game Experiment
+name: Llama Network Game Experiment
 game:
   game_name: prisoners_dilemma
   num_repetitions: 1
   num_rounds: 20
-  random_seed: 42
+  random_seed: 100
 
 llm:
   api_key: null
   provider: local
-  model_name: gemma3:4b
+  model_name: llama3.2:3b
   concurrency: 4
   kwargs:
     temperature: 0.8
@@ -24,16 +24,15 @@ prompt_config:
 
 network_game_config:
   network_types:
-  - regular_k4
-  - small_world_k4_p0.1
-  - small_world_k4_p0.5
   - scale_free_m2
   personality_scenarios:
   - uniform
+  - dominant_high_degree_ENTJ
+  - dominant_high_degree_ESFJ
 
 network:
   num_nodes: 50
-  seed: 42
+  seed: 100
 
 output_dir: results
 save_detailed_results: true
