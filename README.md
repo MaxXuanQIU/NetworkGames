@@ -111,7 +111,7 @@ python test_ollama.py
 
 #### Step 4: Configure experiment YAML for local model
 
-Example (already available in [configs/llama_pair_game.yaml](configs/llama_pair_game.yaml) and [configs/llama_network_game.yaml](configs/llama_network_game.yaml)):
+Example (already available in [configs/pair/llama_pair_game.yaml](configs/pair/llama_pair_game.yaml) and [configs/network/llama_network_game.yaml](configs/network/llama_network_game.yaml)):
 
 ```yaml
 llm:
@@ -129,8 +129,8 @@ llm:
 #### Step 5: Run experiment
 
 ```bash
-python main.py --experiment pair_game --config configs/llama_pair_game.yaml
-python main.py --experiment network_game --config configs/llama_network_game.yaml
+python main.py --experiment pair_game --config configs/pair/llama_pair_game.yaml
+python main.py --experiment network_game --config configs/network/llama_network_game.yaml
 ```
 
 > Note: default local endpoint is `http://localhost:11434/v1` in [`src.llm.llm_interface.LocalInterface`](src/llm/llm_interface.py).
