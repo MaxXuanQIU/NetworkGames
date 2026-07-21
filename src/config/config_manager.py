@@ -60,6 +60,8 @@ class PairGameConfig:
     matrix_size: int = 16
     save_heatmap: bool = True
     save_statistics: bool = True
+    agent_framework: str = "mbti"
+    participant_types: Optional[List[str]] = None # Only for BFI
 
 @dataclass
 class NetworkGameConfig:
@@ -270,7 +272,9 @@ class ConfigManager:
                 pg_cfg = PairGameConfig(
                     matrix_size=pg["matrix_size"],
                     save_heatmap=pg["save_heatmap"],
-                    save_statistics=pg["save_statistics"]
+                    save_statistics=pg["save_statistics"],
+                    agent_framework=pg.get("agent_framework", "mbti"),
+                    participant_types=pg.get("participant_types"),
                 )
 
         ng_cfg = None

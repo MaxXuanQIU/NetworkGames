@@ -1,0 +1,56 @@
+experiment_type: pair_game
+name: BFI Pair Game Experiment
+description: Two contrasting BFI profiles in repeated Prisoner's Dilemma
+
+game:
+  game_name: prisoners_dilemma
+  num_repetitions: 1
+  num_rounds: 20
+  payoff_matrix:
+    COOPERATE:
+      COOPERATE:
+      - 3
+      - 3
+      DEFECT:
+      - 0
+      - 5
+    DEFECT:
+      COOPERATE:
+      - 5
+      - 0
+      DEFECT:
+      - 1
+      - 1
+  random_seed: 42
+
+llm:
+  api_key: null
+  provider: local
+  model_name: llama3.2:3b
+  concurrency: 4
+  kwargs:
+    temperature: 0.8
+    top_p: 0.9
+
+pair_game_config:
+  matrix_size: 2
+  save_heatmap: true
+  save_statistics: true
+  agent_framework: bfi
+  participant_types:
+    - COOPERATIVE
+    - COMPETITIVE
+
+prompt_config:
+  include_history: true
+  include_opponent_type: false
+  include_neighbor_stats: false
+  personality_injection: strong
+
+output_dir: results
+
+visualization_config:
+  figsize: [8, 6]
+  dpi: 300
+  style: seaborn-v0_8
+  color_palette: Set2

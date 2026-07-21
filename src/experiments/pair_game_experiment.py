@@ -14,6 +14,11 @@ from tqdm import tqdm
 import random
 
 from src.agents.mbti_personalities import MBTIType, MBTIPersonality, get_all_mbti_types
+from src.agents.bfi_personalities import (
+    BFIPersonality,
+    get_all_bfi_profiles,
+    get_bfi_profile_by_name,
+)
 from src.llm.llm_interface import LLMManager, LLMFactory, LLMProvider
 from src.games.two_player_game import GameFactory, Action, GameHistory
 from src.analysis.statistics import CooperationAnalyzer, PersonalityAnalyzer
@@ -43,10 +48,34 @@ class PairGameExperiment:
             color_palette=config.visualization_config.get("color_palette", "Set2")
         )
         
-        # Get all MBTI types
-        self.mbti_types = get_all_mbti_types()
-        self.personalities = {mbti_type: MBTIPersonality(mbti_type) for mbti_type in self.mbti_types}
-        
+        # Get all MBTI types or BFI profiles
+        pair_config = config.pair_game_config
+        agent_framework = pair_config.agent_framework.lower() if pair_config else "mbti"
+        requested_types = pair_config.participant_types if pair_config else None
+
+        if agent_framework == "bfi":
+            available_profiles = get_all_bfi_profiles()
+            self.mbti_types = (
+                [get_bfi_profile_by_name(name) for name in requested_types]
+                if requested_types
+                else available_profiles
+            )
+            self.personalities = {
+                profile: BFIPersonality(profile)
+                for profile in self.mbti_types
+            }
+        elif agent_framework == "mbti":
+            self.mbti_types = get_all_mbti_types()
+            self.personalities = {
+                mbti_type: MBTIPersonality(mbti_type)
+                for mbti_type in self.mbti_types
+            }
+        else:
+            raise ValueError(
+                f"Unsupported pair_game_config.agent_framework: {agent_framework}. "
+                "Expected 'mbti' or 'bfi'."
+            )
+
         # Set random seed
         if config.game.random_seed is not None:
             random.seed(config.game.random_seed)
@@ -81,20 +110,23 @@ class PairGameExperiment:
         }
     
     async def _run_matrix_experiment(self) -> Dict[str, Any]:
-        """Run 16x16 matrix experiment"""
-        self.logger.info("Running 16x16 matrix experiment...")
-        
+        """Run a participant-by-participant matrix experiment."""
+        num_types = len(self.mbti_types)
+        self.logger.info("Running %d x %d matrix experiment...", num_types, num_types)
+
         # Initialize result matrices
-        cooperation_matrix = np.zeros((16, 16))
-        payoff_matrix = np.zeros((16, 16))
-        std_matrix = np.zeros((16, 16))
-        
+        cooperation_matrix = np.zeros((num_types, num_types))
+        payoff_matrix = np.zeros((num_types, num_types))
+        std_matrix = np.zeros((num_types, num_types))
+
         # Store detailed results
         detailed_results = {}
-        
-        # Create progress bar
-        total_combinations = 16 * 16
-        pbar = tqdm(total=total_combinations // 2 + 8, desc="Running matrix experiment")
+
+        # Includes self-play: n(n + 1)/2 unique unordered matchups.
+        pbar = tqdm(
+            total=num_types * (num_types + 1) // 2,
+            desc="Running matrix experiment",
+        )
 
         # Define semaphore for limiting concurrency
         semaphore = asyncio.Semaphore(self.config.llm.concurrency)
@@ -263,27 +295,24 @@ class PairGameExperiment:
         return result
     
     def _analyze_results(self, matrix_results: Dict[str, Any]) -> Dict[str, Any]:
-        """Analyze experiment results"""
+        """Analyze experiment results."""
         self.logger.info("Analyzing results...")
-        
+
         cooperation_matrix = matrix_results["cooperation_matrix"]
         detailed_results = matrix_results["detailed_results"]
-        
-        # Calculate basic statistics
-        basic_stats = self._calculate_basic_statistics(cooperation_matrix)
-        
-        # Personality analysis
-        personality_analysis = self._analyze_personalities(detailed_results)
-        
-        # MBTI dimension analysis
-        dimension_analysis = self._analyze_mbti_dimensions(detailed_results)
-        
-        return {
-            "basic_statistics": basic_stats,
-            "personality_analysis": personality_analysis,
-            "dimension_analysis": dimension_analysis,
+
+        results = {
+            "basic_statistics": self._calculate_basic_statistics(cooperation_matrix),
+            "personality_analysis": self._analyze_personalities(detailed_results),
         }
-    
+
+        if self.config.pair_game_config.agent_framework.lower() == "mbti":
+            results["dimension_analysis"] = self._analyze_mbti_dimensions(
+                detailed_results
+            )
+
+        return results
+
     def _calculate_basic_statistics(self, cooperation_matrix: np.ndarray) -> Dict[str, Any]:
         """Calculate basic statistics"""
         return {
@@ -391,27 +420,28 @@ class PairGameExperiment:
             filename="personality_payoff_ranking"
         )
         visualization_files["payoff_ranking"] = payoff_ranking_file
-        
+
         # MBTI dimension analysis (Cooperation & Payoff)
-        dimension_data_all = analysis_results["dimension_analysis"]
-        
-        # 1. Cooperation Dimension Analysis
-        dimension_file_coop = self.plotter.plot_mbti_dimension_analysis(
-            dimension_data_all["cooperation"],
-            title="MBTI Dimension Analysis - Cooperation",
-            filename="mbti_dimension_analysis_coop",
-            ylabel="Cooperation Rate"
-        )
-        visualization_files["dimensions_coop"] = dimension_file_coop
-        
-        # 2. Payoff Dimension Analysis
-        dimension_file_payoff = self.plotter.plot_mbti_dimension_analysis(
-            dimension_data_all["payoff"],
-            title="MBTI Dimension Analysis - Payoff",
-            filename="mbti_dimension_analysis_payoff",
-            ylabel="Average Payoff"
-        )
-        visualization_files["dimensions_payoff"] = dimension_file_payoff
+        if "dimension_analysis" in analysis_results:
+            dimension_data_all = analysis_results["dimension_analysis"]
+
+            # 1. Cooperation Dimension Analysis
+            dimension_file_coop = self.plotter.plot_mbti_dimension_analysis(
+                dimension_data_all["cooperation"],
+                title="MBTI Dimension Analysis - Cooperation",
+                filename="mbti_dimension_analysis_coop",
+                ylabel="Cooperation Rate",
+            )
+            visualization_files["dimensions_coop"] = dimension_file_coop
+
+            # 2. Payoff Dimension Analysis
+            dimension_file_payoff = self.plotter.plot_mbti_dimension_analysis(
+                dimension_data_all["payoff"],
+                title="MBTI Dimension Analysis - Payoff",
+                filename="mbti_dimension_analysis_payoff",
+                ylabel="Average Payoff",
+            )
+            visualization_files["dimensions_payoff"] = dimension_file_payoff
         
         return visualization_files
     
