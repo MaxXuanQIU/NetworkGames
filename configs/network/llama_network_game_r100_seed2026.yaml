@@ -1,0 +1,49 @@
+description: Network game configuration for Llama model
+experiment_type: network_game
+name: Llama Network Game Experiment
+game:
+  game_name: prisoners_dilemma
+  num_repetitions: 1
+  num_rounds: 100
+  random_seed: 2026
+
+llm:
+  api_key: null
+  provider: local
+  model_name: llama3.2:3b
+  concurrency: 4
+  kwargs:
+    temperature: 0.8
+    top_p: 0.9
+
+prompt_config:
+  personality_injection: strong
+  include_history: true
+  include_opponent_type: true
+  include_neighbor_stats: true
+
+network_game_config:
+  network_types:
+  - ring_lattice_k4
+  - small_world_k4_p0.1
+  - small_world_k4_p0.5
+  - scale_free_m2
+  personality_scenarios:
+  - uniform
+
+network:
+  num_nodes: 50
+  seed: 2026
+
+output_dir: results
+save_detailed_results: true
+save_network_snapshots: true
+save_visualizations: true
+
+visualization_config:
+  color_palette: Set2
+  dpi: 300
+  figsize:
+  - 12
+  - 8
+  style: seaborn-v0_8
