@@ -811,6 +811,10 @@ class NetworkGamePlotter(BasePlotter):
         short_name_map = {
             "dominant_high_degree_ENTJ": "HighDegree-ENTJ",
             "dominant_high_degree_ESFJ": "HighDegree-ESFJ",
+            "dominant_random_ENTJ": "Random-ENTJ",
+            "dominant_random_ESFJ": "Random-ESFJ",
+            "dominant_low_degree_ENTJ": "LowDegree-ENTJ",
+            "dominant_low_degree_ESFJ": "LowDegree-ESFJ",
             "uniform": "Uniform",
             "single_ENTJ": "All-ENTJ",
             "clustered": "Clustered"

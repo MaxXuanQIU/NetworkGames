@@ -193,6 +193,22 @@ class NetworkGameExperiment:
             # High-degree nodes are ESFJ, others random
             personality_assignment = self._assign_high_degree_personality(G, MBTIType.ESFJ, top_n=5)
 
+        elif scenario == "dominant_random_ENTJ":
+            # Randomly selected nodes are ENTJ, others random
+            personality_assignment = self._assign_random_personality(G, MBTIType.ENTJ, count=5)
+
+        elif scenario == "dominant_random_ESFJ":
+            # Randomly selected nodes are ESFJ, others random
+            personality_assignment = self._assign_random_personality(G, MBTIType.ESFJ, count=5)
+
+        elif scenario == "dominant_low_degree_ENTJ":
+            # Lowest-degree nodes are ENTJ, others random
+            personality_assignment = self._assign_low_degree_personality(G, MBTIType.ENTJ, bottom_n=5)
+
+        elif scenario == "dominant_low_degree_ESFJ":
+            # Lowest-degree nodes are ESFJ, others random
+            personality_assignment = self._assign_low_degree_personality(G, MBTIType.ESFJ, bottom_n=5)
+
         else:
             # Default to uniform distribution
             for node in nodes:
@@ -234,6 +250,27 @@ class NetworkGameExperiment:
         for node in set(G.nodes()) - set(top_nodes):
             personality_assignment[node] = random.choice(self.mbti_types)
         return personality_assignment
+    
+    def _assign_random_personality(
+        self, G: nx.Graph, target_type: MBTIType, count: int = 5
+    ) -> Dict[int, MBTIType]:
+        """Assign target_type to randomly selected nodes, others random."""
+        selected_nodes = set(random.sample(list(G.nodes()), min(count, G.number_of_nodes())))
+        return {
+            node: target_type if node in selected_nodes else random.choice(self.mbti_types)
+            for node in G.nodes()
+        }
+
+    def _assign_low_degree_personality(
+        self, G: nx.Graph, target_type: MBTIType, bottom_n: int = 5
+    ) -> Dict[int, MBTIType]:
+        """Assign target_type to the lowest-degree nodes, others random."""
+        degrees = sorted(G.degree(), key=lambda item: item[1])
+        selected_nodes = {node for node, _ in degrees[:bottom_n]}
+        return {
+            node: target_type if node in selected_nodes else random.choice(self.mbti_types)
+            for node in G.nodes()
+        }
     
     async def _run_network_game(self, G: nx.Graph, personality_assignment: Dict[int, MBTIType]) -> List[Dict[str, Any]]:
         """Run network game (each node makes decisions with each neighbor, considering network context)"""
