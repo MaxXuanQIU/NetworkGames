@@ -177,6 +177,25 @@ NetworkGames/
 
 ### Basic Usage
 
+```bash
+# Use output_dir from the YAML configuration.
+python main.py --experiment pair_game --config configs/pair_game.yaml
+
+# Override the YAML output_dir for this run.
+python main.py --experiment pair_game --config configs/pair_game.yaml --output-dir result1
+
+# --output_dir is accepted as a compatibility alias.
+python main.py --experiment network_game --config configs/network_game.yaml --output_dir result1
+```
+
+Set the persistent default location in the YAML file:
+
+```yaml
+output_dir: result1
+```
+
+Plots are saved under `<output_dir>/visualizations/`; CSV and JSON experiment results are saved under `<output_dir>/`.
+
 ```python
 import asyncio
 from src.experiments.pair_game_experiment import run_pair_game_experiment

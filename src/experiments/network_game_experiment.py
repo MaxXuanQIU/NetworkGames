@@ -46,7 +46,8 @@ class NetworkGameExperiment:
             style=config.visualization_config.get("style", "seaborn-v0_8"),
             figsize=tuple(config.visualization_config.get("figsize", [12, 8])),
             dpi=config.visualization_config.get("dpi", 300),
-            color_palette=config.visualization_config.get("color_palette", "Set2")
+            color_palette=config.visualization_config.get("color_palette", "Set2"),
+            output_dir=config.output_dir,
         )
         self.interactive_plotter = InteractivePlotter()
         
@@ -734,13 +735,18 @@ class NetworkGameExperiment:
         summary_df.to_csv(output_dir / "network_summary.csv", index=False)
 
 
-async def run_network_game_experiment(config_file: str = "configs/network_game.yaml"):
-    """Main function to run the network game experiment"""
+async def run_network_game_experiment(
+    config_file: str = "configs/network_game.yaml",
+    output_dir: Optional[str] = None,
+):
+    """Run a network game experiment."""
     from src.config.config_manager import ConfigManager
 
     # Load config
     config_manager = ConfigManager()
     config = config_manager.load_config(config_file)
+    if output_dir is not None:
+        config.set_output_dir(output_dir)
     
     # Create LLM manager
     llm_manager = LLMManager()

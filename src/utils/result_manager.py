@@ -16,10 +16,10 @@ import networkx as nx
 
 class ResultManager:
     """Result Manager"""
-    
+
     def __init__(self, output_dir: str = "results"):
-        self.output_dir = Path(output_dir)
-        self.output_dir.mkdir(exist_ok=True)
+        self.output_dir = Path(output_dir).expanduser()
+        self.output_dir.mkdir(parents=True, exist_ok=True)
         self.logger = logging.getLogger(self.__class__.__name__)
     
     def save_experiment_results(self, experiment_type: str, results: Dict[str, Any], 

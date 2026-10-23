@@ -113,6 +113,12 @@ class ExperimentConfig:
         "color_palette": "Set2"
     })
 
+    def set_output_dir(self, output_dir: str) -> None:
+        """Apply a runtime output-directory override."""
+        if not output_dir or not output_dir.strip():
+            raise ValueError("output_dir must not be empty")
+        self.output_dir = str(Path(output_dir).expanduser())
+
 
 class ConfigManager:
     """Configuration manager"""

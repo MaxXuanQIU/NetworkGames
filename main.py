@@ -89,6 +89,13 @@ async def main():
     parser.add_argument("--list-configs", action="store_true",
                        help="List available configuration files")
     parser.add_argument("--validate-config", help="Validate a configuration file")
+    parser.add_argument(
+        "--output-dir",
+        "--output_dir",
+        dest="output_dir",
+        default=None,
+        help="Override the output_dir configured in the YAML file",
+    )
     
     args = parser.parse_args()
     
@@ -128,12 +135,12 @@ async def main():
     try:
         if args.experiment == "pair_game":
             logger.info("Starting pair game experiment...")
-            results = await run_pair_game_experiment(args.config)
+            results = await run_pair_game_experiment(args.config, args.output_dir)
             logger.info("Pair game experiment completed successfully!")
             
         elif args.experiment == "network_game":
             logger.info("Starting network game experiment...")
-            results = await run_network_game_experiment(args.config)
+            results = await run_network_game_experiment(args.config, args.output_dir)
             logger.info("Network game experiment completed successfully!")
             
         elif args.experiment == "personality_probe":

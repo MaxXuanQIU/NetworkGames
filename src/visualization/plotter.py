@@ -24,20 +24,22 @@ class BasePlotter:
     """Base plotting class"""
     
     def __init__(self, style: str = "seaborn-v0_8", figsize: Tuple[int, int] = (12, 8), 
-                 dpi: int = 300, color_palette: str = "Set2"):
+                 dpi: int = 300, color_palette: str = "Set2", output_dir: str = "results"):
         self.style = style
         self.figsize = figsize
         self.dpi = dpi
         self.color_palette = color_palette
+        self.output_dir = Path(output_dir).expanduser()
         self.logger = logging.getLogger(self.__class__.__name__)
         
         # Set matplotlib style
         plt.style.use(style)
         sns.set_palette(color_palette)
     
-    def save_plot(self, filename: str, output_dir: str = "results"):
-        """Save plot"""
-        output_path = Path(output_dir) / "visualizations"
+    def save_plot(self, filename: str, output_dir: Optional[str] = None):
+        """Save plot as PNG and PDF."""
+        output_path = Path(output_dir).expanduser() if output_dir else self.output_dir
+        output_path = output_path / "visualizations"
         output_path.mkdir(parents=True, exist_ok=True)
 
         fig = plt.gcf()

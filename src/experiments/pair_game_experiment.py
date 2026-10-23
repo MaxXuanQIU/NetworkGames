@@ -45,7 +45,8 @@ class PairGameExperiment:
             style=config.visualization_config.get("style", "seaborn-v0_8"),
             figsize=tuple(config.visualization_config.get("figsize", [12, 8])),
             dpi=config.visualization_config.get("dpi", 300),
-            color_palette=config.visualization_config.get("color_palette", "Set2")
+            color_palette=config.visualization_config.get("color_palette", "Set2"),
+            output_dir=config.output_dir,
         )
         
         # Get all MBTI types or BFI profiles
@@ -503,14 +504,18 @@ class PairGameExperiment:
         self.logger.info(f"Results saved to: {output_dir}")
 
 
-async def run_pair_game_experiment(config_file: str = "configs/pair_game.yaml"):
-    """Main function to run two-player game experiment"""
+async def run_pair_game_experiment(
+    config_file: str = "configs/pair_game.yaml",
+    output_dir: Optional[str] = None,
+):
+    """Run a two-player game experiment."""
     from src.config.config_manager import ConfigManager
     
     # Load config
     config_manager = ConfigManager()
     config = config_manager.load_config(config_file)
-    
+    if output_dir is not None:
+        config.set_output_dir(output_dir)
     # Create LLM manager
     llm_manager = LLMManager()
     
