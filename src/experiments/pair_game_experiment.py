@@ -88,7 +88,7 @@ class PairGameExperiment:
         
         # Create result directory
         output_dir = Path(self.config.output_dir)
-        output_dir.mkdir(exist_ok=True)
+        output_dir.mkdir(parents=True, exist_ok=True)
         
         # Run 16x16 matrix experiment
         matrix_results = await self._run_matrix_experiment()
@@ -453,7 +453,7 @@ class PairGameExperiment:
         self.logger.info("Saving results...")
         
         output_dir = Path(self.config.output_dir)
-        output_dir.mkdir(exist_ok=True)
+        output_dir.mkdir(parents=True, exist_ok=True)
         
         # Save cooperation rate matrix
         matrix_df = pd.DataFrame(

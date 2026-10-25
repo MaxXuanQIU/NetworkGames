@@ -30,7 +30,7 @@ class ResultManager:
         
         # Create experiment directory
         experiment_dir = self.output_dir / experiment_id
-        experiment_dir.mkdir(exist_ok=True)
+        experiment_dir.mkdir(parents=True, exist_ok=True)
         
         # Save config
         self._save_config(experiment_dir, config)
@@ -124,7 +124,7 @@ class ResultManager:
             
             # Create network results directory
             network_dir = experiment_dir / "networks"
-            network_dir.mkdir(exist_ok=True)
+            network_dir.mkdir(parents=True, exist_ok=True)
             
             for network_type, scenarios in network_results.items():
                 for scenario, scenario_results in scenarios.items():

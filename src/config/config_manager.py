@@ -136,7 +136,7 @@ class ConfigManager:
     
     def _ensure_config_dir(self):
         """Ensure config directory exists"""
-        self.config_dir.mkdir(exist_ok=True)
+        self.config_dir.mkdir(parents=True, exist_ok=True)
     
     def load_config(self, config_file: str) -> ExperimentConfig:
         """Load configuration file

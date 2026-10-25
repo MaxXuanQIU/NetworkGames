@@ -66,7 +66,7 @@ class NetworkGameExperiment:
         
         # Create results directory
         output_dir = Path(self.config.output_dir)
-        output_dir.mkdir(exist_ok=True)
+        output_dir.mkdir(parents=True, exist_ok=True)
         
         # Get experiment config
         network_game_config = self.config.network_game_config
@@ -725,7 +725,7 @@ class NetworkGameExperiment:
         self.logger.info("Saving network results...")
         
         output_dir = Path(self.config.output_dir)
-        output_dir.mkdir(exist_ok=True)
+        output_dir.mkdir(parents=True, exist_ok=True)
         
         # Save detailed results
         with open(output_dir / "network_results.json", 'w', encoding='utf-8') as f:

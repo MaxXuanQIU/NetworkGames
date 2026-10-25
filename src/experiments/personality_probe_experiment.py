@@ -49,7 +49,7 @@ class PersonalityProbeExperiment:
         self.logger.info("Starting personality probe experiment...")
         
         output_dir = Path(self.config.output_dir)
-        output_dir.mkdir(exist_ok=True)
+        output_dir.mkdir(parents=True, exist_ok=True)
         
         results = []
         repetitions = self.config.personality_probe_config.num_repetitions
