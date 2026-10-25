@@ -167,112 +167,155 @@ class NetworkGameExperiment:
 
         return base_config
     
+    def _assignment_rng(self, namespace: str) -> random.Random:
+        """Return a local RNG so scenario execution order cannot alter assignments."""
+        seed = self.config.network.seed
+        if seed is None:
+            seed = self.config.game.random_seed
+        return random.Random(f"{seed}:{namespace}") if seed is not None else random.Random()
+
+    @staticmethod
+    def _ordered_nodes(G: nx.Graph) -> List[int]:
+        """Use a stable node order when deriving seeded assignments."""
+        return sorted(G.nodes(), key=repr)
+
+    def _create_baseline_assignment(self, G: nx.Graph) -> Dict[int, MBTIType]:
+        """Assign every node once; interventions copy and modify this baseline."""
+        rng = self._assignment_rng("baseline_personality_assignment")
+        return {
+            node: rng.choice(self.mbti_types)
+            for node in self._ordered_nodes(G)
+        }
+
     def _assign_personalities(self, G: nx.Graph, scenario: str) -> Dict[int, MBTIType]:
-        """Assign personality types"""
-        nodes = list(G.nodes())
-        personality_assignment = {}
-        
+        """Assign personalities while preserving the same baseline across interventions."""
+        nodes = self._ordered_nodes(G)
+        baseline_assignment = self._create_baseline_assignment(G)
+
         if scenario == "uniform":
             # Uniform random distribution
-            for node in nodes:
-                personality_assignment[node] = random.choice(self.mbti_types)
-        
-        elif scenario == "single_ENTJ":
+            return baseline_assignment
+
+        if scenario == "single_ENTJ":
             # All are ENTJ
-            for node in nodes:
-                personality_assignment[node] = MBTIType.ENTJ
-        
-        elif scenario == "clustered":
+            return {node: MBTIType.ENTJ for node in nodes}
+
+        if scenario == "clustered":
             # Clustered distribution
-            personality_assignment = self._assign_clustered_personalities(G)
+            return self._assign_clustered_personalities(
+                G,
+                self._assignment_rng("clustered_personality_assignment"),
+            )
 
-        elif scenario == "dominant_high_degree_ENTJ":
+        if scenario == "dominant_high_degree_ENTJ":
             # High-degree nodes are ENTJ, others random
-            personality_assignment = self._assign_high_degree_personality(G, MBTIType.ENTJ, top_n=5)
-        
-        elif scenario == "dominant_high_degree_ESFJ":
+            return self._assign_high_degree_personality(
+                G, baseline_assignment, MBTIType.ENTJ, top_n=5
+            )
+
+        if scenario == "dominant_high_degree_ESFJ":
             # High-degree nodes are ESFJ, others random
-            personality_assignment = self._assign_high_degree_personality(G, MBTIType.ESFJ, top_n=5)
+            return self._assign_high_degree_personality(
+                G, baseline_assignment, MBTIType.ESFJ, top_n=5
+            )
 
-        elif scenario == "dominant_random_ENTJ":
+        if scenario == "dominant_random_ENTJ":
             # Randomly selected nodes are ENTJ, others random
-            personality_assignment = self._assign_random_personality(G, MBTIType.ENTJ, count=5)
+            return self._assign_random_personality(
+                G, baseline_assignment, MBTIType.ENTJ, count=5
+            )
 
-        elif scenario == "dominant_random_ESFJ":
+        if scenario == "dominant_random_ESFJ":
             # Randomly selected nodes are ESFJ, others random
-            personality_assignment = self._assign_random_personality(G, MBTIType.ESFJ, count=5)
+            return self._assign_random_personality(
+                G, baseline_assignment, MBTIType.ESFJ, count=5
+            )
 
-        elif scenario == "dominant_low_degree_ENTJ":
+        if scenario == "dominant_low_degree_ENTJ":
             # Lowest-degree nodes are ENTJ, others random
-            personality_assignment = self._assign_low_degree_personality(G, MBTIType.ENTJ, bottom_n=5)
+            return self._assign_low_degree_personality(
+                G, baseline_assignment, MBTIType.ENTJ, bottom_n=5
+            )
 
-        elif scenario == "dominant_low_degree_ESFJ":
+        if scenario == "dominant_low_degree_ESFJ":
             # Lowest-degree nodes are ESFJ, others random
-            personality_assignment = self._assign_low_degree_personality(G, MBTIType.ESFJ, bottom_n=5)
+            return self._assign_low_degree_personality(
+                G, baseline_assignment, MBTIType.ESFJ, bottom_n=5
+            )
 
-        else:
-            # Default to uniform distribution
-            for node in nodes:
-                personality_assignment[node] = random.choice(self.mbti_types)
-        
-        return personality_assignment
-    
-    def _assign_clustered_personalities(self, G: nx.Graph) -> Dict[int, MBTIType]:
-        """Assign clustered personality distribution"""
+        self.logger.warning("Unknown scenario '%s'; using the baseline assignment.", scenario)
+        return baseline_assignment
+
+    def _assign_clustered_personalities(
+        self, G: nx.Graph, rng: random.Random
+    ) -> Dict[int, MBTIType]:
+        """Assign clustered personalities without consuming the global RNG."""
         # Use community detection algorithm
         communities = nx.community.greedy_modularity_communities(G)
-        
         personality_assignment = {}
-        
+
         # Assign dominant personality type to each community
-        dominant_personalities = random.sample(list(self.mbti_types), len(communities))
-        
+        dominant_personalities = rng.sample(
+            list(self.mbti_types),
+            min(len(communities), len(self.mbti_types)),
+        )
+
         for i, community in enumerate(communities):
             dominant_personality = dominant_personalities[i % len(dominant_personalities)]
-            
             for node in community:
                 # 80% probability assign dominant personality, 20% assign other personality
-                if random.random() < 0.8:
-                    personality_assignment[node] = dominant_personality
-                else:
-                    personality_assignment[node] = random.choice(self.mbti_types)
-        
+                personality_assignment[node] = (
+                    dominant_personality
+                    if rng.random() < 0.8
+                    else rng.choice(self.mbti_types)
+                )
+
         return personality_assignment
-    
-    def _assign_high_degree_personality(self, G: nx.Graph, target_type: MBTIType, top_n: int = 5) -> Dict[int, MBTIType]:
-        """
-        Assign target_type to top_n high-degree nodes, others random.
-        """
-        personality_assignment = {}
-        degrees = sorted(list(G.degree()), key=lambda x: x[1], reverse=True)
-        top_nodes = [node for node, _ in degrees[:top_n]]
-        for node in top_nodes:
-            personality_assignment[node] = target_type
-        for node in set(G.nodes()) - set(top_nodes):
-            personality_assignment[node] = random.choice(self.mbti_types)
-        return personality_assignment
-    
-    def _assign_random_personality(
-        self, G: nx.Graph, target_type: MBTIType, count: int = 5
+
+    def _assign_high_degree_personality(
+        self,
+        G: nx.Graph,
+        baseline_assignment: Dict[int, MBTIType],
+        target_type: MBTIType,
+        top_n: int = 5,
     ) -> Dict[int, MBTIType]:
-        """Assign target_type to randomly selected nodes, others random."""
-        selected_nodes = set(random.sample(list(G.nodes()), min(count, G.number_of_nodes())))
-        return {
-            node: target_type if node in selected_nodes else random.choice(self.mbti_types)
-            for node in G.nodes()
-        }
+        """Overwrite only the highest-degree baseline nodes."""
+        assignment = baseline_assignment.copy()
+        target_nodes = [
+            node for node, _ in sorted(G.degree(), key=lambda item: item[1], reverse=True)[:top_n]
+        ]
+        assignment.update({node: target_type for node in target_nodes})
+        return assignment
+
+    def _assign_random_personality(
+        self,
+        G: nx.Graph,
+        baseline_assignment: Dict[int, MBTIType],
+        target_type: MBTIType,
+        count: int = 5,
+    ) -> Dict[int, MBTIType]:
+        """Overwrite only the same seed-derived random baseline nodes."""
+        rng = self._assignment_rng("random_intervention_nodes")
+        target_nodes = rng.sample(self._ordered_nodes(G), min(count, G.number_of_nodes()))
+        assignment = baseline_assignment.copy()
+        assignment.update({node: target_type for node in target_nodes})
+        return assignment
 
     def _assign_low_degree_personality(
-        self, G: nx.Graph, target_type: MBTIType, bottom_n: int = 5
+        self,
+        G: nx.Graph,
+        baseline_assignment: Dict[int, MBTIType],
+        target_type: MBTIType,
+        bottom_n: int = 5,
     ) -> Dict[int, MBTIType]:
-        """Assign target_type to the lowest-degree nodes, others random."""
-        degrees = sorted(G.degree(), key=lambda item: item[1])
-        selected_nodes = {node for node, _ in degrees[:bottom_n]}
-        return {
-            node: target_type if node in selected_nodes else random.choice(self.mbti_types)
-            for node in G.nodes()
-        }
-    
+        """Overwrite only the lowest-degree baseline nodes."""
+        assignment = baseline_assignment.copy()
+        target_nodes = [
+            node for node, _ in sorted(G.degree(), key=lambda item: item[1])[:bottom_n]
+        ]
+        assignment.update({node: target_type for node in target_nodes})
+        return assignment
+
     async def _run_network_game(self, G: nx.Graph, personality_assignment: Dict[int, MBTIType]) -> List[Dict[str, Any]]:
         """Run network game (each node makes decisions with each neighbor, considering network context)"""
         evolution_data = []

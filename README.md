@@ -35,6 +35,14 @@ This project aims to explore behavioral patterns of different LLM models in netw
 - **Variable 3**: Interaction rounds (default 100)
 - **Output**: Network evolution animation, cooperation rate time series, network snapshots
 
+### Controlled Personality Interventions
+
+For `uniform` and `dominant_*` network scenarios, the framework derives a fixed baseline personality assignment from `network.seed` (falling back to `game.random_seed`). Intervention scenarios copy that baseline and overwrite only their target nodes. Thus, with the same topology and seed:
+
+- `dominant_random_ENTJ` and `dominant_random_ESFJ` intervene on the same five random nodes.
+- High- and low-degree interventions change only their respective five selected nodes.
+- All non-intervened peripheral nodes retain the baseline personality assignment.
+
 ## Quick Start
 
 ### 1. Set Up Your Environment
