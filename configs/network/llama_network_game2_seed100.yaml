@@ -29,6 +29,10 @@ network_game_config:
   - uniform
   - dominant_high_degree_ENTJ
   - dominant_high_degree_ESFJ
+  - dominant_random_ENTJ
+  - dominant_random_ESFJ
+  - dominant_low_degree_ENTJ
+  - dominant_low_degree_ESFJ
 
 network:
   num_nodes: 50
