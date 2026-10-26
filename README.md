@@ -70,8 +70,8 @@ python main.py --create-configs
 
 ```bash
 # Quick test with Mock LLM
-python main.py --experiment pair_game --config configs/quick_test_pair_game.yaml
-python main.py --experiment network_game --config configs/quick_test_network_game.yaml
+python main.py --experiment pair_game --config configs/pair/random_50%_pair_game.yaml
+python main.py --experiment network_game --config configs/random_50%_network_game.yaml
 ```
 
 ### 4. Run Full Experiments
@@ -404,7 +404,7 @@ for config in configs:
 python main.py --experiment pair_game --log-level DEBUG --config configs/your_pair_game.yaml
 
 # Quick test with Mock LLM
-python main.py --experiment pair_game --config configs/quick_test_pair_game.yaml
+python main.py --experiment pair_game --config configs/pair/random_50%_pair_game.yaml
 ```
 
 ## Contribution Guide
